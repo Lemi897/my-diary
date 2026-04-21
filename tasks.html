@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    tasks.html - Tasks and To-Do Page
+    Shows: task list with subtasks, categories, priorities,
+    due dates, add/edit modal, filter by category and status.
+    Data stored in: tasks table in Supabase.
+    parent_id is null for top-level tasks, set for subtasks.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Tasks page specific styles
+    -------------------------------------------------------- */
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .filter-select {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Task card */
+    .task-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+      transition: var(--transition);
+    }
+
+    .task-card:hover {
+      border-color: var(--accent-1);
+    }
+
+    .task-card.done-card {
+      opacity: 0.6;
+    }
+
+    /* Task main row */
+    .task-main-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    /* Task checkbox */
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .task-checkbox.checked {
+      background-color: var(--success);
+      border-color: var(--success);
+      color: #000;
+    }
+
+    /* Task content */
+    .task-content {
+      flex: 1;
+    }
+
+    .task-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+
+    .task-title.done-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Priority badge colors */
+    .priority-low      { background: rgba(0,212,170,0.15);   color: var(--success); }
+    .priority-medium   { background: rgba(255,209,102,0.15); color: var(--warning); }
+    .priority-high     { background: rgba(249,115,22,0.15);  color: #fb923c; }
+    .priority-urgent   { background: rgba(239,35,60,0.15);   color: var(--danger); }
+
+    /* Task actions */
+    .task-actions {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    /* Subtasks section */
+    .subtasks-section {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      padding-left: 1.5rem;
+    }
+
+    .subtask-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.4rem 0;
+    }
+
+    .subtask-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .subtask-checkbox.checked {
+      background-color: var(--success);
+      border-color: var(--success);
+      color: #000;
+    }
+
+    .subtask-title {
+      font-size: 0.85rem;
+      flex: 1;
+    }
+
+    .subtask-title.done-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    /* Add subtask row */
+    .add-subtask-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .add-subtask-input {
+      flex: 1;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+    }
+
+    /* Toggle subtasks button */
+    .toggle-subtasks-btn {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .toggle-subtasks-btn:hover {
+      color: var(--accent-1);
+    }
+
+    /* Summary stats */
+    .tasks-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-stat {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .summary-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* Due date overdue highlight */
+    .due-overdue {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .tasks-summary {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link active">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tasks</div>
+          <div class="page-subtitle">Manage your to-dos and subtasks</div>
+        </div>
+        <button class="btn btn-primary" id="addTaskBtn">
+          <i class="ri-add-line"></i> Add Task
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="tasks-summary">
+        <div class="summary-stat">
+          <div class="summary-stat-value" id="totalTasks">0</div>
+          <div class="summary-stat-label">Total tasks</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-warning" id="pendingTasks">0</div>
+          <div class="summary-stat-label">Pending</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-success" id="doneTasks">0</div>
+          <div class="summary-stat-label">Completed</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-danger" id="overdueTasks">0</div>
+          <div class="summary-stat-label">Overdue</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <select class="filter-select" id="filterStatus">
+          <option value="all">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="done">Completed</option>
+        </select>
+        <select class="filter-select" id="filterCategory">
+          <option value="all">All Categories</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="School">School</option>
+          <option value="Finance">Finance</option>
+          <option value="Health">Health</option>
+          <option value="Social">Social</option>
+          <option value="Errands">Errands</option>
+          <option value="Other">Other</option>
+        </select>
+        <select class="filter-select" id="filterPriority">
+          <option value="all">All Priorities</option>
+          <option value="urgent">Urgent</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+
+      <!-- Tasks list -->
+      <div id="tasksList">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>No tasks yet. Add your first task.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link active">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ============================================================
+    ADD / EDIT TASK MODAL
+    Supports: title, category, priority, due date, parent task
+  ============================================================ -->
+  <div class="modal-overlay" id="taskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="taskModalTitle">Add Task</div>
+        <button class="modal-close" id="taskModalClose">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Task Title</label>
+        <input type="text" class="form-input" id="taskTitle"
+          placeholder="e.g. Submit assignment" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="taskCategory">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="School">School</option>
+          <option value="Finance">Finance</option>
+          <option value="Health">Health</option>
+          <option value="Social">Social</option>
+          <option value="Errands">Errands</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="taskPriority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input type="datetime-local" class="form-input" id="taskDueDate" />
+      </div>
+
+      <button class="btn btn-primary btn-full mt-md" id="saveTaskBtn">
+        Save Task
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    TASKS PAGE JAVASCRIPT
+    Handles: load tasks and subtasks, toggle done, add, edit,
+    delete, add subtasks inline, filter by status/category/priority,
+    overdue detection, summary stats.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      todayDate,
+      formatDateShort,
+      isOnline,
+      onConnectivityChange,
+      showToast,
+      truncate
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // STATE
+    // ----------------------------------------------------------
+    let allTasks = [];
+    let editingTaskId = null;
+    const today = todayDate();
+
+    // ----------------------------------------------------------
+    // LOAD ALL TASKS AND SUBTASKS
+    // Fetches all tasks, then groups subtasks under parents
+    // ----------------------------------------------------------
+    async function loadTasks() {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) { showToast('Failed to load tasks.', 'error'); return; }
+
+      allTasks = data || [];
+      renderTasks();
+      updateSummary();
+    }
+
+    // ----------------------------------------------------------
+    // IS OVERDUE HELPER
+    // Returns true if task has a due date in the past and is not done
+    // ----------------------------------------------------------
+    function isOverdue(task) {
+      if (!task.due_date || task.done) return false;
+      return new Date(task.due_date) < new Date();
+    }
+
+    // ----------------------------------------------------------
+    // UPDATE SUMMARY STATS
+    // ----------------------------------------------------------
+    function updateSummary() {
+      const topLevel = allTasks.filter(t => !t.parent_id);
+      const total = topLevel.length;
+      const done = topLevel.filter(t => t.done).length;
+      const pending = total - done;
+      const overdue = topLevel.filter(t => isOverdue(t)).length;
+
+      document.getElementById('totalTasks').textContent = total;
+      document.getElementById('pendingTasks').textContent = pending;
+      document.getElementById('doneTasks').textContent = done;
+      document.getElementById('overdueTasks').textContent = overdue;
+    }
+
+    // ----------------------------------------------------------
+    // RENDER TASKS
+    // Applies filters and renders task cards with subtasks
+    // ----------------------------------------------------------
+    function renderTasks() {
+      const statusFilter   = document.getElementById('filterStatus').value;
+      const categoryFilter = document.getElementById('filterCategory').value;
+      const priorityFilter = document.getElementById('filterPriority').value;
+
+      // Get top-level tasks only
+      let topLevel = allTasks.filter(t => !t.parent_id);
+
+      // Apply filters
+      if (statusFilter === 'pending') topLevel = topLevel.filter(t => !t.done);
+      if (statusFilter === 'done')    topLevel = topLevel.filter(t => t.done);
+      if (categoryFilter !== 'all')   topLevel = topLevel.filter(t => t.category === categoryFilter);
+      if (priorityFilter !== 'all')   topLevel = topLevel.filter(t => t.priority === priorityFilter);
+
+      const list = document.getElementById('tasksList');
+
+      if (topLevel.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>No tasks found.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = topLevel.map(task => {
+        const subtasks = allTasks.filter(t => t.parent_id === task.id);
+        const overdue = isOverdue(task);
+
+        return `
+          <div class="task-card ${task.done ? 'done-card' : ''}" id="task_${task.id}">
+            <div class="task-main-row">
+
+              <!-- Task checkbox -->
+              <div class="task-checkbox ${task.done ? 'checked' : ''}"
+                onclick="toggleTask('${task.id}', ${task.done})">
+                ${task.done ? '<i class="ri-check-line"></i>' : ''}
+              </div>
+
+              <!-- Task content -->
+              <div class="task-content">
+                <div class="task-title ${task.done ? 'done-text' : ''}">
+                  ${task.title}
+                </div>
+                <div class="task-meta">
+                  <!-- Category badge -->
+                  <span class="badge badge-info">${task.category || 'Other'}</span>
+
+                  <!-- Priority badge -->
+                  <span class="badge priority-${task.priority}">
+                    ${task.priority}
+                  </span>
+
+                  <!-- Due date -->
+                  ${task.due_date ? `
+                    <span class="${overdue ? 'due-overdue' : ''}">
+                      <i class="ri-calendar-line"></i>
+                      ${formatDateShort(task.due_date)}
+                      ${overdue ? ' (overdue)' : ''}
+                    </span>
+                  ` : ''}
+
+                  <!-- Subtask count -->
+                  ${subtasks.length > 0 ? `
+                    <span>${subtasks.filter(s => s.done).length}/${subtasks.length} subtasks</span>
+                  ` : ''}
+                </div>
+
+                <!-- Toggle subtasks button -->
+                ${subtasks.length > 0 ? `
+                  <button class="toggle-subtasks-btn"
+                    onclick="toggleSubtasksView('${task.id}')">
+                    <i class="ri-arrow-down-s-line"></i>
+                    Show subtasks
+                  </button>
+                ` : ''}
+              </div>
+
+              <!-- Task actions -->
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-sm"
+                  onclick="openAddSubtaskRow('${task.id}')"
+                  title="Add subtask">
+                  <i class="ri-add-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="openEditTask('${task.id}')">
+                  <i class="ri-edit-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="deleteTask('${task.id}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Subtasks section (hidden by default) -->
+            <div class="subtasks-section hidden" id="subtasks_${task.id}">
+              ${subtasks.map(sub => `
+                <div class="subtask-item" id="subtask_${sub.id}">
+                  <div class="subtask-checkbox ${sub.done ? 'checked' : ''}"
+                    onclick="toggleTask('${sub.id}', ${sub.done})">
+                    ${sub.done ? '<i class="ri-check-line"></i>' : ''}
+                  </div>
+                  <div class="subtask-title ${sub.done ? 'done-text' : ''}">
+                    ${sub.title}
+                  </div>
+                  <button class="btn btn-ghost btn-sm"
+                    onclick="deleteTask('${sub.id}')">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                </div>
+              `).join('')}
+
+              <!-- Add subtask input row -->
+              <div class="add-subtask-row hidden" id="addSubRow_${task.id}">
+                <input type="text" class="add-subtask-input"
+                  id="subInput_${task.id}"
+                  placeholder="New subtask..."
+                  onkeydown="if(event.key==='Enter') saveSubtask('${task.id}')"
+                />
+                <button class="btn btn-primary btn-sm"
+                  onclick="saveSubtask('${task.id}')">
+                  Add
+                </button>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ----------------------------------------------------------
+    // TOGGLE SUBTASKS VIEW
+    // Shows or hides the subtasks section for a task
+    // ----------------------------------------------------------
+    window.toggleSubtasksView = function(taskId) {
+      const section = document.getElementById(`subtasks_${taskId}`);
+      section.classList.toggle('hidden');
+    };
+
+    // ----------------------------------------------------------
+    // OPEN ADD SUBTASK ROW
+    // Shows the subtask input row and expands subtasks section
+    // ----------------------------------------------------------
+    window.openAddSubtaskRow = function(taskId) {
+      const section = document.getElementById(`subtasks_${taskId}`);
+      const row = document.getElementById(`addSubRow_${taskId}`);
+      section.classList.remove('hidden');
+      row.classList.remove('hidden');
+      document.getElementById(`subInput_${taskId}`).focus();
+    };
+
+    // ----------------------------------------------------------
+    // SAVE SUBTASK
+    // Creates a new task with parent_id set to the parent task
+    // ----------------------------------------------------------
+    window.saveSubtask = async function(parentId) {
+      const input = document.getElementById(`subInput_${parentId}`);
+      const title = input.value.trim();
+      if (!title) return;
+
+      const { error } = await supabase.from('tasks').insert({
+        title,
+        parent_id: parentId,
+        priority: 'low',
+        category: 'Other'
+      });
+
+      if (error) { showToast('Failed to add subtask.', 'error'); return; }
+      showToast('Subtask added.', 'success');
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // TOGGLE TASK DONE
+    // Marks a task or subtask as done or pending
+    // ----------------------------------------------------------
+    window.toggleTask = async function(taskId, currentDone) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ done: !currentDone })
+        .eq('id', taskId);
+
+      if (error) { showToast('Failed to update task.', 'error'); return; }
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // OPEN EDIT TASK MODAL
+    // Prefills modal with existing task data
+    // ----------------------------------------------------------
+    window.openEditTask = function(taskId) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      editingTaskId = taskId;
+      document.getElementById('taskModalTitle').textContent = 'Edit Task';
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskCategory').value = task.category || 'Other';
+      document.getElementById('taskPriority').value = task.priority || 'medium';
+      document.getElementById('taskDueDate').value = task.due_date
+        ? new Date(task.due_date).toISOString().slice(0,16)
+        : '';
+      document.getElementById('taskModal').classList.add('open');
+    };
+
+    // ----------------------------------------------------------
+    // DELETE TASK
+    // Removes task and all its subtasks from Supabase
+    // ----------------------------------------------------------
+    window.deleteTask = async function(taskId) {
+      if (!confirm('Delete this task?')) return;
+      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+      if (error) { showToast('Failed to delete task.', 'error'); return; }
+      showToast('Task deleted.', 'info');
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // ADD TASK MODAL OPEN
+    // ----------------------------------------------------------
+    document.getElementById('addTaskBtn').addEventListener('click', () => {
+      editingTaskId = null;
+      document.getElementById('taskModalTitle').textContent = 'Add Task';
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskCategory').value = 'Personal';
+      document.getElementById('taskPriority').value = 'medium';
+      document.getElementById('taskDueDate').value = '';
+      document.getElementById('taskModal').classList.add('open');
+    });
+
+    // Close modal
+    document.getElementById('taskModalClose').addEventListener('click', () => {
+      document.getElementById('taskModal').classList.remove('open');
+    });
+
+    document.getElementById('taskModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('taskModal')) {
+        document.getElementById('taskModal').classList.remove('open');
+      }
+    });
+
+    // ----------------------------------------------------------
+    // SAVE TASK (add or edit)
+    // ----------------------------------------------------------
+    document.getElementById('saveTaskBtn').addEventListener('click', async () => {
+      const title    = document.getElementById('taskTitle').value.trim();
+      const category = document.getElementById('taskCategory').value;
+      const priority = document.getElementById('taskPriority').value;
+      const dueDate  = document.getElementById('taskDueDate').value || null;
+
+      if (!title) { showToast('Please enter a task title.', 'warning'); return; }
+
+      const payload = { title, category, priority, due_date: dueDate };
+
+      if (editingTaskId) {
+        const { error } = await supabase.from('tasks').update(payload).eq('id', editingTaskId);
+        if (error) { showToast('Failed to update task.', 'error'); return; }
+        showToast('Task updated.', 'success');
+      } else {
+        const { error } = await supabase.from('tasks').insert(payload);
+        if (error) { showToast('Failed to save task.', 'error'); return; }
+        showToast('Task added! 📋', 'success');
+      }
+
+      document.getElementById('taskModal').classList.remove('open');
+      loadTasks();
+    });
+
+    // ----------------------------------------------------------
+    // FILTER CHANGE LISTENERS
+    // ----------------------------------------------------------
+    ['filterStatus', 'filterCategory', 'filterPriority'].forEach(id => {
+      document.getElementById(id).addEventListener('change', renderTasks);
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    loadTasks();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

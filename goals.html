@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    goals.html - Goals and Progress Page
+    Shows: short and long term goals, milestones per goal,
+    progress bars, weekly/monthly charts, categories,
+    target dates, add/edit modals.
+    Data stored in: goals and milestones tables in Supabase.
+    Charts rendered using Chart.js (CDN, no install needed).
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Goals | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Goals page specific styles
+    -------------------------------------------------------- */
+
+    /* Type tabs: short term / long term */
+    .type-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.4rem;
+      width: fit-content;
+    }
+
+    .type-tab {
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .type-tab.active {
+      background-color: var(--accent-1);
+      color: #fff;
+    }
+
+    /* Goals grid */
+    .goals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Goal card */
+    .goal-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .goal-card:hover {
+      border-color: var(--accent-1);
+    }
+
+    .goal-card.completed {
+      opacity: 0.7;
+      border-color: var(--success);
+    }
+
+    .goal-card.paused {
+      opacity: 0.6;
+    }
+
+    /* Goal card header */
+    .goal-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      gap: 0.5rem;
+    }
+
+    .goal-title {
+      font-size: 1rem;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .goal-actions {
+      display: flex;
+      gap: 0.2rem;
+      flex-shrink: 0;
+    }
+
+    /* Goal meta info */
+    .goal-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+      font-size: 0.78rem;
+    }
+
+    /* Goal description */
+    .goal-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* Progress section */
+    .goal-progress-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+      font-size: 0.82rem;
+    }
+
+    /* Milestones section inside goal card */
+    .milestones-section {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .milestones-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .milestone-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.35rem 0;
+      font-size: 0.85rem;
+    }
+
+    .milestone-check {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      transition: var(--transition);
+    }
+
+    .milestone-check.done {
+      background-color: var(--success);
+      border-color: var(--success);
+      color: #000;
+    }
+
+    .milestone-title {
+      flex: 1;
+      font-size: 0.83rem;
+    }
+
+    .milestone-title.done-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .milestone-due {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Add milestone inline row */
+    .add-milestone-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .add-milestone-input {
+      flex: 1;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.6rem;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+    }
+
+    /* Category badge colors for goals */
+    .gcat-fitness    { background: rgba(0,212,170,0.15);   color: var(--success); }
+    .gcat-career     { background: rgba(76,201,240,0.15);  color: var(--info); }
+    .gcat-finance    { background: rgba(255,209,102,0.15); color: var(--warning); }
+    .gcat-education  { background: rgba(131,56,236,0.15);  color: #a78bfa; }
+    .gcat-personal   { background: rgba(233,69,96,0.15);   color: var(--accent-1); }
+    .gcat-health     { background: rgba(0,212,170,0.15);   color: var(--success); }
+    .gcat-spiritual  { background: rgba(236,201,75,0.15);  color: #ecc94b; }
+    .gcat-creative   { background: rgba(236,72,153,0.15);  color: #f472b6; }
+    .gcat-social     { background: rgba(249,115,22,0.15);  color: #fb923c; }
+    .gcat-other      { background: rgba(160,160,176,0.15); color: var(--text-muted); }
+
+    /* Status badge */
+    .status-active    { background: rgba(76,201,240,0.15);  color: var(--info); }
+    .status-completed { background: rgba(0,212,170,0.15);   color: var(--success); }
+    .status-paused    { background: rgba(160,160,176,0.15); color: var(--text-muted); }
+
+    /* Summary stats */
+    .goals-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-stat {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .summary-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+
+    /* Charts section */
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .goals-summary  { grid-template-columns: repeat(2, 1fr); }
+      .charts-section { grid-template-columns: 1fr; }
+      .goals-grid     { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link active">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Goals</div>
+          <div class="page-subtitle">Track your short and long term goals</div>
+        </div>
+        <button class="btn btn-primary" id="addGoalBtn">
+          <i class="ri-add-line"></i> Add Goal
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="goals-summary">
+        <div class="summary-stat">
+          <div class="summary-stat-value" id="totalGoals">0</div>
+          <div class="summary-stat-label">Total goals</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-info" id="activeGoals">0</div>
+          <div class="summary-stat-label">Active</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-success" id="completedGoals">0</div>
+          <div class="summary-stat-label">Completed</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-accent" id="avgProgress">0%</div>
+          <div class="summary-stat-label">Avg progress</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-section">
+        <div class="chart-card">
+          <div class="chart-title">Progress by Category</div>
+          <canvas id="categoryChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Goals by Status</div>
+          <canvas id="statusChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Type tabs -->
+      <div class="type-tabs">
+        <button class="type-tab active" data-type="all">All</button>
+        <button class="type-tab" data-type="short_term">Short Term</button>
+        <button class="type-tab" data-type="long_term">Long Term</button>
+      </div>
+
+      <!-- Goals grid -->
+      <div class="goals-grid" id="goalsGrid">
+        <div class="empty-state" style="grid-column:1/-1;">
+          <div class="empty-icon">🎯</div>
+          <p>No goals yet. Add your first goal.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link active">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ============================================================
+    ADD / EDIT GOAL MODAL
+  ============================================================ -->
+  <div class="modal-overlay" id="goalModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="goalModalTitle">Add Goal</div>
+        <button class="modal-close" id="goalModalClose">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Goal Title</label>
+        <input type="text" class="form-input" id="goalTitle"
+          placeholder="e.g. Learn web development" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <textarea class="form-textarea" id="goalDesc"
+          placeholder="What does achieving this goal look like?" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="goalCategory">
+          <option value="Personal">Personal</option>
+          <option value="Career">Career</option>
+          <option value="Education">Education</option>
+          <option value="Finance">Finance</option>
+          <option value="Fitness">Fitness</option>
+          <option value="Health">Health</option>
+          <option value="Spiritual">Spiritual</option>
+          <option value="Creative">Creative</option>
+          <option value="Social">Social</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="goalType">
+          <option value="short_term">Short Term</option>
+          <option value="long_term">Long Term</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Date</label>
+        <input type="date" class="form-input" id="goalTargetDate" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Current Progress (%)</label>
+        <input type="number" class="form-input" id="goalProgress"
+          min="0" max="100" value="0" placeholder="0" />
+      </div>
+
+      <button class="btn btn-primary btn-full mt-md" id="saveGoalBtn">
+        Save Goal
+      </button>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- ============================================================
+    GOALS PAGE JAVASCRIPT
+    Handles: load goals and milestones, render cards, progress
+    updates, add/edit/delete goals, add/toggle milestones,
+    type filter tabs, summary stats, category and status charts.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      formatDateShort,
+      isOnline,
+      onConnectivityChange,
+      showToast,
+      truncate
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // STATE
+    // ----------------------------------------------------------
+    let allGoals = [];
+    let allMilestones = [];
+    let editingGoalId = null;
+    let activeType = 'all';
+
+    // Chart instances (kept to destroy before re-render)
+    let categoryChartInstance = null;
+    let statusChartInstance = null;
+
+    // ----------------------------------------------------------
+    // LOAD GOALS AND MILESTONES
+    // ----------------------------------------------------------
+    async function loadGoals() {
+      const [goalsRes, milestonesRes] = await Promise.all([
+        supabase.from('goals').select('*').order('created_at', { ascending: false }),
+        supabase.from('milestones').select('*').order('created_at', { ascending: true })
+      ]);
+
+      if (goalsRes.error) { showToast('Failed to load goals.', 'error'); return; }
+
+      allGoals = goalsRes.data || [];
+      allMilestones = milestonesRes.data || [];
+
+      renderGoals();
+      updateSummary();
+      renderCharts();
+    }
+
+    // ----------------------------------------------------------
+    // CATEGORY BADGE CLASS HELPER
+    // ----------------------------------------------------------
+    function getCatClass(cat) {
+      const map = {
+        'Fitness': 'gcat-fitness', 'Career': 'gcat-career',
+        'Finance': 'gcat-finance', 'Education': 'gcat-education',
+        'Personal': 'gcat-personal', 'Health': 'gcat-health',
+        'Spiritual': 'gcat-spiritual', 'Creative': 'gcat-creative',
+        'Social': 'gcat-social', 'Other': 'gcat-other'
+      };
+      return map[cat] || 'gcat-other';
+    }
+
+    // ----------------------------------------------------------
+    // UPDATE SUMMARY STATS
+    // ----------------------------------------------------------
+    function updateSummary() {
+      const total = allGoals.length;
+      const active = allGoals.filter(g => g.status === 'active').length;
+      const completed = allGoals.filter(g => g.status === 'completed').length;
+      const avgProg = total > 0
+        ? Math.round(allGoals.reduce((s, g) => s + (g.progress || 0), 0) / total)
+        : 0;
+
+      document.getElementById('totalGoals').textContent = total;
+      document.getElementById('activeGoals').textContent = active;
+      document.getElementById('completedGoals').textContent = completed;
+      document.getElementById('avgProgress').textContent = `${avgProg}%`;
+    }
+
+    // ----------------------------------------------------------
+    // RENDER CHARTS
+    // Category progress bar chart and status doughnut chart
+    // ----------------------------------------------------------
+    function renderCharts() {
+      const categories = [...new Set(allGoals.map(g => g.category))];
+      const catProgress = categories.map(cat => {
+        const catGoals = allGoals.filter(g => g.category === cat);
+        return Math.round(catGoals.reduce((s, g) => s + (g.progress || 0), 0) / catGoals.length);
+      });
+
+      // Destroy old charts before re-creating
+      if (categoryChartInstance) categoryChartInstance.destroy();
+      if (statusChartInstance) statusChartInstance.destroy();
+
+      // Category progress chart
+      const catCtx = document.getElementById('categoryChart').getContext('2d');
+      categoryChartInstance = new Chart(catCtx, {
+        type: 'bar',
+        data: {
+          labels: categories.length > 0 ? categories : ['No goals yet'],
+          datasets: [{
+            label: 'Avg Progress %',
+            data: catProgress.length > 0 ? catProgress : [0],
+            backgroundColor: 'rgba(233,69,96,0.7)',
+            borderColor: 'rgba(233,69,96,1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { color: '#a0a0b0' },
+              grid: { color: '#2a2a3e' }
+            },
+            x: {
+              ticks: { color: '#a0a0b0' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // Status doughnut chart
+      const active    = allGoals.filter(g => g.status === 'active').length;
+      const completed = allGoals.filter(g => g.status === 'completed').length;
+      const paused    = allGoals.filter(g => g.status === 'paused').length;
+
+      const statCtx = document.getElementById('statusChart').getContext('2d');
+      statusChartInstance = new Chart(statCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Active', 'Completed', 'Paused'],
+          datasets: [{
+            data: [active || 1, completed, paused],
+            backgroundColor: ['rgba(76,201,240,0.8)', 'rgba(0,212,170,0.8)', 'rgba(160,160,176,0.5)'],
+            borderColor: ['#4cc9f0', '#00d4aa', '#606070'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#a0a0b0', padding: 15 }
+            }
+          }
+        }
+      });
+    }
+
+    // ----------------------------------------------------------
+    // RENDER GOALS GRID
+    // Filters by type tab and renders each goal card
+    // ----------------------------------------------------------
+    function renderGoals() {
+      const grid = document.getElementById('goalsGrid');
+
+      let filtered = activeType === 'all'
+        ? allGoals
+        : allGoals.filter(g => g.type === activeType);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">🎯</div>
+            <p>No goals here yet.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(goal => {
+        const milestones = allMilestones.filter(m => m.goal_id === goal.id);
+        const doneMilestones = milestones.filter(m => m.done).length;
+
+        return `
+          <div class="goal-card ${goal.status}" id="goal_${goal.id}">
+
+            <!-- Goal header -->
+            <div class="goal-card-header">
+              <div class="goal-title">${goal.title}</div>
+              <div class="goal-actions">
+                <button class="btn btn-ghost btn-sm"
+                  onclick="openEditGoal('${goal.id}')">
+                  <i class="ri-edit-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="deleteGoal('${goal.id}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Goal meta -->
+            <div class="goal-meta">
+              <span class="badge ${getCatClass(goal.category)}">${goal.category}</span>
+              <span class="badge status-${goal.status}">${goal.status}</span>
+              <span class="badge ${goal.type === 'short_term' ? 'badge-info' : 'badge-accent'}">
+                ${goal.type === 'short_term' ? 'Short Term' : 'Long Term'}
+              </span>
+            </div>
+
+            <!-- Goal description -->
+            ${goal.description ? `
+              <div class="goal-desc">${truncate(goal.description, 100)}</div>
+            ` : ''}
+
+            <!-- Progress bar -->
+            <div class="goal-progress-row">
+              <span style="font-size:0.82rem;font-weight:600;">Progress</span>
+              <span style="font-size:0.82rem;font-weight:700;color:var(--accent-1);">
+                ${goal.progress}%
+              </span>
+            </div>
+            <div class="progress-bar-wrapper mb-sm">
+              <div class="progress-bar-fill" style="width:${goal.progress}%"></div>
+            </div>
+
+            <!-- Target date -->
+            ${goal.target_date ? `
+              <div class="text-muted mb-sm" style="font-size:0.78rem;">
+                <i class="ri-calendar-line"></i>
+                Target: ${formatDateShort(goal.target_date)}
+              </div>
+            ` : ''}
+
+            <!-- Progress slider to update quickly -->
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+              <input type="range" style="flex:1;accent-color:var(--accent-1);"
+                min="0" max="100" value="${goal.progress}"
+                oninput="updateGoalProgress('${goal.id}', this.value)"
+              />
+              <button class="btn btn-sm ${goal.status === 'completed' ? 'btn-secondary' : 'btn-primary'}"
+                onclick="toggleGoalComplete('${goal.id}', '${goal.status}')">
+                ${goal.status === 'completed' ? 'Reopen' : 'Complete'}
+              </button>
+            </div>
+
+            <!-- Milestones -->
+            <div class="milestones-section">
+              <div class="milestones-title">
+                <span>Milestones (${doneMilestones}/${milestones.length})</span>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="toggleMilestoneInput('${goal.id}')">
+                  <i class="ri-add-line"></i>
+                </button>
+              </div>
+
+              ${milestones.map(m => `
+                <div class="milestone-item">
+                  <div class="milestone-check ${m.done ? 'done' : ''}"
+                    onclick="toggleMilestone('${m.id}', ${m.done})">
+                    ${m.done ? '<i class="ri-check-line"></i>' : ''}
+                  </div>
+                  <div class="milestone-title ${m.done ? 'done-text' : ''}">${m.title}</div>
+                  ${m.target_date ? `
+                    <div class="milestone-due">${formatDateShort(m.target_date)}</div>
+                  ` : ''}
+                  <button class="btn btn-ghost btn-sm"
+                    onclick="deleteMilestone('${m.id}')">
+                    <i class="ri-close-line"></i>
+                  </button>
+                </div>
+              `).join('')}
+
+              <!-- Add milestone input -->
+              <div class="add-milestone-row hidden" id="milestoneInput_${goal.id}">
+                <input type="text" class="add-milestone-input"
+                  id="milestoneText_${goal.id}"
+                  placeholder="New milestone..."
+                  onkeydown="if(event.key==='Enter') saveMilestone('${goal.id}')"
+                />
+                <button class="btn btn-primary btn-sm"
+                  onclick="saveMilestone('${goal.id}')">Add</button>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ----------------------------------------------------------
+    // UPDATE GOAL PROGRESS VIA SLIDER
+    // Debounced to avoid too many Supabase calls while sliding
+    // ----------------------------------------------------------
+    let progressTimers = {};
+    window.updateGoalProgress = function(goalId, value) {
+      const val = parseInt(value);
+      // Update local state immediately for responsive UI
+      const goal = allGoals.find(g => g.id === goalId);
+      if (goal) goal.progress = val;
+
+      // Debounce the Supabase update by 600ms
+      clearTimeout(progressTimers[goalId]);
+      progressTimers[goalId] = setTimeout(async () => {
+        const { error } = await supabase
+          .from('goals')
+          .update({ progress: val })
+          .eq('id', goalId);
+        if (error) showToast('Failed to update progress.', 'error');
+        else renderCharts();
+      }, 600);
+    };
+
+    // ----------------------------------------------------------
+    // TOGGLE GOAL COMPLETE / REOPEN
+    // ----------------------------------------------------------
+    window.toggleGoalComplete = async function(goalId, currentStatus) {
+      const newStatus = currentStatus === 'completed' ? 'active' : 'completed';
+      const newProgress = newStatus === 'completed' ? 100 : undefined;
+
+      const payload = { status: newStatus };
+      if (newProgress !== undefined) payload.progress = newProgress;
+
+      const { error } = await supabase
+        .from('goals')
+        .update(payload)
+        .eq('id', goalId);
+
+      if (error) { showToast('Failed to update goal.', 'error'); return; }
+      if (newStatus === 'completed') showToast('Goal completed! 🎯', 'success');
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
+    // TOGGLE MILESTONE DONE
+    // ----------------------------------------------------------
+    window.toggleMilestone = async function(milestoneId, currentDone) {
+      const { error } = await supabase
+        .from('milestones')
+        .update({ done: !currentDone })
+        .eq('id', milestoneId);
+
+      if (error) { showToast('Failed to update milestone.', 'error'); return; }
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
+    // SHOW/HIDE MILESTONE INPUT
+    // ----------------------------------------------------------
+    window.toggleMilestoneInput = function(goalId) {
+      const row = document.getElementById(`milestoneInput_${goalId}`);
+      row.classList.toggle('hidden');
+      if (!row.classList.contains('hidden')) {
+        document.getElementById(`milestoneText_${goalId}`).focus();
+      }
+    };
+
+    // ----------------------------------------------------------
+    // SAVE MILESTONE
+    // ----------------------------------------------------------
+    window.saveMilestone = async function(goalId) {
+      const input = document.getElementById(`milestoneText_${goalId}`);
+      const title = input.value.trim();
+      if (!title) return;
+
+      const { error } = await supabase.from('milestones').insert({
+        goal_id: goalId,
+        title
+      });
+
+      if (error) { showToast('Failed to add milestone.', 'error'); return; }
+      showToast('Milestone added.', 'success');
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
+    // DELETE MILESTONE
+    // ----------------------------------------------------------
+    window.deleteMilestone = async function(milestoneId) {
+      const { error } = await supabase
+        .from('milestones').delete().eq('id', milestoneId);
+      if (error) { showToast('Failed to delete milestone.', 'error'); return; }
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
+    // DELETE GOAL
+    // ----------------------------------------------------------
+    window.deleteGoal = async function(goalId) {
+      if (!confirm('Delete this goal and all its milestones?')) return;
+      const { error } = await supabase.from('goals').delete().eq('id', goalId);
+      if (error) { showToast('Failed to delete goal.', 'error'); return; }
+      showToast('Goal deleted.', 'info');
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
+    // ADD GOAL MODAL
+    // ----------------------------------------------------------
+    document.getElementById('addGoalBtn').addEventListener('click', () => {
+      editingGoalId = null;
+      document.getElementById('goalModalTitle').textContent = 'Add Goal';
+      document.getElementById('goalTitle').value = '';
+      document.getElementById('goalDesc').value = '';
+      document.getElementById('goalCategory').value = 'Personal';
+      document.getElementById('goalType').value = 'short_term';
+      document.getElementById('goalTargetDate').value = '';
+      document.getElementById('goalProgress').value = 0;
+      document.getElementById('goalModal').classList.add('open');
+    });
+
+    document.getElementById('goalModalClose').addEventListener('click', () => {
+      document.getElementById('goalModal').classList.remove('open');
+    });
+
+    document.getElementById('goalModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('goalModal')) {
+        document.getElementById('goalModal').classList.remove('open');
+      }
+    });
+
+    // ----------------------------------------------------------
+    // OPEN EDIT GOAL MODAL
+    // ----------------------------------------------------------
+    window.openEditGoal = function(goalId) {
+      const goal = allGoals.find(g => g.id === goalId);
+      if (!goal) return;
+
+      editingGoalId = goalId;
+      document.getElementById('goalModalTitle').textContent = 'Edit Goal';
+      document.getElementById('goalTitle').value = goal.title;
+      document.getElementById('goalDesc').value = goal.description || '';
+      document.getElementById('goalCategory').value = goal.category;
+      document.getElementById('goalType').value = goal.type;
+      document.getElementById('goalTargetDate').value = goal.target_date || '';
+      document.getElementById('goalProgress').value = goal.progress || 0;
+      document.getElementById('goalModal').classList.add('open');
+    };
+
+    // ----------------------------------------------------------
+    // SAVE GOAL
+    // ----------------------------------------------------------
+    document.getElementById('saveGoalBtn').addEventListener('click', async () => {
+      const title      = document.getElementById('goalTitle').value.trim();
+      const desc       = document.getElementById('goalDesc').value.trim();
+      const category   = document.getElementById('goalCategory').value;
+      const type       = document.getElementById('goalType').value;
+      const targetDate = document.getElementById('goalTargetDate').value || null;
+      const progress   = parseInt(document.getElementById('goalProgress').value) || 0;
+
+      if (!title) { showToast('Please enter a goal title.', 'warning'); return; }
+
+      const payload = {
+        title, description: desc || null,
+        category, type, target_date: targetDate, progress
+      };
+
+      if (editingGoalId) {
+        const { error } = await supabase.from('goals').update(payload).eq('id', editingGoalId);
+        if (error) { showToast('Failed to update goal.', 'error'); return; }
+        showToast('Goal updated.', 'success');
+      } else {
+        const { error } = await supabase.from('goals').insert(payload);
+        if (error) { showToast('Failed to save goal.', 'error'); return; }
+        showToast('Goal added! 🎯', 'success');
+      }
+
+      document.getElementById('goalModal').classList.remove('open');
+      loadGoals();
+    });
+
+    // ----------------------------------------------------------
+    // TYPE FILTER TABS
+    // ----------------------------------------------------------
+    document.querySelectorAll('.type-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeType = tab.dataset.type;
+        renderGoals();
+      });
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    loadGoals();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    habits.html - Habits Tracker Page
+    Shows: habit list, daily check-ins, target tracking,
+    streak per habit, add/edit habit modal, category filter.
+    Data stored in: habits and habit_logs tables in Supabase.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habits | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Habits page specific styles
+    -------------------------------------------------------- */
+
+    /* Category filter tabs */
+    .category-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .category-tab {
+      padding: 0.4rem 1rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background-color: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .category-tab.active,
+    .category-tab:hover {
+      background-color: var(--accent-1);
+      color: #fff;
+      border-color: var(--accent-1);
+    }
+
+    /* Habit card */
+    .habit-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      transition: var(--transition);
+    }
+
+    .habit-card:hover {
+      border-color: var(--accent-1);
+    }
+
+    /* Done toggle button */
+    .habit-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .habit-toggle.done {
+      background-color: var(--success);
+      border-color: var(--success);
+      color: #000;
+    }
+
+    /* Habit info */
+    .habit-info {
+      flex: 1;
+    }
+
+    .habit-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+
+    .habit-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Target progress for target-type habits */
+    .habit-target-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .habit-target-input {
+      width: 70px;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .habit-target-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Habit actions (edit, delete) */
+    .habit-actions {
+      display: flex;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    /* Habit category badge colors */
+    .cat-health     { background: rgba(0,212,170,0.15); color: var(--success); }
+    .cat-mind       { background: rgba(76,201,240,0.15); color: var(--info); }
+    .cat-private    { background: rgba(233,69,96,0.15); color: var(--accent-1); }
+    .cat-finance    { background: rgba(255,209,102,0.15); color: var(--warning); }
+    .cat-social     { background: rgba(131,56,236,0.15); color: #a78bfa; }
+    .cat-work       { background: rgba(249,115,22,0.15); color: #fb923c; }
+    .cat-spiritual  { background: rgba(236,201,75,0.15); color: #ecc94b; }
+    .cat-creative   { background: rgba(236,72,153,0.15); color: #f472b6; }
+    .cat-other      { background: rgba(160,160,176,0.15); color: var(--text-muted); }
+
+    /* Summary bar at top */
+    .habits-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-stat {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .summary-stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link active">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Habits</div>
+          <div class="page-subtitle" id="todayLabel">Loading...</div>
+        </div>
+        <button class="btn btn-primary" id="addHabitBtn">
+          <i class="ri-add-line"></i> Add Habit
+        </button>
+      </div>
+
+      <!-- Daily summary stats -->
+      <div class="habits-summary">
+        <div class="summary-stat">
+          <div class="summary-stat-value text-success" id="doneCount">0</div>
+          <div class="summary-stat-label">Done today</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value" id="totalCount">0</div>
+          <div class="summary-stat-label">Total habits</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-stat-value text-accent" id="completionRate">0%</div>
+          <div class="summary-stat-label">Completion rate</div>
+        </div>
+      </div>
+
+      <!-- Category filter tabs -->
+      <div class="category-tabs" id="categoryTabs">
+        <button class="category-tab active" data-cat="all">All</button>
+        <button class="category-tab" data-cat="Health & Body">Health & Body</button>
+        <button class="category-tab" data-cat="Mind & Learning">Mind & Learning</button>
+        <button class="category-tab" data-cat="Personal & Private">Personal & Private</button>
+        <button class="category-tab" data-cat="Finance">Finance</button>
+        <button class="category-tab" data-cat="Social & Relationships">Social</button>
+        <button class="category-tab" data-cat="Work & Productivity">Work</button>
+        <button class="category-tab" data-cat="Spiritual">Spiritual</button>
+        <button class="category-tab" data-cat="Creative">Creative</button>
+        <button class="category-tab" data-cat="Other">Other</button>
+      </div>
+
+      <!-- Habits list -->
+      <div id="habitsList">
+        <div class="empty-state">
+          <div class="empty-icon">✅</div>
+          <p>No habits yet. Add your first habit.</p>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link active">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ============================================================
+    ADD / EDIT HABIT MODAL
+    Used for both creating new habits and editing existing ones.
+    tracking_type switches between done/target mode.
+  ============================================================ -->
+  <div class="modal-overlay" id="habitModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Add Habit</div>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+
+      <!-- Habit name -->
+      <div class="form-group">
+        <label class="form-label">Habit Name</label>
+        <input type="text" class="form-input" id="habitName"
+          placeholder="e.g. Drink 8 glasses of water" />
+      </div>
+
+      <!-- Category dropdown -->
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="habitCategory">
+          <option value="Health & Body">Health & Body</option>
+          <option value="Mind & Learning">Mind & Learning</option>
+          <option value="Personal & Private">Personal & Private</option>
+          <option value="Finance">Finance</option>
+          <option value="Social & Relationships">Social & Relationships</option>
+          <option value="Work & Productivity">Work & Productivity</option>
+          <option value="Spiritual">Spiritual</option>
+          <option value="Creative">Creative</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <!-- Tracking type -->
+      <div class="form-group">
+        <label class="form-label">Tracking Type</label>
+        <select class="form-select" id="habitTrackingType">
+          <option value="done">Done / Not Done</option>
+          <option value="target">Target (e.g. 8 glasses)</option>
+        </select>
+      </div>
+
+      <!-- Target fields (shown only when tracking type is target) -->
+      <div id="targetFields" class="hidden">
+        <div class="form-group">
+          <label class="form-label">Target Value</label>
+          <input type="number" class="form-input" id="habitTargetValue"
+            placeholder="e.g. 8" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <input type="text" class="form-input" id="habitTargetUnit"
+            placeholder="e.g. glasses, pages, km" />
+        </div>
+      </div>
+
+      <!-- Save button -->
+      <button class="btn btn-primary btn-full mt-md" id="saveHabitBtn">
+        Save Habit
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    HABITS PAGE JAVASCRIPT
+    Handles: load habits, log done/target, add, edit, delete,
+    category filter, summary stats, online/offline badge.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      todayDate,
+      formatDate,
+      isOnline,
+      onConnectivityChange,
+      showToast,
+      capitalize
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // STATE
+    // Holds loaded habits and logs for the current day
+    // ----------------------------------------------------------
+    let allHabits = [];
+    let todayLogs = {};
+    let activeCategory = 'all';
+    let editingHabitId = null;
+    const today = todayDate();
+
+    document.getElementById('todayLabel').textContent = formatDate(today);
+
+    // ----------------------------------------------------------
+    // CATEGORY BADGE CLASS HELPER
+    // Maps category name to a CSS class for color coding
+    // ----------------------------------------------------------
+    function getCatClass(category) {
+      const map = {
+        'Health & Body':         'cat-health',
+        'Mind & Learning':       'cat-mind',
+        'Personal & Private':    'cat-private',
+        'Finance':               'cat-finance',
+        'Social & Relationships':'cat-social',
+        'Work & Productivity':   'cat-work',
+        'Spiritual':             'cat-spiritual',
+        'Creative':              'cat-creative',
+        'Other':                 'cat-other'
+      };
+      return map[category] || 'cat-other';
+    }
+
+    // ----------------------------------------------------------
+    // LOAD HABITS AND TODAY'S LOGS
+    // Fetches all habits and their logs for today from Supabase
+    // ----------------------------------------------------------
+    async function loadHabits() {
+      const [habitsRes, logsRes] = await Promise.all([
+        supabase.from('habits').select('*').order('created_at', { ascending: true }),
+        supabase.from('habit_logs').select('*').eq('log_date', today)
+      ]);
+
+      if (habitsRes.error) {
+        showToast('Failed to load habits.', 'error');
+        return;
+      }
+
+      allHabits = habitsRes.data || [];
+
+      // Map logs by habit_id for quick lookup
+      todayLogs = {};
+      (logsRes.data || []).forEach(log => {
+        todayLogs[log.habit_id] = log;
+      });
+
+      renderHabits();
+      updateSummary();
+    }
+
+    // ----------------------------------------------------------
+    // RENDER HABITS LIST
+    // Filters by active category and renders each habit card
+    // ----------------------------------------------------------
+    function renderHabits() {
+      const list = document.getElementById('habitsList');
+
+      const filtered = activeCategory === 'all'
+        ? allHabits
+        : allHabits.filter(h => h.category === activeCategory);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <p>No habits in this category yet.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(habit => {
+        const log = todayLogs[habit.id];
+        const isDone = log?.done || false;
+        const currentValue = log?.value || 0;
+
+        return `
+          <div class="habit-card" data-id="${habit.id}">
+
+            <!-- Done toggle button -->
+            <button class="habit-toggle ${isDone ? 'done' : ''}"
+              data-id="${habit.id}" data-type="${habit.tracking_type}"
+              onclick="toggleHabit('${habit.id}', '${habit.tracking_type}')">
+              ${isDone ? '<i class="ri-check-line"></i>' : ''}
+            </button>
+
+            <!-- Habit info -->
+            <div class="habit-info">
+              <div class="habit-name ${isDone ? 'text-muted' : ''}"
+                style="${isDone ? 'text-decoration:line-through;' : ''}">
+                ${habit.name}
+              </div>
+              <div class="habit-meta">
+                <span class="badge ${getCatClass(habit.category)}">${habit.category}</span>
+                ${habit.tracking_type === 'target'
+                  ? `<span>${currentValue} / ${habit.target_value} ${habit.target_unit || ''}</span>`
+                  : ''}
+              </div>
+
+              <!-- Target input row (only for target-type habits) -->
+              ${habit.tracking_type === 'target' ? `
+                <div class="habit-target-row">
+                  <input type="number" class="habit-target-input"
+                    id="targetInput_${habit.id}"
+                    value="${currentValue}"
+                    min="0" max="${habit.target_value}"
+                    onchange="updateTargetValue('${habit.id}', this.value, ${habit.target_value})"
+                  />
+                  <span class="habit-target-label">
+                    / ${habit.target_value} ${habit.target_unit || ''}
+                  </span>
+                  <div class="progress-bar-wrapper" style="flex:1;">
+                    <div class="progress-bar-fill"
+                      style="width:${Math.min((currentValue / habit.target_value) * 100, 100)}%">
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Edit and delete actions -->
+            <div class="habit-actions">
+              <button class="btn btn-ghost btn-sm"
+                onclick="openEditModal('${habit.id}')">
+                <i class="ri-edit-line"></i>
+              </button>
+              <button class="btn btn-ghost btn-sm"
+                onclick="deleteHabit('${habit.id}')">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ----------------------------------------------------------
+    // UPDATE SUMMARY STATS
+    // Recalculates done count, total, and completion rate
+    // ----------------------------------------------------------
+    function updateSummary() {
+      const total = allHabits.length;
+      const done = allHabits.filter(h => todayLogs[h.id]?.done).length;
+      const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+      document.getElementById('doneCount').textContent = done;
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('completionRate').textContent = `${rate}%`;
+    }
+
+    // ----------------------------------------------------------
+    // TOGGLE HABIT DONE (for done-type habits)
+    // Creates or updates a habit log for today
+    // ----------------------------------------------------------
+    window.toggleHabit = async function(habitId, trackingType) {
+      if (trackingType === 'target') return; // target habits use input instead
+
+      const existing = todayLogs[habitId];
+      const newDone = !(existing?.done || false);
+
+      if (existing) {
+        // Update existing log
+        const { error } = await supabase
+          .from('habit_logs')
+          .update({ done: newDone })
+          .eq('id', existing.id);
+        if (error) { showToast('Failed to update habit.', 'error'); return; }
+        todayLogs[habitId].done = newDone;
+      } else {
+        // Insert new log
+        const { data, error } = await supabase
+          .from('habit_logs')
+          .insert({ habit_id: habitId, log_date: today, done: newDone })
+          .select()
+          .single();
+        if (error) { showToast('Failed to log habit.', 'error'); return; }
+        todayLogs[habitId] = data;
+      }
+
+      renderHabits();
+      updateSummary();
+    };
+
+    // ----------------------------------------------------------
+    // UPDATE TARGET VALUE (for target-type habits)
+    // Saves progress value and marks done if target is reached
+    // ----------------------------------------------------------
+    window.updateTargetValue = async function(habitId, value, targetValue) {
+      const numVal = parseInt(value) || 0;
+      const isDone = numVal >= parseInt(targetValue);
+      const existing = todayLogs[habitId];
+
+      if (existing) {
+        const { error } = await supabase
+          .from('habit_logs')
+          .update({ value: numVal, done: isDone })
+          .eq('id', existing.id);
+        if (error) { showToast('Failed to update progress.', 'error'); return; }
+        todayLogs[habitId].value = numVal;
+        todayLogs[habitId].done = isDone;
+      } else {
+        const { data, error } = await supabase
+          .from('habit_logs')
+          .insert({ habit_id: habitId, log_date: today, value: numVal, done: isDone })
+          .select()
+          .single();
+        if (error) { showToast('Failed to log progress.', 'error'); return; }
+        todayLogs[habitId] = data;
+      }
+
+      renderHabits();
+      updateSummary();
+      if (isDone) showToast('Target reached! 🎉', 'success');
+    };
+
+    // ----------------------------------------------------------
+    // ADD HABIT MODAL
+    // Opens modal for adding a new habit
+    // ----------------------------------------------------------
+    document.getElementById('addHabitBtn').addEventListener('click', () => {
+      editingHabitId = null;
+      document.getElementById('modalTitle').textContent = 'Add Habit';
+      document.getElementById('habitName').value = '';
+      document.getElementById('habitCategory').value = 'Health & Body';
+      document.getElementById('habitTrackingType').value = 'done';
+      document.getElementById('habitTargetValue').value = '';
+      document.getElementById('habitTargetUnit').value = '';
+      document.getElementById('targetFields').classList.add('hidden');
+      document.getElementById('habitModal').classList.add('open');
+    });
+
+    // Show/hide target fields based on tracking type selection
+    document.getElementById('habitTrackingType').addEventListener('change', (e) => {
+      const targetFields = document.getElementById('targetFields');
+      if (e.target.value === 'target') {
+        targetFields.classList.remove('hidden');
+      } else {
+        targetFields.classList.add('hidden');
+      }
+    });
+
+    // Close modal
+    document.getElementById('modalClose').addEventListener('click', () => {
+      document.getElementById('habitModal').classList.remove('open');
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('habitModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('habitModal')) {
+        document.getElementById('habitModal').classList.remove('open');
+      }
+    });
+
+    // ----------------------------------------------------------
+    // SAVE HABIT (add or edit)
+    // Inserts or updates a habit in Supabase
+    // ----------------------------------------------------------
+    document.getElementById('saveHabitBtn').addEventListener('click', async () => {
+      const name = document.getElementById('habitName').value.trim();
+      const category = document.getElementById('habitCategory').value;
+      const trackingType = document.getElementById('habitTrackingType').value;
+      const targetValue = parseInt(document.getElementById('habitTargetValue').value) || null;
+      const targetUnit = document.getElementById('habitTargetUnit').value.trim() || null;
+
+      if (!name) { showToast('Please enter a habit name.', 'warning'); return; }
+      if (trackingType === 'target' && !targetValue) {
+        showToast('Please enter a target value.', 'warning');
+        return;
+      }
+
+      const payload = { name, category, tracking_type: trackingType, target_value: targetValue, target_unit: targetUnit };
+
+      if (editingHabitId) {
+        // Update existing habit
+        const { error } = await supabase
+          .from('habits')
+          .update(payload)
+          .eq('id', editingHabitId);
+        if (error) { showToast('Failed to update habit.', 'error'); return; }
+        showToast('Habit updated.', 'success');
+      } else {
+        // Insert new habit
+        const { error } = await supabase
+          .from('habits')
+          .insert(payload);
+        if (error) { showToast('Failed to save habit.', 'error'); return; }
+        showToast('Habit added! 💪', 'success');
+      }
+
+      document.getElementById('habitModal').classList.remove('open');
+      loadHabits();
+    });
+
+    // ----------------------------------------------------------
+    // OPEN EDIT MODAL
+    // Prefills modal with existing habit data
+    // ----------------------------------------------------------
+    window.openEditModal = function(habitId) {
+      const habit = allHabits.find(h => h.id === habitId);
+      if (!habit) return;
+
+      editingHabitId = habitId;
+      document.getElementById('modalTitle').textContent = 'Edit Habit';
+      document.getElementById('habitName').value = habit.name;
+      document.getElementById('habitCategory').value = habit.category;
+      document.getElementById('habitTrackingType').value = habit.tracking_type;
+      document.getElementById('habitTargetValue').value = habit.target_value || '';
+      document.getElementById('habitTargetUnit').value = habit.target_unit || '';
+
+      if (habit.tracking_type === 'target') {
+        document.getElementById('targetFields').classList.remove('hidden');
+      } else {
+        document.getElementById('targetFields').classList.add('hidden');
+      }
+
+      document.getElementById('habitModal').classList.add('open');
+    };
+
+    // ----------------------------------------------------------
+    // DELETE HABIT
+    // Removes habit and all its logs from Supabase
+    // ----------------------------------------------------------
+    window.deleteHabit = async function(habitId) {
+      if (!confirm('Delete this habit and all its history?')) return;
+      const { error } = await supabase.from('habits').delete().eq('id', habitId);
+      if (error) { showToast('Failed to delete habit.', 'error'); return; }
+      showToast('Habit deleted.', 'info');
+      loadHabits();
+    };
+
+    // ----------------------------------------------------------
+    // CATEGORY FILTER TABS
+    // Filters the habit list by selected category
+    // ----------------------------------------------------------
+    document.getElementById('categoryTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.category-tab');
+      if (!tab) return;
+      document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeCategory = tab.dataset.cat;
+      renderHabits();
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    loadHabits();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

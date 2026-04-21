@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    profile.html - Profile and Settings Page
+    Shows: user name, bio, avatar, stats overview, badges earned,
+    theme switcher (unlocked themes), streak info, data export,
+    and app settings.
+    Profile data stored in: profiles table in Supabase.
+    Theme and streak data from localStorage and streaks table.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Profile page specific styles
+    -------------------------------------------------------- */
+
+    /* Profile card at top */
+    .profile-card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Avatar circle with initials */
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .avatar-edit-hint {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 24px;
+      height: 24px;
+      background-color: var(--accent-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-bio {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Profile stats row */
+    .profile-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .profile-stat {
+      text-align: center;
+    }
+
+    .profile-stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .profile-stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Streak display in profile */
+    .streak-display {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .streak-flame-lg {
+      font-size: 2.5rem;
+      animation: flamePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes flamePulse {
+      0%, 100% { transform: scale(1) rotate(-5deg); }
+      50%       { transform: scale(1.2) rotate(5deg); }
+    }
+
+    .streak-info { flex: 1; }
+
+    .streak-count-lg {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .streak-details {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 0.25rem;
+    }
+
+    .streak-xp-bar-wrapper {
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      height: 6px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .streak-xp-bar {
+      height: 100%;
+      background: #fff;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+
+    /* Badges section */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .badge-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .badge-card.earned {
+      border-color: var(--warning);
+      background: rgba(255,209,102,0.08);
+    }
+
+    .badge-card.locked {
+      opacity: 0.4;
+    }
+
+    .badge-icon {
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .badge-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .badge-req {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Theme switcher */
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+
+    .theme-card {
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .theme-card.active-theme {
+      border-color: var(--warning);
+    }
+
+    .theme-card.locked-theme {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .theme-preview {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+
+    .theme-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .theme-unlock-info {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .theme-active-badge {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      font-size: 0.7rem;
+      background: var(--warning);
+      color: #000;
+      padding: 0.1rem 0.4rem;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+
+    /* Settings section */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .settings-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background-color: var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent-1);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    /* Edit profile form */
+    .edit-profile-section {
+      display: none;
+    }
+
+    .edit-profile-section.open {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link active">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Profile</div>
+          <div class="page-subtitle">Your stats, themes, badges and settings</div>
+        </div>
+        <button class="btn btn-primary" id="editProfileBtn">
+          <i class="ri-edit-line"></i> Edit Profile
+        </button>
+      </div>
+
+      <!-- Profile card -->
+      <div class="profile-card">
+        <div class="avatar" id="avatarCircle">
+          M
+          <div class="avatar-edit-hint"><i class="ri-pencil-line"></i></div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Maestro</div>
+          <div class="profile-bio" id="profileBio">My personal diary and life tracker.</div>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-value text-accent" id="statJournalEntries">0</div>
+              <div class="profile-stat-label">Journal entries</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-success" id="statGoalsCompleted">0</div>
+              <div class="profile-stat-label">Goals completed</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-warning" id="statHabitsTotal">0</div>
+              <div class="profile-stat-label">Habits tracked</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-info" id="statTasksDone">0</div>
+              <div class="profile-stat-label">Tasks completed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit profile form (hidden by default) -->
+      <div class="card mb-lg edit-profile-section" id="editProfileSection">
+        <div class="card-title">Edit Profile</div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="editName" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio</label>
+          <textarea class="form-textarea" id="editBio" rows="2"
+            placeholder="A short bio about yourself"></textarea>
+        </div>
+        <button class="btn btn-primary" id="saveProfileBtn">
+          <i class="ri-save-line"></i> Save Profile
+        </button>
+      </div>
+
+      <!-- Streak display -->
+      <div class="streak-display mb-lg">
+        <div class="streak-flame-lg">🔥</div>
+        <div class="streak-info">
+          <div class="streak-count-lg" id="streakCount">0 days</div>
+          <div class="streak-details" id="streakDetails">Best: 0 days • 0 XP earned</div>
+          <div class="streak-xp-bar-wrapper">
+            <div class="streak-xp-bar" id="streakXpBar" style="width:0%"></div>
+          </div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.6);margin-top:0.3rem;"
+            id="nextMilestoneHint"></div>
+        </div>
+      </div>
+
+      <!-- Themes section -->
+      <div class="card mb-lg">
+        <div class="card-title">Themes</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          Unlock themes by maintaining your daily streak. Click an unlocked theme to apply it.
+        </p>
+        <div class="themes-grid" id="themesGrid"></div>
+      </div>
+
+      <!-- Badges section -->
+      <div class="card mb-lg">
+        <div class="card-title">Badges</div>
+        <div class="badges-grid" id="badgesGrid"></div>
+      </div>
+
+      <!-- Settings section -->
+      <div class="card mb-lg">
+        <div class="card-title">Settings</div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Evening Reminder</div>
+            <div class="settings-desc">Remind me to fill in my diary each evening</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="reminderToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Streak Notifications</div>
+            <div class="settings-desc">Alert me when I am close to breaking my streak</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="streakNotifToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Reset Active Theme</div>
+            <div class="settings-desc">Go back to the default dark theme</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="resetThemeBtn">
+            Reset Theme
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Export Journal as Text</div>
+            <div class="settings-desc">Download all your journal entries as a .txt file</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="exportJournalBtn">
+            <i class="ri-download-line"></i> Export
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">App Version</div>
+            <div class="settings-desc">My Diary v1.0.0</div>
+          </div>
+          <span class="badge badge-info">v1.0.0</span>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ============================================================
+    PROFILE PAGE JAVASCRIPT
+    Handles: load profile, edit and save profile, streak display,
+    theme switcher with unlock checks, badges display,
+    settings toggles, journal export, stats loading.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      isOnline,
+      onConnectivityChange,
+      showToast
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // ALL THEMES DEFINITION
+    // Each theme has name, key, milestone, and preview colors
+    // ----------------------------------------------------------
+    const ALL_THEMES = [
+      {
+        key: '', name: 'Default Dark', milestone: 0,
+        colors: ['#0f0f0f', '#1a1a2e', '#e94560']
+      },
+      {
+        key: 'tokyo-night', name: 'Tokyo Night', milestone: 7,
+        colors: ['#1a1b26', '#1f2335', '#7aa2f7']
+      },
+      {
+        key: 'dracula', name: 'Dracula', milestone: 14,
+        colors: ['#282a36', '#2d2f3f', '#ff79c6']
+      },
+      {
+        key: 'catppuccin', name: 'Catppuccin', milestone: 21,
+        colors: ['#1e1e2e', '#313244', '#cba6f7']
+      },
+      {
+        key: 'nord', name: 'Nord', milestone: 30,
+        colors: ['#2e3440', '#434c5e', '#88c0d0']
+      },
+      {
+        key: 'gruvbox', name: 'Gruvbox', milestone: 45,
+        colors: ['#282828', '#3c3836', '#fe8019']
+      },
+      {
+        key: 'sunset', name: 'Sunset', milestone: 60,
+        colors: ['#1a0a00', '#3d1c00', '#ff6b35']
+      },
+      {
+        key: 'ocean-deep', name: 'Ocean Deep', milestone: 75,
+        colors: ['#020c1b', '#112240', '#64ffda']
+      },
+      {
+        key: 'sakura', name: 'Sakura', milestone: 90,
+        colors: ['#1a0a12', '#3d1530', '#ff85a1']
+      },
+      {
+        key: 'forest', name: 'Forest', milestone: 120,
+        colors: ['#0a1a0a', '#143314', '#52b788']
+      },
+      {
+        key: 'cyberpunk', name: 'Cyberpunk', milestone: 150,
+        colors: ['#0d0d0d', '#1a0a2e', '#ffff00']
+      }
+    ];
+
+    // ----------------------------------------------------------
+    // ALL BADGES DEFINITION
+    // Badges are earned based on streaks, entries, goals, etc.
+    // ----------------------------------------------------------
+    const ALL_BADGES = [
+      { icon: '🌱', name: 'First Step',    desc: 'First journal entry',    key: 'first_entry' },
+      { icon: '🔥', name: 'On Fire',       desc: '7 day streak',           key: 'streak_7' },
+      { icon: '💪', name: 'Consistent',    desc: '14 day streak',          key: 'streak_14' },
+      { icon: '🎯', name: 'Goal Getter',   desc: 'Complete first goal',    key: 'first_goal' },
+      { icon: '📚', name: 'Bookworm',      desc: '10 journal entries',     key: 'entries_10' },
+      { icon: '🏆', name: 'Champion',      desc: '30 day streak',          key: 'streak_30' },
+      { icon: '💰', name: 'Saver',         desc: 'First savings deposit',  key: 'first_save' },
+      { icon: '✅', name: 'Task Master',   desc: 'Complete 10 tasks',      key: 'tasks_10' },
+      { icon: '🌟', name: 'Legend',        desc: '60 day streak',          key: 'streak_60' },
+      { icon: '🚀', name: 'Unstoppable',   desc: '100 day streak',         key: 'streak_100' }
+    ];
+
+    // ----------------------------------------------------------
+    // LOAD PROFILE DATA
+    // ----------------------------------------------------------
+    async function loadProfile() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        document.getElementById('profileName').textContent = data.name || 'Maestro';
+        document.getElementById('profileBio').textContent = data.bio || 'My personal diary and life tracker.';
+        document.getElementById('editName').value = data.name || '';
+        document.getElementById('editBio').value = data.bio || '';
+
+        // Update avatar initials
+        const initials = (data.name || 'M').charAt(0).toUpperCase();
+        document.getElementById('avatarCircle').childNodes[0].textContent = initials;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // LOAD STATS
+    // Counts from Supabase for journal, goals, habits, tasks
+    // ----------------------------------------------------------
+    async function loadStats() {
+      const [journalRes, goalsRes, habitsRes, tasksRes] = await Promise.all([
+        supabase.from('journal_entries').select('id', { count: 'exact' }),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('status', 'completed'),
+        supabase.from('habits').select('id', { count: 'exact' }),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('done', true).is('parent_id', null)
+      ]);
+
+      document.getElementById('statJournalEntries').textContent = journalRes.count || 0;
+      document.getElementById('statGoalsCompleted').textContent = goalsRes.count || 0;
+      document.getElementById('statHabitsTotal').textContent    = habitsRes.count || 0;
+      document.getElementById('statTasksDone').textContent      = tasksRes.count || 0;
+    }
+
+    // ----------------------------------------------------------
+    // LOAD STREAK
+    // ----------------------------------------------------------
+    async function loadStreak() {
+      const { data, error } = await supabase
+        .from('streaks')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (error || !data) return;
+
+      document.getElementById('streakCount').textContent = `${data.current_streak} days`;
+      document.getElementById('streakDetails').textContent =
+        `Best: ${data.longest_streak} days • ${data.total_xp} XP earned`;
+
+      // XP bar: progress to next 100 XP milestone
+      const xpProgress = (data.total_xp % 100);
+      document.getElementById('streakXpBar').style.width = `${xpProgress}%`;
+
+      // Next theme milestone hint
+      const milestones = ALL_THEMES.map(t => t.milestone).filter(m => m > data.current_streak);
+      if (milestones.length > 0) {
+        const next = Math.min(...milestones);
+        const theme = ALL_THEMES.find(t => t.milestone === next);
+        document.getElementById('nextMilestoneHint').textContent =
+          `${next - data.current_streak} days to unlock ${theme?.name}`;
+      } else {
+        document.getElementById('nextMilestoneHint').textContent = 'All themes unlocked! 🎉';
+      }
+
+      renderBadges(data);
+    }
+
+    // ----------------------------------------------------------
+    // RENDER THEMES GRID
+    // Shows all themes, locked ones are dimmed
+    // ----------------------------------------------------------
+    function renderThemes(currentStreak) {
+      const unlockedThemes = JSON.parse(localStorage.getItem('unlocked_themes') || '[]');
+      const activeTheme = localStorage.getItem('active_theme') || '';
+      const grid = document.getElementById('themesGrid');
+
+      grid.innerHTML = ALL_THEMES.map(theme => {
+        const isUnlocked = theme.milestone === 0 || unlockedThemes.includes(theme.key);
+        const isActive = theme.key === activeTheme;
+
+        return `
+          <div class="theme-card ${isActive ? 'active-theme' : ''} ${!isUnlocked ? 'locked-theme' : ''}"
+            style="background-color:${theme.colors[0]};border-color:${isActive ? 'var(--warning)' : theme.colors[1]};"
+            onclick="${isUnlocked ? `applyTheme('${theme.key}')` : ''}">
+
+            ${isActive ? '<div class="theme-active-badge">Active</div>' : ''}
+
+            <div class="theme-preview">
+              ${theme.colors.map(c => `
+                <div class="theme-swatch" style="background-color:${c};"></div>
+              `).join('')}
+            </div>
+
+            <div class="theme-name" style="color:${theme.colors[2]};">${theme.name}</div>
+            <div class="theme-unlock-info">
+              ${isUnlocked
+                ? (theme.milestone === 0 ? 'Default' : `Unlocked at ${theme.milestone} days`)
+                : `🔒 ${theme.milestone} day streak`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ----------------------------------------------------------
+    // APPLY THEME
+    // Saves to localStorage and reloads page to apply
+    // ----------------------------------------------------------
+    window.applyTheme = function(themeKey) {
+      localStorage.setItem('active_theme', themeKey);
+      document.documentElement.setAttribute('data-theme', themeKey);
+      showToast(`Theme applied! 🎨`, 'success');
+      renderThemes();
+    };
+
+    // ----------------------------------------------------------
+    // RENDER BADGES
+    // Checks earned conditions and marks badges accordingly
+    // ----------------------------------------------------------
+    async function renderBadges(streakData) {
+      const [journalRes, goalsRes, tasksRes, savingsRes] = await Promise.all([
+        supabase.from('journal_entries').select('id', { count: 'exact' }),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('status', 'completed'),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('done', true).is('parent_id', null),
+        supabase.from('savings_deposits').select('id', { count: 'exact' })
+      ]);
+
+      const streak  = streakData?.current_streak || 0;
+      const entries = journalRes.count || 0;
+      const goals   = goalsRes.count || 0;
+      const tasks   = tasksRes.count || 0;
+      const saves   = savingsRes.count || 0;
+
+      // Map badge keys to earned conditions
+      const earned = {
+        first_entry: entries >= 1,
+        streak_7:    streak >= 7,
+        streak_14:   streak >= 14,
+        first_goal:  goals >= 1,
+        entries_10:  entries >= 10,
+        streak_30:   streak >= 30,
+        first_save:  saves >= 1,
+        tasks_10:    tasks >= 10,
+        streak_60:   streak >= 60,
+        streak_100:  streak >= 100
+      };
+
+      const grid = document.getElementById('badgesGrid');
+      grid.innerHTML = ALL_BADGES.map(badge => `
+        <div class="badge-card ${earned[badge.key] ? 'earned' : 'locked'}">
+          <div class="badge-icon">${badge.icon}</div>
+          <div class="badge-name">${badge.name}</div>
+          <div class="badge-req">${badge.desc}</div>
+          ${earned[badge.key]
+            ? '<div style="font-size:0.7rem;color:var(--warning);margin-top:0.3rem;">✓ Earned</div>'
+            : ''}
+        </div>
+      `).join('');
+    }
+
+    // ----------------------------------------------------------
+    // EDIT PROFILE TOGGLE
+    // ----------------------------------------------------------
+    document.getElementById('editProfileBtn').addEventListener('click', () => {
+      const section = document.getElementById('editProfileSection');
+      section.classList.toggle('open');
+    });
+
+    // ----------------------------------------------------------
+    // SAVE PROFILE
+    // Upserts profile data to Supabase profiles table
+    // ----------------------------------------------------------
+    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      const name = document.getElementById('editName').value.trim();
+      const bio  = document.getElementById('editBio').value.trim();
+
+      if (!name) { showToast('Please enter your name.', 'warning'); return; }
+
+      // Check if a profile row exists
+      const { data: existing } = await supabase
+        .from('profiles').select('id').limit(1).single();
+
+      let error;
+      if (existing) {
+        ({ error } = await supabase
+          .from('profiles')
+          .update({ name, bio })
+          .eq('id', existing.id));
+      } else {
+        ({ error } = await supabase
+          .from('profiles')
+          .insert({ name, bio }));
+      }
+
+      if (error) { showToast('Failed to save profile.', 'error'); return; }
+
+      showToast('Profile saved!', 'success');
+      document.getElementById('editProfileSection').classList.remove('open');
+      loadProfile();
+    });
+
+    // ----------------------------------------------------------
+    // RESET THEME
+    // ----------------------------------------------------------
+    document.getElementById('resetThemeBtn').addEventListener('click', () => {
+      localStorage.setItem('active_theme', '');
+      document.documentElement.setAttribute('data-theme', '');
+      showToast('Theme reset to default.', 'info');
+      renderThemes();
+    });
+
+    // ----------------------------------------------------------
+    // EXPORT JOURNAL
+    // Downloads all journal entries as a plain text file
+    // ----------------------------------------------------------
+    document.getElementById('exportJournalBtn').addEventListener('click', async () => {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('title, content, mood, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error || !data) { showToast('Failed to export.', 'error'); return; }
+
+      const text = data.map(e => [
+        `Date: ${new Date(e.created_at).toLocaleString('en-KE')}`,
+        `Title: ${e.title || 'Untitled'}`,
+        `Mood: ${e.mood || 'Unknown'}`,
+        `\n${(e.content || '').replace(/<[^>]*>/g, '')}`,
+        '\n---\n'
+      ].join('\n')).join('\n');
+
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-diary-journal-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Journal exported!', 'success');
+    });
+
+    // ----------------------------------------------------------
+    // SETTINGS TOGGLES
+    // Save toggle states to localStorage
+    // ----------------------------------------------------------
+    const reminderToggle = document.getElementById('reminderToggle');
+    const streakNotifToggle = document.getElementById('streakNotifToggle');
+
+    reminderToggle.checked = localStorage.getItem('reminder_toggle') !== 'false';
+    streakNotifToggle.checked = localStorage.getItem('streak_notif_toggle') !== 'false';
+
+    reminderToggle.addEventListener('change', () => {
+      localStorage.setItem('reminder_toggle', reminderToggle.checked);
+    });
+
+    streakNotifToggle.addEventListener('change', () => {
+      localStorage.setItem('streak_notif_toggle', streakNotifToggle.checked);
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    async function init() {
+      await Promise.all([loadProfile(), loadStats(), loadStreak()]);
+      renderThemes();
+    }
+
+    init();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

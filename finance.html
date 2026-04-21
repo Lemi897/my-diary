@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    finance.html - Finance Tracker Page
+    Shows: expense log, debt tracker, savings goals,
+    weekly/monthly summary charts, live currency conversion,
+    AI spending suggestions, Worldcoin manual balance tracker.
+    Data stored in: expenses, debts, savings_goals,
+    savings_deposits tables in Supabase.
+    Exchange rates fetched from open.er-api.com (cached daily).
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Finance page specific styles
+    -------------------------------------------------------- */
+
+    /* Section tabs */
+    .section-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .section-tab {
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .section-tab.active {
+      background-color: var(--accent-1);
+      color: #fff;
+      border-color: var(--accent-1);
+    }
+
+    /* Section panels */
+    .section-panel {
+      display: none;
+    }
+
+    .section-panel.active {
+      display: block;
+    }
+
+    /* Summary cards row */
+    .finance-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .fin-stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+    }
+
+    .fin-stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+
+    .fin-stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    /* Expense list */
+    .expense-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .expense-item:last-child {
+      border-bottom: none;
+    }
+
+    .expense-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      background-color: var(--bg-secondary);
+    }
+
+    .expense-info {
+      flex: 1;
+    }
+
+    .expense-desc {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .expense-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .expense-amount {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--danger);
+      white-space: nowrap;
+    }
+
+    /* Category icons map */
+    .cat-icon-food        { background: rgba(255,209,102,0.2); }
+    .cat-icon-transport   { background: rgba(76,201,240,0.2); }
+    .cat-icon-airtime     { background: rgba(0,212,170,0.2); }
+    .cat-icon-stationery  { background: rgba(131,56,236,0.2); }
+    .cat-icon-entertainment { background: rgba(233,69,96,0.2); }
+    .cat-icon-clothing    { background: rgba(236,72,153,0.2); }
+    .cat-icon-debt        { background: rgba(239,35,60,0.2); }
+    .cat-icon-other       { background: rgba(160,160,176,0.2); }
+
+    /* Debt item */
+    .debt-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem;
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.6rem;
+      border: 1px solid var(--border);
+    }
+
+    .debt-info { flex: 1; }
+
+    .debt-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+
+    .debt-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .debt-amount {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .debt-owe     { color: var(--danger); }
+    .debt-owed    { color: var(--success); }
+
+    .debt-paid {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    /* Savings goal card */
+    .savings-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .savings-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .savings-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .savings-amounts {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .savings-amounts strong {
+      color: var(--success);
+      font-size: 1rem;
+    }
+
+    /* Chart cards */
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    /* AI suggestions box */
+    .ai-suggestions-box {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--accent-3);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+      display: none;
+    }
+
+    .ai-suggestions-box.visible {
+      display: block;
+    }
+
+    .ai-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent-3);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .ai-suggestions-text {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* Worldcoin tracker card */
+    .worldcoin-card {
+      background: linear-gradient(135deg, #1a0a2e, #2d1a4e);
+      border: 1px solid #533483;
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .worldcoin-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #a78bfa;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .worldcoin-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .worldcoin-ksh {
+      font-size: 0.85rem;
+      color: #a78bfa;
+      margin-top: 0.2rem;
+    }
+
+    @media (max-width: 768px) {
+      .chart-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link active">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Finance</div>
+          <div class="page-subtitle">Track expenses, debts, and savings in KSH</div>
+        </div>
+        <button class="btn btn-primary" id="addExpenseBtn">
+          <i class="ri-add-line"></i> Add Expense
+        </button>
+      </div>
+
+      <!-- Summary stats -->
+      <div class="finance-summary">
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Spent today</div>
+          <div class="fin-stat-value text-danger" id="spentToday">KSH 0</div>
+        </div>
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Spent this week</div>
+          <div class="fin-stat-value text-warning" id="spentWeek">KSH 0</div>
+        </div>
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Spent this month</div>
+          <div class="fin-stat-value" id="spentMonth">KSH 0</div>
+        </div>
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Total debts owed</div>
+          <div class="fin-stat-value text-danger" id="totalDebtsOwe">KSH 0</div>
+        </div>
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Total owed to me</div>
+          <div class="fin-stat-value text-success" id="totalDebtsOwed">KSH 0</div>
+        </div>
+        <div class="fin-stat-card">
+          <div class="fin-stat-label">Total savings</div>
+          <div class="fin-stat-value text-success" id="totalSavings">KSH 0</div>
+        </div>
+      </div>
+
+      <!-- Section tabs -->
+      <div class="section-tabs">
+        <button class="section-tab active" data-section="expenses">Expenses</button>
+        <button class="section-tab" data-section="debts">Debts</button>
+        <button class="section-tab" data-section="savings">Savings</button>
+        <button class="section-tab" data-section="summary">Summary & AI</button>
+      </div>
+
+      <!-- ======================================================
+        EXPENSES SECTION
+      ====================================================== -->
+      <div class="section-panel active" id="panel-expenses">
+
+        <!-- Worldcoin tracker -->
+        <div class="worldcoin-card">
+          <div class="worldcoin-title">
+            <i class="ri-copper-coin-line"></i> Worldcoin (WLD) Balance
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div>
+              <div class="worldcoin-value" id="wldBalance">0 WLD</div>
+              <div class="worldcoin-ksh" id="wldKsh">≈ KSH 0</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="number" class="form-input" id="wldInput"
+                placeholder="Enter WLD balance" step="0.01"
+                style="width:180px;background:rgba(255,255,255,0.1);border-color:#533483;" />
+              <button class="btn btn-sm" style="background:#533483;color:#fff;"
+                onclick="saveWldBalance()">Update</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter row -->
+        <div class="flex-between mb-md" style="flex-wrap:wrap;gap:0.5rem;">
+          <select class="filter-select" id="expenseCategoryFilter"
+            style="background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius-sm);padding:0.4rem 0.75rem;
+            color:var(--text-primary);font-size:0.85rem;">
+            <option value="all">All Categories</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport / Fare</option>
+            <option value="Airtime">Airtime</option>
+            <option value="Stationery">Stationery</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Debt Repayment">Debt Repayment</option>
+            <option value="Other">Other</option>
+          </select>
+          <select class="filter-select" id="expensePeriodFilter"
+            style="background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius-sm);padding:0.4rem 0.75rem;
+            color:var(--text-primary);font-size:0.85rem;">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+
+        <!-- Expenses list -->
+        <div class="card card-sm">
+          <div id="expensesList">
+            <div class="empty-state">
+              <div class="empty-icon">💸</div>
+              <p>No expenses logged yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+        DEBTS SECTION
+      ====================================================== -->
+      <div class="section-panel" id="panel-debts">
+        <div class="flex-between mb-md">
+          <div class="card-title">Debts</div>
+          <button class="btn btn-primary btn-sm" id="addDebtBtn">
+            <i class="ri-add-line"></i> Add Debt
+          </button>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">
+            I OWE
+          </div>
+          <div id="debtsOweList">
+            <div class="empty-state" style="padding:1.5rem;">
+              <p>No debts you owe.</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--text-muted);margin-bottom:0.5rem;">
+            OWED TO ME
+          </div>
+          <div id="debtsOwedList">
+            <div class="empty-state" style="padding:1.5rem;">
+              <p>Nobody owes you anything.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+        SAVINGS SECTION
+      ====================================================== -->
+      <div class="section-panel" id="panel-savings">
+        <div class="flex-between mb-md">
+          <div class="card-title">Savings Goals</div>
+          <button class="btn btn-primary btn-sm" id="addSavingsBtn">
+            <i class="ri-add-line"></i> Add Goal
+          </button>
+        </div>
+        <div id="savingsList">
+          <div class="empty-state">
+            <div class="empty-icon">🏦</div>
+            <p>No savings goals yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+        SUMMARY AND AI SECTION
+      ====================================================== -->
+      <div class="section-panel" id="panel-summary">
+
+        <!-- Charts -->
+        <div class="chart-row">
+          <div class="chart-card">
+            <div class="chart-title">Spending by Category (This Month)</div>
+            <canvas id="categorySpendChart" height="220"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Daily Spending (This Week)</div>
+            <canvas id="weeklySpendChart" height="220"></canvas>
+          </div>
+        </div>
+
+        <!-- AI suggestions -->
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">AI Spending Suggestions</div>
+            <button class="btn btn-primary btn-sm" id="getAiSuggestionsBtn">
+              <i class="ri-robot-line"></i> Analyse My Spending
+            </button>
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-muted);">
+            Click the button above to get personalised suggestions based on your actual spending data.
+          </p>
+          <div class="ai-suggestions-box" id="aiSuggestionsBox">
+            <div class="ai-label">
+              <i class="ri-robot-line"></i> AI Finance Assistant
+            </div>
+            <div class="ai-suggestions-text" id="aiSuggestionsText"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link active">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ============================================================
+    ADD EXPENSE MODAL
+  ============================================================ -->
+  <div class="modal-overlay" id="expenseModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="expenseModalTitle">Add Expense</div>
+        <button class="modal-close" id="expenseModalClose">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="expenseDesc"
+          placeholder="e.g. Lunch at school" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount</label>
+        <input type="number" class="form-input" id="expenseAmount"
+          placeholder="0.00" step="0.01" min="0" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Currency</label>
+        <select class="form-select" id="expenseCurrency">
+          <option value="KSH">KSH - Kenyan Shilling</option>
+          <option value="USD">USD - US Dollar</option>
+          <option value="EUR">EUR - Euro</option>
+          <option value="GBP">GBP - British Pound</option>
+          <option value="UGX">UGX - Ugandan Shilling</option>
+          <option value="TZS">TZS - Tanzanian Shilling</option>
+          <option value="WLD">WLD - Worldcoin</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="expenseCategory">
+          <option value="Food">Food</option>
+          <option value="Transport">Transport / Fare</option>
+          <option value="Airtime">Airtime</option>
+          <option value="Stationery">Stationery</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Debt Repayment">Debt Repayment</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="expenseDate" />
+      </div>
+
+      <button class="btn btn-primary btn-full mt-md" id="saveExpenseBtn">
+        Save Expense
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    ADD DEBT MODAL
+  ============================================================ -->
+  <div class="modal-overlay" id="debtModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add Debt</div>
+        <button class="modal-close" id="debtModalClose">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" class="form-input" id="debtDesc"
+          placeholder="e.g. Borrowed for fare" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Person</label>
+        <input type="text" class="form-input" id="debtPerson"
+          placeholder="e.g. John" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Amount (KSH)</label>
+        <input type="number" class="form-input" id="debtAmount"
+          placeholder="0.00" step="0.01" min="0" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="debtType">
+          <option value="owe">I owe this person</option>
+          <option value="owed_to_me">This person owes me</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Due Date (optional)</label>
+        <input type="date" class="form-input" id="debtDueDate" />
+      </div>
+
+      <button class="btn btn-primary btn-full mt-md" id="saveDebtBtn">
+        Save Debt
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    ADD SAVINGS GOAL MODAL
+  ============================================================ -->
+  <div class="modal-overlay" id="savingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="savingsModalTitle">Add Savings Goal</div>
+        <button class="modal-close" id="savingsModalClose">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Goal Name</label>
+        <input type="text" class="form-input" id="savingsTitle"
+          placeholder="e.g. New laptop" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Amount (KSH)</label>
+        <input type="number" class="form-input" id="savingsTarget"
+          placeholder="0.00" step="0.01" min="0" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Date (optional)</label>
+        <input type="date" class="form-input" id="savingsDate" />
+      </div>
+
+      <button class="btn btn-primary btn-full mt-md" id="saveSavingsBtn">
+        Save Goal
+      </button>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <!-- ============================================================
+    FINANCE PAGE JAVASCRIPT
+    Handles: load expenses/debts/savings, currency conversion,
+    add/delete records, Worldcoin balance, summary stats,
+    category and weekly charts, AI spending suggestions.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      todayDate,
+      formatDateShort,
+      formatKSH,
+      convertToKSH,
+      fetchExchangeRates,
+      currentWeekRange,
+      currentMonthRange,
+      isOnline,
+      onConnectivityChange,
+      showToast,
+      truncate
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // STATE
+    // ----------------------------------------------------------
+    let allExpenses = [];
+    let allDebts = [];
+    let allSavings = [];
+    let allDeposits = [];
+    const today = todayDate();
+
+    // Chart instances
+    let categoryChartInst = null;
+    let weeklyChartInst = null;
+
+    // ----------------------------------------------------------
+    // SECTION TABS
+    // Switches between expenses, debts, savings, summary panels
+    // ----------------------------------------------------------
+    document.querySelectorAll('.section-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.section-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${tab.dataset.section}`).classList.add('active');
+        if (tab.dataset.section === 'summary') renderCharts();
+      });
+    });
+
+    // ----------------------------------------------------------
+    // LOAD ALL FINANCE DATA
+    // ----------------------------------------------------------
+    async function loadAll() {
+      const [expRes, debtRes, savRes, depRes] = await Promise.all([
+        supabase.from('expenses').select('*').order('expense_date', { ascending: false }),
+        supabase.from('debts').select('*').order('created_at', { ascending: false }),
+        supabase.from('savings_goals').select('*').order('created_at', { ascending: false }),
+        supabase.from('savings_deposits').select('*').order('deposit_date', { ascending: false })
+      ]);
+
+      allExpenses = expRes.data || [];
+      allDebts    = debtRes.data || [];
+      allSavings  = savRes.data || [];
+      allDeposits = depRes.data || [];
+
+      updateSummary();
+      renderExpenses();
+      renderDebts();
+      renderSavings();
+      loadWldBalance();
+    }
+
+    // ----------------------------------------------------------
+    // SUMMARY STATS
+    // ----------------------------------------------------------
+    function updateSummary() {
+      const week  = currentWeekRange();
+      const month = currentMonthRange();
+
+      const spentToday = allExpenses
+        .filter(e => e.expense_date === today)
+        .reduce((s, e) => s + parseFloat(e.amount_ksh || 0), 0);
+
+      const spentWeek = allExpenses
+        .filter(e => e.expense_date >= week.start && e.expense_date <= week.end)
+        .reduce((s, e) => s + parseFloat(e.amount_ksh || 0), 0);
+
+      const spentMonth = allExpenses
+        .filter(e => e.expense_date >= month.start && e.expense_date <= month.end)
+        .reduce((s, e) => s + parseFloat(e.amount_ksh || 0), 0);
+
+      const totalOwe = allDebts
+        .filter(d => d.type === 'owe' && !d.paid)
+        .reduce((s, d) => s + parseFloat(d.amount_ksh || 0), 0);
+
+      const totalOwed = allDebts
+        .filter(d => d.type === 'owed_to_me' && !d.paid)
+        .reduce((s, d) => s + parseFloat(d.amount_ksh || 0), 0);
+
+      const totalSavings = allSavings
+        .reduce((s, g) => s + parseFloat(g.current_amount || 0), 0);
+
+      document.getElementById('spentToday').textContent  = formatKSH(spentToday);
+      document.getElementById('spentWeek').textContent   = formatKSH(spentWeek);
+      document.getElementById('spentMonth').textContent  = formatKSH(spentMonth);
+      document.getElementById('totalDebtsOwe').textContent  = formatKSH(totalOwe);
+      document.getElementById('totalDebtsOwed').textContent = formatKSH(totalOwed);
+      document.getElementById('totalSavings').textContent   = formatKSH(totalSavings);
+    }
+
+    // ----------------------------------------------------------
+    // CATEGORY ICON HELPER
+    // Returns emoji for each expense category
+    // ----------------------------------------------------------
+    function getCatIcon(cat) {
+      const icons = {
+        'Food': '🍔', 'Transport': '🚌', 'Airtime': '📱',
+        'Stationery': '📚', 'Entertainment': '🎮', 'Clothing': '👕',
+        'Debt Repayment': '💳', 'Other': '📦'
+      };
+      return icons[cat] || '📦';
+    }
+
+    function getCatIconClass(cat) {
+      const classes = {
+        'Food': 'cat-icon-food', 'Transport': 'cat-icon-transport',
+        'Airtime': 'cat-icon-airtime', 'Stationery': 'cat-icon-stationery',
+        'Entertainment': 'cat-icon-entertainment', 'Clothing': 'cat-icon-clothing',
+        'Debt Repayment': 'cat-icon-debt', 'Other': 'cat-icon-other'
+      };
+      return classes[cat] || 'cat-icon-other';
+    }
+
+    // ----------------------------------------------------------
+    // RENDER EXPENSES LIST
+    // Applies category and period filters
+    // ----------------------------------------------------------
+    function renderExpenses() {
+      const catFilter    = document.getElementById('expenseCategoryFilter').value;
+      const periodFilter = document.getElementById('expensePeriodFilter').value;
+      const week  = currentWeekRange();
+      const month = currentMonthRange();
+
+      let filtered = [...allExpenses];
+      if (catFilter !== 'all') filtered = filtered.filter(e => e.category === catFilter);
+      if (periodFilter === 'today') filtered = filtered.filter(e => e.expense_date === today);
+      if (periodFilter === 'week')  filtered = filtered.filter(e => e.expense_date >= week.start && e.expense_date <= week.end);
+      if (periodFilter === 'month') filtered = filtered.filter(e => e.expense_date >= month.start && e.expense_date <= month.end);
+
+      const list = document.getElementById('expensesList');
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state" style="padding:2rem;">
+            <div class="empty-icon">💸</div>
+            <p>No expenses found.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(exp => `
+        <div class="expense-item">
+          <div class="expense-icon ${getCatIconClass(exp.category)}">
+            ${getCatIcon(exp.category)}
+          </div>
+          <div class="expense-info">
+            <div class="expense-desc">${exp.description}</div>
+            <div class="expense-meta">
+              ${exp.category} • ${formatDateShort(exp.expense_date)}
+              ${exp.currency !== 'KSH' ? ` • ${exp.amount} ${exp.currency}` : ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div class="expense-amount">${formatKSH(exp.amount_ksh)}</div>
+            <button class="btn btn-ghost btn-sm"
+              onclick="deleteExpense('${exp.id}')">
+              <i class="ri-delete-bin-line"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Filter change listeners for expenses
+    document.getElementById('expenseCategoryFilter').addEventListener('change', renderExpenses);
+    document.getElementById('expensePeriodFilter').addEventListener('change', renderExpenses);
+
+    // ----------------------------------------------------------
+    // RENDER DEBTS
+    // Splits into owe and owed-to-me sections
+    // ----------------------------------------------------------
+    function renderDebts() {
+      const oweList  = document.getElementById('debtsOweList');
+      const owedList = document.getElementById('debtsOwedList');
+
+      const owe  = allDebts.filter(d => d.type === 'owe');
+      const owed = allDebts.filter(d => d.type === 'owed_to_me');
+
+      function debtHTML(debt) {
+        return `
+          <div class="debt-item ${debt.paid ? 'debt-paid' : ''}">
+            <div class="debt-info">
+              <div class="debt-name">${debt.description}</div>
+              <div class="debt-meta">
+                ${debt.person_name ? `👤 ${debt.person_name}` : ''}
+                ${debt.due_date ? ` • Due: ${formatDateShort(debt.due_date)}` : ''}
+                ${debt.paid ? ' • Paid' : ''}
+              </div>
+            </div>
+            <div class="debt-amount ${debt.type === 'owe' ? 'debt-owe' : 'debt-owed'}">
+              ${formatKSH(debt.amount_ksh)}
+            </div>
+            <div style="display:flex;gap:0.25rem;">
+              ${!debt.paid ? `
+                <button class="btn btn-ghost btn-sm" title="Mark as paid"
+                  onclick="markDebtPaid('${debt.id}')">
+                  <i class="ri-check-line"></i>
+                </button>
+              ` : ''}
+              <button class="btn btn-ghost btn-sm"
+                onclick="deleteDebt('${debt.id}')">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      oweList.innerHTML = owe.length > 0
+        ? owe.map(debtHTML).join('')
+        : '<div class="empty-state" style="padding:1.5rem;"><p>No debts you owe.</p></div>';
+
+      owedList.innerHTML = owed.length > 0
+        ? owed.map(debtHTML).join('')
+        : '<div class="empty-state" style="padding:1.5rem;"><p>Nobody owes you anything.</p></div>';
+    }
+
+    // ----------------------------------------------------------
+    // RENDER SAVINGS GOALS
+    // Shows each goal with progress bar and deposit button
+    // ----------------------------------------------------------
+    function renderSavings() {
+      const list = document.getElementById('savingsList');
+
+      if (allSavings.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🏦</div>
+            <p>No savings goals yet.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = allSavings.map(goal => {
+        const progress = goal.target_amount > 0
+          ? Math.min(Math.round((goal.current_amount / goal.target_amount) * 100), 100)
+          : 0;
+
+        return `
+          <div class="savings-card">
+            <div class="savings-card-header">
+              <div>
+                <div class="savings-title">${goal.title}</div>
+                ${goal.target_date ? `
+                  <div class="text-muted" style="font-size:0.78rem;margin-top:0.2rem;">
+                    Target: ${formatDateShort(goal.target_date)}
+                  </div>
+                ` : ''}
+              </div>
+              <div style="display:flex;gap:0.25rem;">
+                <button class="btn btn-ghost btn-sm"
+                  onclick="deleteSavingsGoal('${goal.id}')">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="savings-amounts">
+              <strong>${formatKSH(goal.current_amount)}</strong>
+              of ${formatKSH(goal.target_amount)} • ${progress}%
+            </div>
+
+            <div class="progress-bar-wrapper mb-md">
+              <div class="progress-bar-fill" style="width:${progress}%"></div>
+            </div>
+
+            <!-- Add deposit row -->
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="number" placeholder="Add deposit (KSH)"
+                id="depositInput_${goal.id}"
+                class="form-input" style="flex:1;" min="0" step="0.01" />
+              <button class="btn btn-primary btn-sm"
+                onclick="addDeposit('${goal.id}')">
+                + Deposit
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ----------------------------------------------------------
+    // ADD DEPOSIT TO SAVINGS GOAL
+    // ----------------------------------------------------------
+    window.addDeposit = async function(goalId) {
+      const input = document.getElementById(`depositInput_${goalId}`);
+      const amount = parseFloat(input.value);
+      if (!amount || amount <= 0) { showToast('Enter a valid amount.', 'warning'); return; }
+
+      const goal = allSavings.find(g => g.id === goalId);
+      if (!goal) return;
+
+      const newTotal = parseFloat(goal.current_amount) + amount;
+
+      const [depRes, updateRes] = await Promise.all([
+        supabase.from('savings_deposits').insert({
+          savings_goal_id: goalId,
+          amount,
+          deposit_date: today
+        }),
+        supabase.from('savings_goals').update({ current_amount: newTotal }).eq('id', goalId)
+      ]);
+
+      if (depRes.error || updateRes.error) {
+        showToast('Failed to add deposit.', 'error'); return;
+      }
+
+      showToast(`KSH ${amount} deposited! 🏦`, 'success');
+      input.value = '';
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
+    // WORLDCOIN BALANCE TRACKER
+    // Saves WLD balance and shows converted KSH value
+    // ----------------------------------------------------------
+    async function loadWldBalance() {
+      const saved = localStorage.getItem('wld_balance') || '0';
+      document.getElementById('wldInput').value = saved;
+      document.getElementById('wldBalance').textContent = `${parseFloat(saved).toFixed(2)} WLD`;
+
+      // Try to get WLD price in KSH
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/KES');
+        const data = await res.json();
+        // WLD is not in standard exchange, use approximate USD value
+        // We store WLD as USD equivalent for now
+        const usdRate = data.rates?.USD || 0.0077;
+        const wldUsdPrice = 1.2; // approximate WLD price in USD
+        const wldKsh = parseFloat(saved) * wldUsdPrice / usdRate;
+        document.getElementById('wldKsh').textContent = `≈ ${formatKSH(wldKsh)}`;
+      } catch {
+        document.getElementById('wldKsh').textContent = '≈ KSH (offline)';
+      }
+    }
+
+    window.saveWldBalance = function() {
+      const val = document.getElementById('wldInput').value;
+      localStorage.setItem('wld_balance', val || '0');
+      loadWldBalance();
+      showToast('WLD balance updated.', 'success');
+    };
+
+    // ----------------------------------------------------------
+    // DELETE EXPENSE
+    // ----------------------------------------------------------
+    window.deleteExpense = async function(id) {
+      if (!confirm('Delete this expense?')) return;
+      const { error } = await supabase.from('expenses').delete().eq('id', id);
+      if (error) { showToast('Failed to delete.', 'error'); return; }
+      showToast('Expense deleted.', 'info');
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
+    // MARK DEBT AS PAID
+    // ----------------------------------------------------------
+    window.markDebtPaid = async function(id) {
+      const { error } = await supabase.from('debts').update({ paid: true }).eq('id', id);
+      if (error) { showToast('Failed to update.', 'error'); return; }
+      showToast('Marked as paid.', 'success');
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
+    // DELETE DEBT
+    // ----------------------------------------------------------
+    window.deleteDebt = async function(id) {
+      if (!confirm('Delete this debt?')) return;
+      const { error } = await supabase.from('debts').delete().eq('id', id);
+      if (error) { showToast('Failed to delete.', 'error'); return; }
+      showToast('Debt deleted.', 'info');
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
+    // DELETE SAVINGS GOAL
+    // ----------------------------------------------------------
+    window.deleteSavingsGoal = async function(id) {
+      if (!confirm('Delete this savings goal?')) return;
+      const { error } = await supabase.from('savings_goals').delete().eq('id', id);
+      if (error) { showToast('Failed to delete.', 'error'); return; }
+      showToast('Savings goal deleted.', 'info');
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
+    // ADD EXPENSE MODAL
+    // ----------------------------------------------------------
+    document.getElementById('addExpenseBtn').addEventListener('click', () => {
+      document.getElementById('expenseDesc').value = '';
+      document.getElementById('expenseAmount').value = '';
+      document.getElementById('expenseCurrency').value = 'KSH';
+      document.getElementById('expenseCategory').value = 'Food';
+      document.getElementById('expenseDate').value = today;
+      document.getElementById('expenseModal').classList.add('open');
+    });
+
+    document.getElementById('expenseModalClose').addEventListener('click', () => {
+      document.getElementById('expenseModal').classList.remove('open');
+    });
+
+    document.getElementById('expenseModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('expenseModal'))
+        document.getElementById('expenseModal').classList.remove('open');
+    });
+
+    // ----------------------------------------------------------
+    // SAVE EXPENSE
+    // Converts to KSH before saving
+    // ----------------------------------------------------------
+    document.getElementById('saveExpenseBtn').addEventListener('click', async () => {
+      const desc     = document.getElementById('expenseDesc').value.trim();
+      const amount   = parseFloat(document.getElementById('expenseAmount').value);
+      const currency = document.getElementById('expenseCurrency').value;
+      const category = document.getElementById('expenseCategory').value;
+      const date     = document.getElementById('expenseDate').value || today;
+
+      if (!desc) { showToast('Please enter a description.', 'warning'); return; }
+      if (!amount || amount <= 0) { showToast('Please enter a valid amount.', 'warning'); return; }
+
+      const amountKsh = await convertToKSH(amount, currency);
+
+      const { error } = await supabase.from('expenses').insert({
+        description: desc,
+        amount,
+        currency,
+        amount_ksh: amountKsh,
+        category,
+        expense_date: date
+      });
+
+      if (error) { showToast('Failed to save expense.', 'error'); return; }
+      showToast('Expense saved! 💸', 'success');
+      document.getElementById('expenseModal').classList.remove('open');
+      loadAll();
+    });
+
+    // ----------------------------------------------------------
+    // ADD DEBT MODAL
+    // ----------------------------------------------------------
+    document.getElementById('addDebtBtn').addEventListener('click', () => {
+      document.getElementById('debtDesc').value = '';
+      document.getElementById('debtPerson').value = '';
+      document.getElementById('debtAmount').value = '';
+      document.getElementById('debtType').value = 'owe';
+      document.getElementById('debtDueDate').value = '';
+      document.getElementById('debtModal').classList.add('open');
+    });
+
+    document.getElementById('debtModalClose').addEventListener('click', () => {
+      document.getElementById('debtModal').classList.remove('open');
+    });
+
+    document.getElementById('debtModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('debtModal'))
+        document.getElementById('debtModal').classList.remove('open');
+    });
+
+    document.getElementById('saveDebtBtn').addEventListener('click', async () => {
+      const desc    = document.getElementById('debtDesc').value.trim();
+      const person  = document.getElementById('debtPerson').value.trim();
+      const amount  = parseFloat(document.getElementById('debtAmount').value);
+      const type    = document.getElementById('debtType').value;
+      const dueDate = document.getElementById('debtDueDate').value || null;
+
+      if (!desc) { showToast('Please enter a description.', 'warning'); return; }
+      if (!amount || amount <= 0) { showToast('Please enter a valid amount.', 'warning'); return; }
+
+      const { error } = await supabase.from('debts').insert({
+        description: desc,
+        person_name: person || null,
+        amount_ksh: amount,
+        type,
+        due_date: dueDate
+      });
+
+      if (error) { showToast('Failed to save debt.', 'error'); return; }
+      showToast('Debt recorded.', 'success');
+      document.getElementById('debtModal').classList.remove('open');
+      loadAll();
+    });
+
+    // ----------------------------------------------------------
+    // ADD SAVINGS GOAL MODAL
+    // ----------------------------------------------------------
+    document.getElementById('addSavingsBtn').addEventListener('click', () => {
+      document.getElementById('savingsTitle').value = '';
+      document.getElementById('savingsTarget').value = '';
+      document.getElementById('savingsDate').value = '';
+      document.getElementById('savingsModal').classList.add('open');
+    });
+
+    document.getElementById('savingsModalClose').addEventListener('click', () => {
+      document.getElementById('savingsModal').classList.remove('open');
+    });
+
+    document.getElementById('savingsModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('savingsModal'))
+        document.getElementById('savingsModal').classList.remove('open');
+    });
+
+    document.getElementById('saveSavingsBtn').addEventListener('click', async () => {
+      const title  = document.getElementById('savingsTitle').value.trim();
+      const target = parseFloat(document.getElementById('savingsTarget').value);
+      const date   = document.getElementById('savingsDate').value || null;
+
+      if (!title) { showToast('Please enter a goal name.', 'warning'); return; }
+      if (!target || target <= 0) { showToast('Please enter a target amount.', 'warning'); return; }
+
+      const { error } = await supabase.from('savings_goals').insert({
+        title, target_amount: target, target_date: date
+      });
+
+      if (error) { showToast('Failed to save goal.', 'error'); return; }
+      showToast('Savings goal created! 🏦', 'success');
+      document.getElementById('savingsModal').classList.remove('open');
+      loadAll();
+    });
+
+    // ----------------------------------------------------------
+    // RENDER CHARTS (Summary tab)
+    // Category spending pie and daily spending bar chart
+    // ----------------------------------------------------------
+    function renderCharts() {
+      const month = currentMonthRange();
+      const week  = currentWeekRange();
+
+      // Category spending this month
+      const monthExpenses = allExpenses.filter(
+        e => e.expense_date >= month.start && e.expense_date <= month.end
+      );
+
+      const catTotals = {};
+      monthExpenses.forEach(e => {
+        catTotals[e.category] = (catTotals[e.category] || 0) + parseFloat(e.amount_ksh || 0);
+      });
+
+      if (categoryChartInst) categoryChartInst.destroy();
+      const catCtx = document.getElementById('categorySpendChart').getContext('2d');
+      categoryChartInst = new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(catTotals).length > 0 ? Object.keys(catTotals) : ['No data'],
+          datasets: [{
+            data: Object.values(catTotals).length > 0 ? Object.values(catTotals) : [1],
+            backgroundColor: [
+              '#e94560','#4cc9f0','#00d4aa','#ffd166',
+              '#f72585','#7209b7','#fb923c','#a0a0b0'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#a0a0b0', padding: 10, font: { size: 11 } }
+            }
+          }
+        }
+      });
+
+      // Daily spending this week
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const weekStart = new Date(week.start);
+      const dailyTotals = days.map((_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        const dStr = d.toISOString().split('T')[0];
+        return allExpenses
+          .filter(e => e.expense_date === dStr)
+          .reduce((s, e) => s + parseFloat(e.amount_ksh || 0), 0);
+      });
+
+      if (weeklyChartInst) weeklyChartInst.destroy();
+      const weekCtx = document.getElementById('weeklySpendChart').getContext('2d');
+      weeklyChartInst = new Chart(weekCtx, {
+        type: 'bar',
+        data: {
+          labels: days,
+          datasets: [{
+            label: 'KSH Spent',
+            data: dailyTotals,
+            backgroundColor: 'rgba(233,69,96,0.7)',
+            borderColor: 'rgba(233,69,96,1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#a0a0b0' },
+              grid: { color: '#2a2a3e' }
+            },
+            x: {
+              ticks: { color: '#a0a0b0' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // ----------------------------------------------------------
+    // AI SPENDING SUGGESTIONS
+    // Sends spending summary to Claude API for analysis
+    // ----------------------------------------------------------
+    document.getElementById('getAiSuggestionsBtn').addEventListener('click', async () => {
+      if (!isOnline()) {
+        showToast('AI suggestions require an internet connection.', 'warning');
+        return;
+      }
+
+      const month = currentMonthRange();
+      const monthExpenses = allExpenses.filter(
+        e => e.expense_date >= month.start && e.expense_date <= month.end
+      );
+
+      if (monthExpenses.length === 0) {
+        showToast('No expenses this month to analyse.', 'warning');
+        return;
+      }
+
+      // Build spending summary
+      const catTotals = {};
+      monthExpenses.forEach(e => {
+        catTotals[e.category] = (catTotals[e.category] || 0) + parseFloat(e.amount_ksh || 0);
+      });
+
+      const totalSpent = Object.values(catTotals).reduce((s, v) => s + v, 0);
+      const summary = Object.entries(catTotals)
+        .map(([cat, amt]) => `${cat}: KSH ${amt.toFixed(2)}`)
+        .join(', ');
+
+      const btn = document.getElementById('getAiSuggestionsBtn');
+      btn.textContent = 'Analysing...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: `You are a friendly financial assistant helping a Kenyan university student manage their spending. 
+
+This month they spent a total of KSH ${totalSpent.toFixed(2)} broken down as follows: ${summary}.
+
+Please provide:
+1. A brief observation about their spending pattern
+2. The top 2 areas where they could potentially save
+3. One practical money saving tip relevant to a Kenyan student
+
+Keep it friendly, practical, under 200 words, and use Kenyan context where relevant.`
+            }]
+          })
+        });
+
+        const data = await response.json();
+        const aiText = data.content?.[0]?.text || 'No response received.';
+
+        document.getElementById('aiSuggestionsText').textContent = aiText;
+        document.getElementById('aiSuggestionsBox').classList.add('visible');
+
+      } catch (err) {
+        showToast('Failed to get AI suggestions. Try again.', 'error');
+      } finally {
+        btn.innerHTML = '<i class="ri-robot-line"></i> Analyse My Spending';
+        btn.disabled = false;
+      }
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    loadAll();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>

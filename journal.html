@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    journal.html - Journal and Thoughts Page
+    Shows: journal entries list, rich text editor, mood slider,
+    health status logger, AI health suggestions, writing prompts,
+    tags, search, and entry filters.
+    Data stored in: journal_entries table in Supabase.
+    AI health suggestions use Claude API (online only).
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <!-- Quill rich text editor for journal content -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+
+  <style>
+    /* --------------------------------------------------------
+       Journal page specific styles
+    -------------------------------------------------------- */
+
+    /* Two column layout: entries list + editor */
+    .journal-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .journal-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Entries list panel */
+    .entries-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .entries-panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .entries-search {
+      width: 100%;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      margin: 0.75rem 1.25rem;
+      width: calc(100% - 2.5rem);
+    }
+
+    .entries-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .entry-item {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .entry-item:hover {
+      background-color: var(--bg-secondary);
+    }
+
+    .entry-item.active {
+      background-color: var(--bg-secondary);
+      border-left: 3px solid var(--accent-1);
+    }
+
+    .entry-item-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .entry-item-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .entry-item-preview {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Editor panel */
+    .editor-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .editor-toolbar-custom {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* Entry title input */
+    .entry-title-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-main);
+    }
+
+    .entry-title-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .entry-title-input:focus {
+      border-bottom-color: var(--accent-1);
+      outline: none;
+    }
+
+    /* Quill editor custom styles */
+    .ql-toolbar.ql-snow {
+      background-color: var(--bg-secondary);
+      border-color: var(--border);
+      border-left: none;
+      border-right: none;
+    }
+
+    .ql-container.ql-snow {
+      border-color: var(--border);
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .ql-editor {
+      background-color: var(--bg-card);
+      color: var(--text-primary);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      min-height: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .ql-editor.ql-blank::before {
+      color: var(--text-muted);
+      font-style: normal;
+    }
+
+    .ql-snow .ql-stroke { stroke: var(--text-secondary); }
+    .ql-snow .ql-fill   { fill: var(--text-secondary); }
+    .ql-snow .ql-picker  { color: var(--text-secondary); }
+    .ql-snow .ql-picker-options {
+      background-color: var(--bg-secondary);
+      border-color: var(--border);
+    }
+
+    /* Mood slider section */
+    .mood-section {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .mood-section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .mood-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .mood-slider {
+      flex: 1;
+      accent-color: var(--accent-1);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .mood-emoji-display {
+      font-size: 2rem;
+      line-height: 1;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .mood-label-display {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 80px;
+    }
+
+    /* Health status section */
+    .health-section {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .health-section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .health-textarea {
+      width: 100%;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      font-family: var(--font-main);
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    .health-textarea:focus {
+      border-color: var(--accent-1);
+      outline: none;
+    }
+
+    /* AI health response box */
+    .ai-health-response {
+      margin-top: 0.75rem;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--accent-3);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      display: none;
+    }
+
+    .ai-health-response.visible {
+      display: block;
+    }
+
+    .ai-health-response .ai-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-3);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Tags section */
+    .tags-section {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .tags-input-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      background-color: rgba(233,69,96,0.15);
+      color: var(--accent-1);
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tag-chip:hover {
+      background-color: rgba(233,69,96,0.3);
+    }
+
+    .tag-input {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 0.2rem 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      width: 120px;
+    }
+
+    /* Writing prompts section */
+    .prompts-section {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .prompt-chip {
+      display: inline-block;
+      padding: 0.3rem 0.75rem;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      margin: 0.25rem 0.25rem 0.25rem 0;
+      transition: var(--transition);
+    }
+
+    .prompt-chip:hover {
+      border-color: var(--accent-1);
+      color: var(--accent-1);
+    }
+
+    /* Entry actions footer */
+    .editor-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Mood emoji map display row */
+    .mood-emojis-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.4rem;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link active">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <div class="page-title">Journal</div>
+          <div class="page-subtitle">Write your thoughts, track your mood and health</div>
+        </div>
+        <button class="btn btn-primary" id="newEntryBtn">
+          <i class="ri-add-line"></i> New Entry
+        </button>
+      </div>
+
+      <!-- Two column layout -->
+      <div class="journal-layout">
+
+        <!-- LEFT: Entries list -->
+        <div class="entries-panel">
+          <div class="entries-panel-header">
+            <div class="card-title" style="margin:0;">Entries</div>
+            <span class="text-muted" id="entriesCount">0 entries</span>
+          </div>
+          <input type="text" class="entries-search" id="entriesSearch"
+            placeholder="Search entries..." />
+          <div class="entries-list" id="entriesList">
+            <div class="empty-state" style="padding:2rem 1rem;">
+              <div class="empty-icon">📖</div>
+              <p>No entries yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Editor panel -->
+        <div class="editor-panel">
+
+          <!-- Editor top bar -->
+          <div class="editor-toolbar-custom">
+            <div style="font-size:0.85rem;color:var(--text-muted);" id="editorDateLabel">
+              New entry
+            </div>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-ghost btn-sm" id="deleteEntryBtn" style="display:none;">
+                <i class="ri-delete-bin-line"></i> Delete
+              </button>
+            </div>
+          </div>
+
+          <!-- Entry title -->
+          <input type="text" class="entry-title-input" id="entryTitle"
+            placeholder="Entry title (optional)" />
+
+          <!-- Writing prompts -->
+          <div class="prompts-section">
+            <div class="mood-section-title">Writing Prompts</div>
+            <div id="promptsContainer"></div>
+          </div>
+
+          <!-- Quill rich text editor -->
+          <div id="quillEditor"></div>
+
+          <!-- Mood slider -->
+          <div class="mood-section">
+            <div class="mood-section-title">How are you feeling?</div>
+            <div class="mood-slider-row">
+              <div class="mood-emoji-display" id="moodEmoji">😐</div>
+              <input type="range" class="mood-slider" id="moodSlider"
+                min="1" max="10" value="5" />
+              <div class="mood-label-display" id="moodLabel">Neutral</div>
+            </div>
+            <div class="mood-emojis-row">
+              <span title="Terrible">😭</span>
+              <span title="Very Bad">😔</span>
+              <span title="Bad">😟</span>
+              <span title="Low">😕</span>
+              <span title="Neutral">😐</span>
+              <span title="Okay">🙂</span>
+              <span title="Good">😊</span>
+              <span title="Great">😄</span>
+              <span title="Amazing">🤩</span>
+              <span title="Euphoric">🥳</span>
+            </div>
+          </div>
+
+          <!-- Health status -->
+          <div class="health-section">
+            <div class="health-section-title">
+              🩺 Health Status
+              <span style="font-weight:400;color:var(--text-muted);font-size:0.78rem;">
+                (optional - describe how your body feels)
+              </span>
+            </div>
+            <textarea class="health-textarea" id="healthNotes"
+              placeholder="e.g. Headache since morning, feeling tired, slight sore throat..."></textarea>
+            <button class="btn btn-secondary btn-sm mt-sm" id="getAiHealthBtn">
+              <i class="ri-robot-line"></i> Get AI Health Suggestion
+            </button>
+
+            <!-- AI response box -->
+            <div class="ai-health-response" id="aiHealthResponse">
+              <div class="ai-label">
+                <i class="ri-robot-line"></i> AI Health Assistant
+              </div>
+              <div id="aiHealthText"></div>
+            </div>
+          </div>
+
+          <!-- Tags section -->
+          <div class="tags-section">
+            <div class="mood-section-title">Tags</div>
+            <div class="tags-input-row" id="tagsContainer">
+              <input type="text" class="tag-input" id="tagInput"
+                placeholder="Add tag..."
+                onkeydown="if(event.key==='Enter'||event.key===',') addTag()" />
+            </div>
+          </div>
+
+          <!-- Entry footer actions -->
+          <div class="editor-footer">
+            <button class="btn btn-ghost btn-sm" id="clearEditorBtn">
+              Clear
+            </button>
+            <button class="btn btn-primary" id="saveEntryBtn">
+              <i class="ri-save-line"></i> Save Entry
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link active">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- Quill JS -->
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+  <!-- ============================================================
+    JOURNAL PAGE JAVASCRIPT
+    Handles: load entries, render list, open entry in editor,
+    mood slider, health AI suggestions via Claude API,
+    tags, writing prompts, save, delete, search.
+  ============================================================ -->
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import {
+      todayDate,
+      formatDate,
+      formatDateShort,
+      isOnline,
+      onConnectivityChange,
+      showToast,
+      truncate
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(updateOnlineBadge);
+
+    // ----------------------------------------------------------
+    // QUILL EDITOR SETUP
+    // Rich text editor with full formatting toolbar
+    // ----------------------------------------------------------
+    const quill = new Quill('#quillEditor', {
+      theme: 'snow',
+      placeholder: 'Write your thoughts here...',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          [{ font: [] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ color: [] }, { background: [] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ align: [] }],
+          ['blockquote', 'code-block'],
+          ['emoji'],
+          ['clean']
+        ]
+      }
+    });
+
+    // ----------------------------------------------------------
+    // MOOD SLIDER
+    // Maps score 1-10 to emoji and label
+    // ----------------------------------------------------------
+    const moodMap = {
+      1:  { emoji: '😭', label: 'Terrible' },
+      2:  { emoji: '😔', label: 'Very Bad' },
+      3:  { emoji: '😟', label: 'Bad' },
+      4:  { emoji: '😕', label: 'Low' },
+      5:  { emoji: '😐', label: 'Neutral' },
+      6:  { emoji: '🙂', label: 'Okay' },
+      7:  { emoji: '😊', label: 'Good' },
+      8:  { emoji: '😄', label: 'Great' },
+      9:  { emoji: '🤩', label: 'Amazing' },
+      10: { emoji: '🥳', label: 'Euphoric' }
+    };
+
+    const moodSlider = document.getElementById('moodSlider');
+    const moodEmoji = document.getElementById('moodEmoji');
+    const moodLabel = document.getElementById('moodLabel');
+
+    moodSlider.addEventListener('input', () => {
+      const val = parseInt(moodSlider.value);
+      moodEmoji.textContent = moodMap[val].emoji;
+      moodLabel.textContent = moodMap[val].label;
+    });
+
+    // ----------------------------------------------------------
+    // WRITING PROMPTS
+    // Clicking a prompt inserts it into the editor
+    // ----------------------------------------------------------
+    const prompts = [
+      "What made you smile today?",
+      "What is one thing you are grateful for?",
+      "What challenged you today and what did you learn?",
+      "How is your energy level right now?",
+      "What do you want to accomplish tomorrow?",
+      "Describe your mood in three words.",
+      "What is something you want to let go of?",
+      "Write about a recent win, no matter how small.",
+      "What are you looking forward to?",
+      "How did you take care of yourself today?"
+    ];
+
+    const promptsContainer = document.getElementById('promptsContainer');
+    promptsContainer.innerHTML = prompts.map(p => `
+      <span class="prompt-chip" onclick="usePrompt('${p.replace(/'/g, "\\'")}')">${p}</span>
+    `).join('');
+
+    window.usePrompt = function(prompt) {
+      quill.focus();
+      const range = quill.getSelection(true);
+      quill.insertText(range.index, prompt + '\n');
+    };
+
+    // ----------------------------------------------------------
+    // TAGS MANAGEMENT
+    // Tags are stored as an array in Supabase (text[] column)
+    // ----------------------------------------------------------
+    let currentTags = [];
+
+    window.addTag = function() {
+      const input = document.getElementById('tagInput');
+      const tag = input.value.trim().replace(/,/g, '');
+      if (!tag || currentTags.includes(tag)) { input.value = ''; return; }
+      currentTags.push(tag);
+      input.value = '';
+      renderTags();
+    };
+
+    function renderTags() {
+      const container = document.getElementById('tagsContainer');
+      const input = document.getElementById('tagInput');
+      container.innerHTML = '';
+      currentTags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.innerHTML = `#${tag} <i class="ri-close-line"></i>`;
+        chip.onclick = () => {
+          currentTags = currentTags.filter(t => t !== tag);
+          renderTags();
+        };
+        container.appendChild(chip);
+      });
+      container.appendChild(input);
+    }
+
+    // ----------------------------------------------------------
+    // STATE
+    // ----------------------------------------------------------
+    let allEntries = [];
+    let editingEntryId = null;
+
+    // ----------------------------------------------------------
+    // LOAD ENTRIES
+    // Fetches all journal entries ordered by newest first
+    // ----------------------------------------------------------
+    async function loadEntries() {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) { showToast('Failed to load entries.', 'error'); return; }
+      allEntries = data || [];
+      renderEntriesList(allEntries);
+    }
+
+    // ----------------------------------------------------------
+    // RENDER ENTRIES LIST
+    // Shows entries in the left panel with title, mood, date
+    // ----------------------------------------------------------
+    function renderEntriesList(entries) {
+      const list = document.getElementById('entriesList');
+      document.getElementById('entriesCount').textContent = `${entries.length} entries`;
+
+      if (entries.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state" style="padding:2rem 1rem;">
+            <div class="empty-icon">📖</div>
+            <p>No entries yet.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = entries.map(entry => `
+        <div class="entry-item ${editingEntryId === entry.id ? 'active' : ''}"
+          onclick="openEntry('${entry.id}')">
+          <div class="entry-item-title">
+            ${entry.title || 'Untitled Entry'}
+          </div>
+          <div class="entry-item-meta">
+            <span>${moodMap[entry.mood_score]?.emoji || '😐'}</span>
+            <span>${entry.mood || 'No mood'}</span>
+            <span>•</span>
+            <span>${formatDateShort(entry.created_at)}</span>
+          </div>
+          <div class="entry-item-preview">
+            ${truncate(entry.content?.replace(/<[^>]*>/g, '') || '', 60)}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ----------------------------------------------------------
+    // OPEN ENTRY IN EDITOR
+    // Loads a saved entry into the editor for viewing or editing
+    // ----------------------------------------------------------
+    window.openEntry = function(entryId) {
+      const entry = allEntries.find(e => e.id === entryId);
+      if (!entry) return;
+
+      editingEntryId = entryId;
+
+      document.getElementById('entryTitle').value = entry.title || '';
+      quill.root.innerHTML = entry.content || '';
+      moodSlider.value = entry.mood_score || 5;
+      moodEmoji.textContent = moodMap[entry.mood_score]?.emoji || '😐';
+      moodLabel.textContent = moodMap[entry.mood_score]?.label || 'Neutral';
+      document.getElementById('healthNotes').value = entry.health_notes || '';
+      document.getElementById('editorDateLabel').textContent =
+        formatDate(entry.created_at);
+
+      // Load tags
+      currentTags = entry.tags || [];
+      renderTags();
+
+      // Show AI response if it exists
+      if (entry.health_ai_response) {
+        document.getElementById('aiHealthText').textContent = entry.health_ai_response;
+        document.getElementById('aiHealthResponse').classList.add('visible');
+      } else {
+        document.getElementById('aiHealthResponse').classList.remove('visible');
+      }
+
+      // Show delete button
+      document.getElementById('deleteEntryBtn').style.display = 'inline-flex';
+
+      // Highlight active entry in list
+      renderEntriesList(allEntries);
+    };
+
+    // ----------------------------------------------------------
+    // NEW ENTRY BUTTON
+    // Clears the editor for a fresh entry
+    // ----------------------------------------------------------
+    document.getElementById('newEntryBtn').addEventListener('click', clearEditor);
+    document.getElementById('clearEditorBtn').addEventListener('click', clearEditor);
+
+    function clearEditor() {
+      editingEntryId = null;
+      document.getElementById('entryTitle').value = '';
+      quill.setContents([]);
+      moodSlider.value = 5;
+      moodEmoji.textContent = '😐';
+      moodLabel.textContent = 'Neutral';
+      document.getElementById('healthNotes').value = '';
+      document.getElementById('aiHealthResponse').classList.remove('visible');
+      document.getElementById('aiHealthText').textContent = '';
+      document.getElementById('editorDateLabel').textContent = 'New entry';
+      document.getElementById('deleteEntryBtn').style.display = 'none';
+      currentTags = [];
+      renderTags();
+    }
+
+    // ----------------------------------------------------------
+    // AI HEALTH SUGGESTION
+    // Sends health notes to Claude API and shows suggestions
+    // Only works when online
+    // ----------------------------------------------------------
+    document.getElementById('getAiHealthBtn').addEventListener('click', async () => {
+      const healthNotes = document.getElementById('healthNotes').value.trim();
+
+      if (!healthNotes) {
+        showToast('Please describe your health status first.', 'warning');
+        return;
+      }
+
+      if (!isOnline()) {
+        showToast('AI suggestions require an internet connection.', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('getAiHealthBtn');
+      btn.textContent = 'Thinking...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: `You are a friendly health assistant. The user has described their health status as follows: "${healthNotes}". 
+
+Please provide:
+1. A brief assessment of the symptoms
+2. Simple first aid or home remedies they can try
+3. Whether they should see a doctor and how urgently
+
+Keep your response clear, friendly, and under 200 words. Always remind them you are not a doctor and this is not a diagnosis.`
+            }]
+          })
+        });
+
+        const data = await response.json();
+        const aiText = data.content?.[0]?.text || 'No response received.';
+
+        document.getElementById('aiHealthText').textContent = aiText;
+        document.getElementById('aiHealthResponse').classList.add('visible');
+
+      } catch (err) {
+        showToast('Failed to get AI suggestion. Try again.', 'error');
+      } finally {
+        btn.innerHTML = '<i class="ri-robot-line"></i> Get AI Health Suggestion';
+        btn.disabled = false;
+      }
+    });
+
+    // ----------------------------------------------------------
+    // SAVE ENTRY
+    // Inserts or updates journal entry in Supabase
+    // ----------------------------------------------------------
+    document.getElementById('saveEntryBtn').addEventListener('click', async () => {
+      const title       = document.getElementById('entryTitle').value.trim();
+      const content     = quill.root.innerHTML;
+      const moodScore   = parseInt(moodSlider.value);
+      const mood        = moodMap[moodScore].label;
+      const healthNotes = document.getElementById('healthNotes').value.trim();
+      const aiResponse  = document.getElementById('aiHealthText').textContent || null;
+
+      if (!content || content === '<p><br></p>') {
+        showToast('Please write something before saving.', 'warning');
+        return;
+      }
+
+      const payload = {
+        title: title || null,
+        content,
+        mood,
+        mood_score: moodScore,
+        health_notes: healthNotes || null,
+        health_ai_response: aiResponse,
+        tags: currentTags.length > 0 ? currentTags : null
+      };
+
+      if (editingEntryId) {
+        const { error } = await supabase
+          .from('journal_entries')
+          .update(payload)
+          .eq('id', editingEntryId);
+        if (error) { showToast('Failed to update entry.', 'error'); return; }
+        showToast('Entry updated.', 'success');
+      } else {
+        const { error } = await supabase
+          .from('journal_entries')
+          .insert(payload);
+        if (error) { showToast('Failed to save entry.', 'error'); return; }
+        showToast('Entry saved! 📖', 'success');
+      }
+
+      loadEntries();
+    });
+
+    // ----------------------------------------------------------
+    // DELETE ENTRY
+    // ----------------------------------------------------------
+    document.getElementById('deleteEntryBtn').addEventListener('click', async () => {
+      if (!editingEntryId) return;
+      if (!confirm('Delete this journal entry?')) return;
+
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', editingEntryId);
+
+      if (error) { showToast('Failed to delete entry.', 'error'); return; }
+      showToast('Entry deleted.', 'info');
+      clearEditor();
+      loadEntries();
+    });
+
+    // ----------------------------------------------------------
+    // SEARCH ENTRIES
+    // Filters entries list by title or content
+    // ----------------------------------------------------------
+    document.getElementById('entriesSearch').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allEntries.filter(entry =>
+        (entry.title || '').toLowerCase().includes(query) ||
+        (entry.content || '').replace(/<[^>]*>/g, '').toLowerCase().includes(query) ||
+        (entry.mood || '').toLowerCase().includes(query)
+      );
+      renderEntriesList(filtered);
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    loadEntries();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</body>
+</html>
