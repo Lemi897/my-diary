@@ -142,3 +142,19 @@ export function isOnline() {
 
 // Calls a callback whenever online/offline status changes
 // Usage: onConnectivityChange((
+// ------------------------------------------------------------
+// TOAST NOTIFICATION
+// Supports: showing toast messages across all pages
+// Call showToast('Saved!', 'success') from any module
+// Types: 'success', 'error', 'warning', 'info'
+// ------------------------------------------------------------
+export function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('toast-hide');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
