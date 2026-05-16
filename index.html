@@ -548,7 +548,7 @@
 
     // ----------------------------------------------------------
     // STREAK AUTO-INCREMENT
-    // Runs on every page load. Checks last_login date:
+    // Runs on every page load. Checks last_active_date date:
     //   - Same day  → no change (already counted today)
     //   - Yesterday → increment streak (consecutive day!)
     //   - Older     → reset streak to 1 (broke the chain)
@@ -577,13 +577,13 @@
           current_streak: 1,
           longest_streak: 1,
           total_xp: 10,
-          last_login: today
+          last_active_date: today
         });
         showToast('🔥 Day 1 streak started! Keep it up!', 'success');
         return;
       }
 
-      const lastLogin = data.last_login; // 'YYYY-MM-DD' string
+      const lastLogin = data.last_active_date; // 'YYYY-MM-DD' string
 
       if (lastLogin === today) {
         // Already logged in today — nothing to do
@@ -617,7 +617,7 @@
         current_streak: newStreak,
         longest_streak: newLongest,
         total_xp: xpEarned,
-        last_login: today
+        last_active_date: today
       }).eq('id', data.id);
     }
 
