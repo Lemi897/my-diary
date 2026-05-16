@@ -546,6 +546,81 @@
       150: { name: 'Cyberpunk',   key: 'cyberpunk' }
     };
 
+    // ----------------------------------------------------------
+    // STREAK AUTO-INCREMENT
+    // Runs on every page load. Checks last_login date:
+    //   - Same day  → no change (already counted today)
+    //   - Yesterday → increment streak (consecutive day!)
+    //   - Older     → reset streak to 1 (broke the chain)
+    //   - No row    → create first row (brand new user)
+    // Also awards 10 XP per streak day and tracks longest.
+    // ----------------------------------------------------------
+    async function updateStreakOnLogin() {
+      const today = todayDate();
+
+      // Fetch existing streak row
+      const { data, error } = await supabase
+        .from('streaks')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows found, which is fine for new users
+        console.warn('Streak fetch error:', error.message);
+        return;
+      }
+
+      if (!data) {
+        // Brand new user — create their first streak row
+        await supabase.from('streaks').insert({
+          current_streak: 1,
+          longest_streak: 1,
+          total_xp: 10,
+          last_login: today
+        });
+        showToast('🔥 Day 1 streak started! Keep it up!', 'success');
+        return;
+      }
+
+      const lastLogin = data.last_login; // 'YYYY-MM-DD' string
+
+      if (lastLogin === today) {
+        // Already logged in today — nothing to do
+        return;
+      }
+
+      // Calculate difference in days between last login and today
+      const last = new Date(lastLogin);
+      const now  = new Date(today);
+      const diffDays = Math.round((now - last) / (1000 * 60 * 60 * 24));
+
+      let newStreak, newLongest, xpEarned;
+
+      if (diffDays === 1) {
+        // Consecutive day! Extend the streak
+        newStreak  = data.current_streak + 1;
+        newLongest = Math.max(newStreak, data.longest_streak);
+        xpEarned   = data.total_xp + 10;
+        showToast(`🔥 ${newStreak} day streak! +10 XP`, 'success');
+      } else {
+        // Streak broken — reset to 1
+        newStreak  = 1;
+        newLongest = data.longest_streak; // keep the record
+        xpEarned   = data.total_xp + 10; // still earn XP for today
+        if (diffDays > 1) {
+          showToast('😬 Streak reset — but you\'re back! Day 1 again.', 'info');
+        }
+      }
+
+      await supabase.from('streaks').update({
+        current_streak: newStreak,
+        longest_streak: newLongest,
+        total_xp: xpEarned,
+        last_login: today
+      }).eq('id', data.id);
+    }
+
     async function loadStreak() {
       const { data, error } = await supabase
         .from('streaks')
@@ -808,6 +883,9 @@
       setGreeting();
       loadDailyQuote();
       updateOnlineBadge(isOnline());
+
+      // Update streak first (sequential — must run before loadStreak reads the new value)
+      await updateStreakOnLogin();
 
       // Load data from Supabase (all run in parallel)
       await Promise.all([
