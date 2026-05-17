@@ -839,7 +839,7 @@
     // ----------------------------------------------------------
     function loadPageVerse() {
       try {
-        const verse = getVerseFromLibrary('Personal');
+        const verse = getVerseFromLibrary('goals');
         document.getElementById('goalsVerse_text').textContent = `"${verse.text}"`;
         document.getElementById('goalsVerse_ref').textContent = verse.ref;
       } catch(e) {

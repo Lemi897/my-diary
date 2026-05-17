@@ -394,7 +394,7 @@
     import { getVerseFromLibrary } from './js/scripture.js';
 
     function loadHabitScripture() {
-      { const verse = getVerseFromLibrary('discipline');
+      { const verse = getVerseFromLibrary('habits');
         document.getElementById('habitScripture').textContent = `"${verse.text}"`;
         document.getElementById('habitScriptureRef').textContent = verse.ref;
       });
@@ -605,7 +605,7 @@
       renderHabits();
       updateSummary();
       if (newDone) {
-        { const verse = getVerseFromLibrary('discipline');
+        { const verse = getVerseFromLibrary('habits');
           showToast(`💪 "${verse.text.substring(0,55)}..." — ${verse.ref}`, 'success');
         });
       }
