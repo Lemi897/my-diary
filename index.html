@@ -522,7 +522,7 @@
       onConnectivityChange,
       truncate
     } from './js/utils.js';
-    import { getVerse, renderVerseCard } from './js/scripture.js';
+    import { getVerseFromLibrary } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME LOADER
@@ -791,15 +791,19 @@
     // SCRIPTURE ENGINE
     // Curated verse library by theme. Picks a verse daily using
     // ----------------------------------------------------------
-    // DAILY SCRIPTURE
-    // Uses scripture.js engine — curated library, AI fallback
+    // DAILY SCRIPTURE — sync from library (no network needed)
     // ----------------------------------------------------------
-    async function loadDailyQuote() {
-      const verse = await getVerse('daily');
-      document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
-      document.getElementById('quoteAuthor').textContent = verse.ref;
-      if (verse.apply) {
-        document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
+    function loadDailyQuote() {
+      try {
+        const verse = getVerseFromLibrary('daily');
+        document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
+        document.getElementById('quoteAuthor').textContent = verse.ref;
+        if (verse.apply) {
+          document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
+        }
+      } catch(e) {
+        document.getElementById('dailyQuote').textContent = '"This is the day the LORD has made; let us rejoice and be glad in it."';
+        document.getElementById('quoteAuthor').textContent = 'Psalm 118:24';
       }
     }
 
@@ -828,7 +832,10 @@
       loadDailyQuote();
       updateOnlineBadge(isOnline());
 
-      // Load data from Supabase (all run in parallel)
+      // Update streak first (sequential — must complete before loadStreak reads new value)
+      await updateStreakOnLogin();
+
+      // Load all data in parallel after streak is updated
       await Promise.all([
         loadUserName(),
         loadStreak(),
