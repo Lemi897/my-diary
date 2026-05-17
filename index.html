@@ -160,22 +160,55 @@
       margin-top: 0.25rem;
     }
 
-    /* Quote card */
+    /* Scripture card */
     .quote-card {
-      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
-      border-left: 3px solid var(--accent-1);
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-left: 4px solid #f0c040;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quote-card::after {
+      content: '✝';
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 3rem;
+      opacity: 0.07;
+      color: #f0c040;
+    }
+
+    .scripture-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f0c040;
+      margin-bottom: 0.5rem;
     }
 
     .quote-text {
       font-size: 1rem;
       font-style: italic;
-      color: var(--text-secondary);
-      line-height: 1.7;
+      color: #e8e8f0;
+      line-height: 1.8;
     }
 
     .quote-author {
-      font-size: 0.8rem;
-      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #f0c040;
+      margin-top: 0.6rem;
+    }
+
+    .scripture-theme-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: rgba(240,192,64,0.15);
+      color: #f0c040;
+      border-radius: 20px;
+      padding: 0.15rem 0.6rem;
       margin-top: 0.5rem;
     }
 
@@ -427,13 +460,12 @@
           </div>
         </div>
 
-        <!-- Daily motivational quote -->
+        <!-- Daily Scripture -->
         <div class="card quote-card">
-          <div class="card-title">Daily Quote</div>
-          <div class="quote-text" id="dailyQuote">
-            "The secret of getting ahead is getting started."
-          </div>
-          <div class="quote-author" id="quoteAuthor">- Mark Twain</div>
+          <div class="scripture-label">📖 Verse of the Day</div>
+          <div class="quote-text" id="dailyQuote">Loading scripture...</div>
+          <div class="quote-author" id="quoteAuthor"></div>
+          <div class="scripture-theme-tag" id="scriptureThemeTag"></div>
         </div>
 
       </div>
@@ -490,6 +522,7 @@
       onConnectivityChange,
       truncate
     } from './js/utils.js';
+    import { getVerse, renderVerseCard } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME LOADER
@@ -545,81 +578,6 @@
       120: { name: 'Forest',      key: 'forest' },
       150: { name: 'Cyberpunk',   key: 'cyberpunk' }
     };
-
-    // ----------------------------------------------------------
-    // STREAK AUTO-INCREMENT
-    // Runs on every page load. Checks last_active_date date:
-    //   - Same day  → no change (already counted today)
-    //   - Yesterday → increment streak (consecutive day!)
-    //   - Older     → reset streak to 1 (broke the chain)
-    //   - No row    → create first row (brand new user)
-    // Also awards 10 XP per streak day and tracks longest.
-    // ----------------------------------------------------------
-    async function updateStreakOnLogin() {
-      const today = todayDate();
-
-      // Fetch existing streak row
-      const { data, error } = await supabase
-        .from('streaks')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows found, which is fine for new users
-        console.warn('Streak fetch error:', error.message);
-        return;
-      }
-
-      if (!data) {
-        // Brand new user — create their first streak row
-        await supabase.from('streaks').insert({
-          current_streak: 1,
-          longest_streak: 1,
-          total_xp: 10,
-          last_active_date: today
-        });
-        showToast('🔥 Day 1 streak started! Keep it up!', 'success');
-        return;
-      }
-
-      const lastLogin = data.last_active_date; // 'YYYY-MM-DD' string
-
-      if (lastLogin === today) {
-        // Already logged in today — nothing to do
-        return;
-      }
-
-      // Calculate difference in days between last login and today
-      const last = new Date(lastLogin);
-      const now  = new Date(today);
-      const diffDays = Math.round((now - last) / (1000 * 60 * 60 * 24));
-
-      let newStreak, newLongest, xpEarned;
-
-      if (diffDays === 1) {
-        // Consecutive day! Extend the streak
-        newStreak  = data.current_streak + 1;
-        newLongest = Math.max(newStreak, data.longest_streak);
-        xpEarned   = data.total_xp + 10;
-        showToast(`🔥 ${newStreak} day streak! +10 XP`, 'success');
-      } else {
-        // Streak broken — reset to 1
-        newStreak  = 1;
-        newLongest = data.longest_streak; // keep the record
-        xpEarned   = data.total_xp + 10; // still earn XP for today
-        if (diffDays > 1) {
-          showToast('😬 Streak reset — but you\'re back! Day 1 again.', 'info');
-        }
-      }
-
-      await supabase.from('streaks').update({
-        current_streak: newStreak,
-        longest_streak: newLongest,
-        total_xp: xpEarned,
-        last_active_date: today
-      }).eq('id', data.id);
-    }
 
     async function loadStreak() {
       const { data, error } = await supabase
@@ -829,37 +787,23 @@
     // ----------------------------------------------------------
     // DAILY MOTIVATIONAL QUOTE
     // Rotates through a local list daily using date as seed
-    // No internet needed for quotes
     // ----------------------------------------------------------
-    function loadDailyQuote() {
-      const quotes = [
-        { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
-        { text: "It always seems impossible until it's done.", author: "Nelson Mandela" },
-        { text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
-        { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-        { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-        { text: "Act as if what you do makes a difference. It does.", author: "William James" },
-        { text: "Success is not final, failure is not fatal: it is the courage to continue.", author: "Winston Churchill" },
-        { text: "You are never too old to set another goal or to dream a new dream.", author: "C.S. Lewis" },
-        { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-        { text: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke" },
-        { text: "Discipline is the bridge between goals and accomplishment.", author: "Jim Rohn" },
-        { text: "Small daily improvements are the key to staggering long-term results.", author: "Robin Sharma" },
-        { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
-        { text: "A year from now you may wish you had started today.", author: "Karen Lamb" },
-        { text: "Do something today that your future self will thank you for.", author: "Sean Patrick Flanery" }
-      ];
-
-      // Use today's date as a seed to pick a consistent quote per day
-      const today = new Date();
-      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-      const index = seed % quotes.length;
-      const quote = quotes[index];
-
-      document.getElementById('dailyQuote').textContent = `"${quote.text}"`;
-      document.getElementById('quoteAuthor').textContent = `- ${quote.author}`;
+    // SCRIPTURE ENGINE
+    // Curated verse library by theme. Picks a verse daily using
+    // ----------------------------------------------------------
+    // DAILY SCRIPTURE
+    // Uses scripture.js engine — curated library, AI fallback
+    // ----------------------------------------------------------
+    async function loadDailyQuote() {
+      const verse = await getVerse('daily');
+      document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
+      document.getElementById('quoteAuthor').textContent = verse.ref;
+      if (verse.apply) {
+        document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
+      }
     }
 
+    // ----------------------------------------------------------
     // ----------------------------------------------------------
     // PROFILE NAME LOADER
     // Loads user's name from Supabase profiles table
@@ -883,9 +827,6 @@
       setGreeting();
       loadDailyQuote();
       updateOnlineBadge(isOnline());
-
-      // Update streak first (sequential — must run before loadStreak reads the new value)
-      await updateStreakOnLogin();
 
       // Load data from Supabase (all run in parallel)
       await Promise.all([
