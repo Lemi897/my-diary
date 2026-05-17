@@ -608,7 +608,7 @@
       showToast,
       truncate
     } from './js/utils.js';
-    import { getVerseFromLibrary } from './js/scripture.js';
+    import { getVerse } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -954,15 +954,10 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
       // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
-    function loadPageVerse() {
-      try {
-        const verse = getVerseFromLibrary('journal');
-        document.getElementById('journalVerse_text').textContent = `"${verse.text}"`;
-        document.getElementById('journalVerse_ref').textContent = verse.ref;
-      } catch(e) {
-        document.getElementById('journalVerse_text').textContent = '"Whatever you do, work at it with all your heart, as working for the Lord."';
-        document.getElementById('journalVerse_ref').textContent = 'Colossians 3:23';
-      }
+    async function loadPageVerse() {
+      const verse = await getVerse('journal');
+      document.getElementById('journalVerse_text').textContent = `"${verse.text}"`;
+      document.getElementById('journalVerse_ref').textContent = verse.ref;
     }
 
         loadPageVerse();

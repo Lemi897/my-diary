@@ -391,10 +391,10 @@
       showToast,
       capitalize
     } from './js/utils.js';
-    import { getVerseFromLibrary } from './js/scripture.js';
+    import { getVerse } from './js/scripture.js';
 
     function loadHabitScripture() {
-      { const verse = getVerseFromLibrary('habits');
+      getVerse('discipline').then(verse => {
         document.getElementById('habitScripture').textContent = `"${verse.text}"`;
         document.getElementById('habitScriptureRef').textContent = verse.ref;
       });
@@ -605,7 +605,7 @@
       renderHabits();
       updateSummary();
       if (newDone) {
-        { const verse = getVerseFromLibrary('habits');
+        getVerse('discipline').then(verse => {
           showToast(`💪 "${verse.text.substring(0,55)}..." — ${verse.ref}`, 'success');
         });
       }

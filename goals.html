@@ -507,7 +507,7 @@
       showToast,
       truncate
     } from './js/utils.js';
-    import { getVerseFromLibrary } from './js/scripture.js';
+    import { getVerse } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -837,15 +837,10 @@
       // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
-    function loadPageVerse() {
-      try {
-        const verse = getVerseFromLibrary('goals');
-        document.getElementById('goalsVerse_text').textContent = `"${verse.text}"`;
-        document.getElementById('goalsVerse_ref').textContent = verse.ref;
-      } catch(e) {
-        document.getElementById('goalsVerse_text').textContent = '"Whatever you do, work at it with all your heart, as working for the Lord."';
-        document.getElementById('goalsVerse_ref').textContent = 'Colossians 3:23';
-      }
+    async function loadPageVerse() {
+      const verse = await getVerse('Personal');
+      document.getElementById('goalsVerse_text').textContent = `"${verse.text}"`;
+      document.getElementById('goalsVerse_ref').textContent = verse.ref;
     }
 
         loadPageVerse();
