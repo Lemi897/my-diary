@@ -360,6 +360,14 @@
         </button>
       </div>
 
+      <!-- Daily Scripture -->
+      <div class="card" style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-left:4px solid #f0c040;margin-bottom:1rem;position:relative;overflow:hidden;">
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#f0c040;margin-bottom:0.4rem;">📖 Word for Today</div>
+        <div style="font-size:0.9rem;font-style:italic;color:#e8e8f0;line-height:1.7;" id="financeVerse_text">Loading...</div>
+        <div style="font-size:0.8rem;font-weight:600;color:#f0c040;margin-top:0.4rem;" id="financeVerse_ref"></div>
+        <div style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:2.5rem;opacity:0.07;color:#f0c040;">✝</div>
+      </div>
+
       <!-- Summary stats -->
       <div class="finance-summary">
         <div class="fin-stat-card">
@@ -743,6 +751,7 @@
       showToast,
       truncate
     } from './js/utils.js';
+    import { getVerse } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -1066,7 +1075,17 @@
 
       showToast(`KSH ${amount} deposited! 🏦`, 'success');
       input.value = '';
-      loadAll();
+      // ----------------------------------------------------------
+    // SCRIPTURE VERSE LOADER
+    // ----------------------------------------------------------
+    async function loadPageVerse() {
+      const verse = await getVerse('spending');
+      document.getElementById('financeVerse_text').textContent = `"${verse.text}"`;
+      document.getElementById('financeVerse_ref').textContent = verse.ref;
+    }
+
+        loadPageVerse();
+    loadAll();
     };
 
     // ----------------------------------------------------------
