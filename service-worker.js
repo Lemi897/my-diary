@@ -6,7 +6,7 @@
 // for Supabase API calls so data stays fresh when online.
 // ============================================================
 
-const CACHE_NAME = 'my-diary-v2';
+const CACHE_NAME = 'my-diary-v99';
 
 // Files to cache on install for full offline support
 const STATIC_ASSETS = [
