@@ -751,7 +751,7 @@
       showToast,
       truncate
     } from './js/utils.js';
-    import { getVerse } from './js/scripture.js';
+    import { getVerseFromLibrary } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -1078,8 +1078,8 @@
       // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
-    async function loadPageVerse() {
-      const verse = await getVerse('spending');
+    function loadPageVerse() {
+      const verse = getVerseFromLibrary('spending');
       document.getElementById('financeVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('financeVerse_ref').textContent = verse.ref;
     }

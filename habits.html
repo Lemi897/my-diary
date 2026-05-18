@@ -391,13 +391,12 @@
       showToast,
       capitalize
     } from './js/utils.js';
-    import { getVerse } from './js/scripture.js';
+    import { getVerseFromLibrary } from './js/scripture.js';
 
     function loadHabitScripture() {
-      getVerse('discipline').then(verse => {
+      const verse = getVerseFromLibrary('habits');
         document.getElementById('habitScripture').textContent = `"${verse.text}"`;
         document.getElementById('habitScriptureRef').textContent = verse.ref;
-      });
     }
 
     // ----------------------------------------------------------
@@ -605,9 +604,8 @@
       renderHabits();
       updateSummary();
       if (newDone) {
-        getVerse('discipline').then(verse => {
+        const verse = getVerseFromLibrary('habits');
           showToast(`💪 "${verse.text.substring(0,55)}..." — ${verse.ref}`, 'success');
-        });
       }
 
     // ----------------------------------------------------------

@@ -468,7 +468,7 @@
       showToast,
       truncate
     } from './js/utils.js';
-    import { getVerse } from './js/scripture.js';
+    import { getVerseFromLibrary } from './js/scripture.js';
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -713,8 +713,8 @@
       // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
-    async function loadPageVerse() {
-      const verse = await getVerse('Work & Productivity');
+    function loadPageVerse() {
+      const verse = getVerseFromLibrary('work');
       document.getElementById('tasksVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('tasksVerse_ref').textContent = verse.ref;
     }
