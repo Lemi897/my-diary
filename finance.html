@@ -1075,7 +1075,10 @@
 
       showToast(`KSH ${amount} deposited! 🏦`, 'success');
       input.value = '';
-      // ----------------------------------------------------------
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -1083,8 +1086,6 @@
       document.getElementById('financeVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('financeVerse_ref').textContent = verse.ref;
     }
-
-    };
 
     loadPageVerse();
     loadAll();

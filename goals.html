@@ -834,7 +834,10 @@
 
       if (error) { showToast('Failed to update goal.', 'error'); return; }
       if (newStatus === 'completed') showToast('Goal completed! 🎯', 'success');
-      // ----------------------------------------------------------
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -842,8 +845,6 @@
       document.getElementById('goalsVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('goalsVerse_ref').textContent = verse.ref;
     }
-
-    };
 
     loadPageVerse();
     loadGoals();
