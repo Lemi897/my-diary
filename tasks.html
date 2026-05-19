@@ -709,8 +709,10 @@
       });
 
       if (error) { showToast('Failed to add subtask.', 'error'); return; }
-      showToast('Subtask added.', 'success');
-      // ----------------------------------------------------------
+showToast('Subtask added.', 'success');
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -718,8 +720,6 @@
       document.getElementById('tasksVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('tasksVerse_ref').textContent = verse.ref;
     }
-
-    };
 
     loadPageVerse();
     loadTasks();
