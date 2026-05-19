@@ -948,10 +948,12 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
           .from('journal_entries')
           .insert(payload);
         if (error) { showToast('Failed to save entry.', 'error'); return; }
-        showToast('Entry saved! 📖', 'success');
+       showToast('Entry saved! 📖', 'success');
       }
 
-      // ----------------------------------------------------------
+    });
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -959,8 +961,6 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
       document.getElementById('journalVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('journalVerse_ref').textContent = verse.ref;
     }
-
-    });
 
     loadPageVerse();
     loadEntries();
