@@ -350,18 +350,7 @@
 </head>
 
 <body>
-  <!-- AUTH GUARD: hides page until session confirmed, then reveals -->
-  <style>#authGate{display:none}</style>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
-    const { data: { session } } = await _sb.auth.getSession();
-    if (!session) {
-      window.location.replace('login.html');
-    } else {
-      document.getElementById('authGate').style.display = '';
-    }
-  </script>
+  <!-- auth handled inside main module script -->
   <div id="authGate">
   <div class="app-wrapper">
 
@@ -589,6 +578,20 @@
   ============================================================ -->
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
+
+    // ----------------------------------------------------------
+    // AUTH CHECK — runs first, before anything else
+    // Single Supabase client via supabase.js (no duplicate)
+    // Sets userId immediately so all queries have it ready
+    // ----------------------------------------------------------
+    {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('login.html');
+      } else {
+        document.getElementById('authGate').style.display = '';
+      }
+    }
 
     // Module-level userId — set in init(), used by all functions
     let userId = null;
@@ -963,8 +966,9 @@
     // INIT
     // ----------------------------------------------------------
     async function init() {
-      userId = (await getCurrentUser())?.id;
-      if (!userId) return; // safety: guard redundancy
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      userId = _s?.user?.id;
+      if (!userId) { window.location.replace('login.html'); return; }
       await Promise.all([loadProfile(), loadStats(), loadStreak()]);
       renderThemes();
     }
@@ -974,11 +978,8 @@
     // SIGN OUT
     // ----------------------------------------------------------
     window.signOut = async function() {
-      import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm').then(async ({ createClient }) => {
-        const sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
-        await sb.auth.signOut();
-        window.location.replace('login.html');
-      });
+      await supabase.auth.signOut();
+      window.location.replace('login.html');
     };
     init();
   </script>

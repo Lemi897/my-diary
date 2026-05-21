@@ -389,18 +389,7 @@
 </head>
 
 <body>
-  <!-- AUTH GUARD: hides page until session confirmed, then reveals -->
-  <style>#authGate{display:none}</style>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
-    const { data: { session } } = await _sb.auth.getSession();
-    if (!session) {
-      window.location.replace('login.html');
-    } else {
-      document.getElementById('authGate').style.display = '';
-    }
-  </script>
+  <!-- auth handled inside main module script -->
 <div id="authGate">
   <div class="app-wrapper">
 
@@ -624,6 +613,20 @@
   ============================================================ -->
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
+
+    // ----------------------------------------------------------
+    // AUTH CHECK — runs first, before anything else
+    // Single Supabase client via supabase.js (no duplicate)
+    // Sets userId immediately so all queries have it ready
+    // ----------------------------------------------------------
+    {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('login.html');
+      } else {
+        document.getElementById('authGate').style.display = '';
+      }
+    }
     import {
       todayDate,
       formatDate,
@@ -1003,7 +1006,10 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
       document.getElementById('journalVerse_ref').textContent = verse.ref;
     }
     loadPageVerse();
-    await loadEntries();
+    const { data: { session: _s } } = await supabase.auth.getSession();
+    userId = _s?.user?.id;
+    if (!userId) { window.location.replace('login.html'); }
+    else { await loadEntries(); }
     });
 
     // ----------------------------------------------------------

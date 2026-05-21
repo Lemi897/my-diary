@@ -309,13 +309,7 @@
 </head>
 
 <body>
-  <!-- AUTH GUARD: redirect to login if no session -->
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
-    const { data: { session } } = await _sb.auth.getSession();
-    if (!session) window.location.replace('login.html');
-  </script>
+  <!-- auth handled inside main module script -->
     <!-- LOADING SCREEN -->
   <div id="appLoader" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;">
     <div style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;font-family:'Plus Jakarta Sans',sans-serif;animation:loaderPop 0.7s ease forwards;opacity:0;transform:scale(0.8);">My<span style="color:#e94560;">Diary</span></div>
@@ -556,8 +550,18 @@
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
 
-    // Module-level userId — set in init(), used by all functions
+    // Module-level userId — set after auth check below
     let userId = null;
+
+    // ----------------------------------------------------------
+    // AUTH CHECK — single client, runs before init()
+    // ----------------------------------------------------------
+    {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('login.html');
+      }
+    }
 
     // Theme already applied in <head> blocking script — no re-apply needed
 
@@ -965,8 +969,9 @@
     // INIT - Run all loaders when page loads
     // ----------------------------------------------------------
     async function init() {
-      userId = (await getCurrentUser())?.id;
-      if (!userId) return; // safety: guard redundancy
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      userId = _s?.user?.id;
+      if (!userId) { window.location.replace('login.html'); return; }
       loaderProgress(10, 'Loading...');
       setGreeting();
       loadDailyQuote();
@@ -994,11 +999,8 @@
     // SIGN OUT
     // ----------------------------------------------------------
     window.signOut = async function() {
-      import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm').then(async ({ createClient }) => {
-        const sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
-        await sb.auth.signOut();
-        window.location.replace('login.html');
-      });
+      await supabase.auth.signOut();
+      window.location.replace('login.html');
     };
     init();
   </script>
