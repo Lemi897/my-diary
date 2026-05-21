@@ -1081,7 +1081,7 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
     // ----------------------------------------------------------
     async function init() {
       const { data: { session: _s } } = await supabase.auth.getSession();
-      const userId = _s?.user?.id;
+      userId = _s?.user?.id;
       if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
       loaderProgress(20, 'Loading journal...');
       loadPageVerse();
