@@ -11,6 +11,7 @@ const CACHE_NAME = 'my-diary-v99';
 // Files to cache on install for full offline support
 const STATIC_ASSETS = [
   '/',
+  '/login.html',
   '/index.html',
   '/habits.html',
   '/tasks.html',

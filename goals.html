@@ -21,6 +21,13 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/themes.css" />
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
   <style>
     /* --------------------------------------------------------
@@ -289,6 +296,13 @@
 </head>
 
 <body>
+  <!-- AUTH GUARD: redirect to login if no session -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) window.location.replace('login.html');
+  </script>
     <!-- LOADING SCREEN -->
   <div id="appLoader" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;">
     <div style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;font-family:'Plus Jakarta Sans',sans-serif;animation:loaderPop 0.7s ease forwards;opacity:0;transform:scale(0.8);">My<span style="color:#e94560;">Diary</span></div>
@@ -330,6 +344,7 @@
           <i class="ri-user-3-line nav-icon"></i> Profile
         </a>
       </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
       <div class="online-badge" id="onlineBadge">
         <div class="dot"></div>
         <span class="status-text">Online</span>
@@ -432,6 +447,10 @@
         <a href="finance.html" class="bottom-nav-link">
           <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
         </a>
+        <a href="profile.html" class="bottom-nav-link">
+          <i class="ri-user-3-line nav-icon"></i>
+          <span>Profile</span>
+        </a>
       </div>
     </nav>
 
@@ -510,15 +529,19 @@
     type filter tabs, summary stats, category and status charts.
   ============================================================ -->
   <script type="module">
-    import { supabase } from './js/supabase.js';
+    import { supabase, getCurrentUser } from './js/supabase.js';
     import {
       formatDateShort,
       isOnline,
       onConnectivityChange,
+      replayOfflineQueue,
       showToast,
       truncate
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
+
+    // Module-level userId — set in init(), used by all functions
+    let userId = null;
 
 
     // ----------------------------------------------------------
@@ -551,7 +574,15 @@
       text.textContent = online ? 'Online' : 'Offline';
     }
     updateOnlineBadge(isOnline());
-    onConnectivityChange(updateOnlineBadge);
+    onConnectivityChange(async (online) => {
+      updateOnlineBadge(online);
+      if (online) {
+        const result = await replayOfflineQueue();
+        if (result && result.replayed > 0) {
+          showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
+        }
+      }
+    });
 
     // ----------------------------------------------------------
     // STATE
@@ -570,8 +601,8 @@
     // ----------------------------------------------------------
     async function loadGoals() {
       const [goalsRes, milestonesRes] = await Promise.all([
-        supabase.from('goals').select('*').order('created_at', { ascending: false }),
-        supabase.from('milestones').select('*').order('created_at', { ascending: true })
+        supabase.from('goals').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+        supabase.from('milestones').select('*').eq('user_id', userId).order('created_at', { ascending: true })
       ]);
 
       if (goalsRes.error) { showToast('Failed to load goals.', 'error'); return; }
@@ -721,7 +752,7 @@
 
             <!-- Goal header -->
             <div class="goal-card-header">
-              <div class="goal-title">${goal.title}</div>
+              <div class="goal-title">${sanitize(goal.title)}</div>
               <div class="goal-actions">
                 <button class="btn btn-ghost btn-sm"
                   onclick="openEditGoal('${goal.id}')">
@@ -736,7 +767,7 @@
 
             <!-- Goal meta -->
             <div class="goal-meta">
-              <span class="badge ${getCatClass(goal.category)}">${goal.category}</span>
+              <span class="badge ${getCatClass(goal.category)}">${sanitize(goal.category || '')}</span>
               <span class="badge status-${goal.status}">${goal.status}</span>
               <span class="badge ${goal.type === 'short_term' ? 'badge-info' : 'badge-accent'}">
                 ${goal.type === 'short_term' ? 'Short Term' : 'Long Term'}
@@ -795,7 +826,7 @@
                     onclick="toggleMilestone('${m.id}', ${m.done})">
                     ${m.done ? '<i class="ri-check-line"></i>' : ''}
                   </div>
-                  <div class="milestone-title ${m.done ? 'done-text' : ''}">${m.title}</div>
+                  <div class="milestone-title ${m.done ? 'done-text' : ''}">${sanitize(m.title)}</div>
                   ${m.target_date ? `
                     <div class="milestone-due">${formatDateShort(m.target_date)}</div>
                   ` : ''}
@@ -912,6 +943,7 @@
       if (!title) return;
 
       const { error } = await supabase.from('milestones').insert({
+        user_id: userId,
         goal_id: goalId,
         title
       });
@@ -926,7 +958,7 @@
     // ----------------------------------------------------------
     window.deleteMilestone = async function(milestoneId) {
       const { error } = await supabase
-        .from('milestones').delete().eq('id', milestoneId);
+        .from('milestones').delete().eq('id', milestoneId).eq('user_id', userId);
       if (error) { showToast('Failed to delete milestone.', 'error'); return; }
       loadGoals();
     };
@@ -936,7 +968,7 @@
     // ----------------------------------------------------------
     window.deleteGoal = async function(goalId) {
       if (!confirm('Delete this goal and all its milestones?')) return;
-      const { error } = await supabase.from('goals').delete().eq('id', goalId);
+      const { error } = await supabase.from('goals').delete().eq('id', goalId).eq('user_id', userId);
       if (error) { showToast('Failed to delete goal.', 'error'); return; }
       showToast('Goal deleted.', 'info');
       loadGoals();
@@ -1008,7 +1040,7 @@
         if (error) { showToast('Failed to update goal.', 'error'); return; }
         showToast('Goal updated.', 'success');
       } else {
-        const { error } = await supabase.from('goals').insert(payload);
+        const { error } = await supabase.from('goals').insert({ ...payload, user_id: userId });
         if (error) { showToast('Failed to save goal.', 'error'); return; }
         showToast('Goal added! 🎯', 'success');
       }

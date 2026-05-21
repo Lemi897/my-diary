@@ -19,6 +19,13 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/themes.css" />
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
   <style>
     /* --------------------------------------------------------
@@ -183,6 +190,13 @@
 </head>
 
 <body>
+  <!-- AUTH GUARD: redirect to login if no session -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) window.location.replace('login.html');
+  </script>
     <!-- LOADING SCREEN -->
   <div id="appLoader" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;">
     <div style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;font-family:'Plus Jakarta Sans',sans-serif;animation:loaderPop 0.7s ease forwards;opacity:0;transform:scale(0.8);">My<span style="color:#e94560;">Diary</span></div>
@@ -224,6 +238,7 @@
           <i class="ri-user-3-line nav-icon"></i> Profile
         </a>
       </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
       <div class="online-badge" id="onlineBadge">
         <div class="dot"></div>
         <span class="status-text">Online</span>
@@ -317,6 +332,10 @@
         <a href="finance.html" class="bottom-nav-link">
           <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
         </a>
+        <a href="profile.html" class="bottom-nav-link active">
+          <i class="ri-user-3-line nav-icon"></i>
+          <span>Profile</span>
+        </a>
       </div>
     </nav>
 
@@ -393,16 +412,20 @@
     category filter, summary stats, online/offline badge.
   ============================================================ -->
   <script type="module">
-    import { supabase } from './js/supabase.js';
+    import { supabase, getCurrentUser } from './js/supabase.js';
     import {
       todayDate,
       formatDate,
       isOnline,
       onConnectivityChange,
+      replayOfflineQueue,
       showToast,
       capitalize
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
+
+    // Module-level userId — set in init(), used by all functions
+    let userId = null;
 
     function loadHabitScripture() {
       const verse = getVerseFromLibrary('habits');
@@ -441,7 +464,15 @@
       text.textContent = online ? 'Online' : 'Offline';
     }
     updateOnlineBadge(isOnline());
-    onConnectivityChange(updateOnlineBadge);
+    onConnectivityChange(async (online) => {
+      updateOnlineBadge(online);
+      if (online) {
+        const result = await replayOfflineQueue();
+        if (result && result.replayed > 0) {
+          showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
+        }
+      }
+    });
 
     // ----------------------------------------------------------
     // STATE
@@ -480,8 +511,8 @@
     // ----------------------------------------------------------
     async function loadHabits() {
       const [habitsRes, logsRes] = await Promise.all([
-        supabase.from('habits').select('*').order('created_at', { ascending: true }),
-        supabase.from('habit_logs').select('*').eq('log_date', today)
+        supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
+        supabase.from('habit_logs').select('*').eq('user_id', userId).eq('log_date', today)
       ]);
 
       if (habitsRes.error) {
@@ -543,9 +574,9 @@
                 ${habit.name}
               </div>
               <div class="habit-meta">
-                <span class="badge ${getCatClass(habit.category)}">${habit.category}</span>
+                <span class="badge ${getCatClass(habit.category)}">${sanitize(habit.category)}</span>
                 ${habit.tracking_type === 'target'
-                  ? `<span>${currentValue} / ${habit.target_value} ${habit.target_unit || ''}</span>`
+                  ? `<span>${currentValue} / ${sanitize(String(habit.target_value))} ${sanitize(habit.target_unit || '')}</span>`
                   : ''}
               </div>
 
@@ -559,7 +590,7 @@
                     onchange="updateTargetValue('${habit.id}', this.value, ${habit.target_value})"
                   />
                   <span class="habit-target-label">
-                    / ${habit.target_value} ${habit.target_unit || ''}
+                    / ${sanitize(String(habit.target_value))} ${sanitize(habit.target_unit || '')}
                   </span>
                   <div class="progress-bar-wrapper" style="flex:1;">
                     <div class="progress-bar-fill"
@@ -623,7 +654,7 @@
         // Insert new log
         const { data, error } = await supabase
           .from('habit_logs')
-          .insert({ habit_id: habitId, log_date: today, done: newDone })
+          .insert({ user_id: userId, habit_id: habitId, log_date: today, done: newDone })
           .select()
           .single();
         if (error) { showToast('Failed to log habit.', 'error'); return; }
@@ -739,7 +770,7 @@
         // Insert new habit
         const { error } = await supabase
           .from('habits')
-          .insert(payload);
+          .insert({ ...payload, user_id: userId });
         if (error) { showToast('Failed to save habit.', 'error'); return; }
         showToast('Habit added! 💪', 'success');
       }
@@ -779,7 +810,7 @@
     // ----------------------------------------------------------
     window.deleteHabit = async function(habitId) {
       if (!confirm('Delete this habit and all its history?')) return;
-      const { error } = await supabase.from('habits').delete().eq('id', habitId);
+      const { error } = await supabase.from('habits').delete().eq('id', habitId).eq('user_id', userId);
       if (error) { showToast('Failed to delete habit.', 'error'); return; }
       showToast('Habit deleted.', 'info');
       loadHabits();

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+  <!-- ============================================================
+    login.html - Authentication Page
+    Handles: Sign up with email+password, Sign in, password reset.
+    Uses Supabase Auth. On success redirects to index.html.
+    No sidebar/bottom-nav — this page is outside the app shell.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="My Diary - Sign in to your account" />
+  <title>Sign In | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+
+  <style>
+    /* --------------------------------------------------------
+       Auth page — standalone, no app shell
+    -------------------------------------------------------- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #0f0f0f;
+      --bg-secondary:  #1a1a2e;
+      --bg-card:       #16213e;
+      --accent-1:      #e94560;
+      --accent-3:      #533483;
+      --text-primary:  #ffffff;
+      --text-secondary:#a0a0b0;
+      --text-muted:    #606070;
+      --border:        #2a2a3e;
+      --danger:        #ef233c;
+      --success:       #00d4aa;
+      --radius:        12px;
+      --radius-sm:     8px;
+      --font-main:     'Plus Jakarta Sans', sans-serif;
+      --transition:    all 0.25s ease;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font-main);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Full-page centered layout */
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(ellipse at top, #1a1a2e 0%, #0f0f0f 70%);
+    }
+
+    /* Auth card */
+    .auth-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+
+    /* Logo */
+    .auth-logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-logo span { color: var(--accent-1); }
+
+    .auth-tagline {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* Tab switcher: Sign In / Sign Up */
+    .auth-tabs {
+      display: flex;
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 1.75rem;
+      gap: 4px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 0.55rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      transition: var(--transition);
+    }
+
+    .auth-tab.active {
+      background-color: var(--accent-1);
+      color: #fff;
+    }
+
+    /* Form elements */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .form-input {
+      width: 100%;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 1rem 0.65rem 2.5rem;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-1);
+      background-color: var(--bg-card);
+    }
+
+    /* Password toggle button */
+    .toggle-pw {
+      position: absolute;
+      right: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+      font-family: var(--font-main);
+    }
+
+    .toggle-pw:hover { color: var(--text-secondary); }
+
+    /* Submit button */
+    .btn-auth {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-main);
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-auth:hover { opacity: 0.9; }
+    .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Error / success message */
+    .auth-message {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .auth-message.error {
+      display: block;
+      background-color: rgba(239,35,60,0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239,35,60,0.3);
+    }
+
+    .auth-message.success {
+      display: block;
+      background-color: rgba(0,212,170,0.12);
+      color: var(--success);
+      border: 1px solid rgba(0,212,170,0.3);
+    }
+
+    /* Forgot password link */
+    .auth-footer-link {
+      display: block;
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .auth-footer-link:hover { color: var(--accent-1); }
+
+    /* Name field (signup only) */
+    #nameGroup { display: none; }
+  </style>
+</head>
+
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+
+      <!-- Logo -->
+      <div class="auth-logo">My<span>Diary</span></div>
+      <div class="auth-tagline">Your personal life tracker</div>
+
+      <!-- Sign In / Sign Up tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignin"  onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab"        id="tabSignup"  onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Message area -->
+      <div class="auth-message" id="authMessage"></div>
+
+      <!-- Name field (signup only) -->
+      <div class="form-group" id="nameGroup">
+        <label class="form-label" for="nameInput">Your Name</label>
+        <div class="input-wrapper">
+          <i class="ri-user-3-line input-icon"></i>
+          <input class="form-input" type="text" id="nameInput" placeholder="e.g. Maestro" autocomplete="name" />
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="emailInput">Email Address</label>
+        <div class="input-wrapper">
+          <i class="ri-mail-line input-icon"></i>
+          <input class="form-input" type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="passwordInput">Password</label>
+        <div class="input-wrapper">
+          <i class="ri-lock-line input-icon"></i>
+          <input class="form-input" type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password" />
+          <button class="toggle-pw" type="button" onclick="togglePassword()" id="togglePwBtn">
+            <i class="ri-eye-line" id="pwEyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-auth" id="authBtn" onclick="handleAuth()">
+        <i class="ri-login-circle-line"></i>
+        <span id="authBtnText">Sign In</span>
+      </button>
+
+      <!-- Forgot password -->
+      <span class="auth-footer-link" id="forgotLink" onclick="handleForgotPassword()">
+        Forgot your password?
+      </span>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://teppimpaunucbwingqac.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ----------------------------------------------------------
+    // If already signed in, skip straight to dashboard
+    // ----------------------------------------------------------
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) window.location.replace('index.html');
+
+    // ----------------------------------------------------------
+    // TAB SWITCHING
+    // ----------------------------------------------------------
+    let currentTab = 'signin';
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      document.getElementById('tabSignin').classList.toggle('active', tab === 'signin');
+      document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+      document.getElementById('nameGroup').style.display = tab === 'signup' ? 'flex' : 'none';
+      document.getElementById('authBtnText').textContent = tab === 'signin' ? 'Sign In' : 'Create Account';
+      document.getElementById('authBtn').querySelector('i').className =
+        tab === 'signin' ? 'ri-login-circle-line' : 'ri-user-add-line';
+      document.getElementById('forgotLink').style.display = tab === 'signin' ? 'block' : 'none';
+      clearMessage();
+    };
+
+    // ----------------------------------------------------------
+    // PASSWORD VISIBILITY TOGGLE
+    // ----------------------------------------------------------
+    window.togglePassword = function() {
+      const input = document.getElementById('passwordInput');
+      const icon  = document.getElementById('pwEyeIcon');
+      const show  = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      icon.className = show ? 'ri-eye-off-line' : 'ri-eye-line';
+    };
+
+    // ----------------------------------------------------------
+    // MESSAGE HELPERS
+    // ----------------------------------------------------------
+    function showMessage(text, type = 'error') {
+      const el = document.getElementById('authMessage');
+      el.textContent = text;
+      el.className = 'auth-message ' + type;
+    }
+
+    function clearMessage() {
+      const el = document.getElementById('authMessage');
+      el.className = 'auth-message';
+      el.textContent = '';
+    }
+
+    // ----------------------------------------------------------
+    // MAIN AUTH HANDLER
+    // ----------------------------------------------------------
+    window.handleAuth = async function() {
+      const email    = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      const name     = document.getElementById('nameInput').value.trim();
+      const btn      = document.getElementById('authBtn');
+
+      clearMessage();
+
+      if (!email || !password) {
+        showMessage('Please enter your email and password.');
+        return;
+      }
+
+      if (currentTab === 'signup' && password.length < 6) {
+        showMessage('Password must be at least 6 characters.');
+        return;
+      }
+
+      btn.disabled = true;
+      document.getElementById('authBtnText').textContent = 'Please wait...';
+
+      if (currentTab === 'signin') {
+        // ---- SIGN IN ----
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          showMessage(error.message);
+          btn.disabled = false;
+          document.getElementById('authBtnText').textContent = 'Sign In';
+        } else {
+          window.location.replace('index.html');
+        }
+
+      } else {
+        // ---- SIGN UP ----
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          showMessage(error.message);
+          btn.disabled = false;
+          document.getElementById('authBtnText').textContent = 'Create Account';
+          return;
+        }
+
+        // Create profile row for the new user
+        if (data.user) {
+          await supabase.from('profiles').upsert({
+            id: data.user.id,
+            name: name || email.split('@')[0],
+            email: email,
+            created_at: new Date().toISOString()
+          });
+        }
+
+        showMessage(
+          'Account created! Check your email to confirm, then sign in.',
+          'success'
+        );
+        switchTab('signin');
+        btn.disabled = false;
+      }
+    };
+
+    // ----------------------------------------------------------
+    // FORGOT PASSWORD
+    // ----------------------------------------------------------
+    window.handleForgotPassword = async function() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) {
+        showMessage('Enter your email address above first.');
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/index.html'
+      });
+      if (error) {
+        showMessage(error.message);
+      } else {
+        showMessage('Password reset email sent — check your inbox.', 'success');
+      }
+    };
+
+    // ----------------------------------------------------------
+    // Allow Enter key to submit
+    // ----------------------------------------------------------
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleAuth();
+    });
+  </script>
+</body>
+</html>

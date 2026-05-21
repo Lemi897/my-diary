@@ -121,3 +121,60 @@ export function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 400);
   }, 3000);
 }
+
+// ------------------------------------------------------------
+// OFFLINE QUEUE REPLAY
+// Call this once when the app comes back online.
+// Iterates the queue, replays each action against Supabase,
+// and clears the queue on full success.
+// Import supabase inside to avoid circular deps.
+// ------------------------------------------------------------
+export async function replayOfflineQueue() {
+  const queue = getOfflineQueue();
+  if (!queue.length) return;
+
+  const { supabase } = await import('./supabase.js');
+
+  const failed = [];
+
+  for (const item of queue) {
+    try {
+      let res;
+      if (item.action === 'insert') {
+        res = await supabase.from(item.table).insert(item.data);
+      } else if (item.action === 'update') {
+        res = await supabase.from(item.table).update(item.data).eq('id', item.data.id);
+      } else if (item.action === 'delete') {
+        res = await supabase.from(item.table).delete().eq('id', item.data.id);
+      }
+      if (res?.error) failed.push(item);
+    } catch (e) {
+      failed.push(item);
+    }
+  }
+
+  // Keep only items that failed; discard those that succeeded
+  if (failed.length === 0) {
+    clearOfflineQueue();
+  } else {
+    localStorage.setItem('offline_queue', JSON.stringify(failed));
+  }
+
+  return { replayed: queue.length - failed.length, failed: failed.length };
+}
+
+// ------------------------------------------------------------
+// HTML SANITIZER
+// Escapes user-supplied strings before inserting into innerHTML.
+// Prevents XSS from stored malicious content.
+// Usage: sanitize(task.title)
+// ------------------------------------------------------------
+export function sanitize(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

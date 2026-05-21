@@ -21,6 +21,13 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/themes.css" />
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
   <style>
     /* --------------------------------------------------------
@@ -343,6 +350,13 @@
 </head>
 
 <body>
+  <!-- AUTH GUARD: redirect to login if no session -->
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const _sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) window.location.replace('login.html');
+  </script>
   <div class="app-wrapper">
 
     <!-- --------------------------------------------------------
@@ -373,6 +387,7 @@
           <i class="ri-user-3-line nav-icon"></i> Profile
         </a>
       </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
       <div class="online-badge" id="onlineBadge">
         <div class="dot"></div>
         <span class="status-text">Online</span>
@@ -551,6 +566,10 @@
         <a href="finance.html" class="bottom-nav-link">
           <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
         </a>
+        <a href="profile.html" class="bottom-nav-link active">
+          <i class="ri-user-3-line nav-icon"></i>
+          <span>Profile</span>
+        </a>
       </div>
     </nav>
 
@@ -563,10 +582,14 @@
     settings toggles, journal export, stats loading.
   ============================================================ -->
   <script type="module">
-    import { supabase } from './js/supabase.js';
+    import { supabase, getCurrentUser } from './js/supabase.js';
+
+    // Module-level userId — set in init(), used by all functions
+    let userId = null;
     import {
       isOnline,
       onConnectivityChange,
+      replayOfflineQueue,
       showToast
     } from './js/utils.js';
 
@@ -583,7 +606,15 @@
       text.textContent = online ? 'Online' : 'Offline';
     }
     updateOnlineBadge(isOnline());
-    onConnectivityChange(updateOnlineBadge);
+    onConnectivityChange(async (online) => {
+      updateOnlineBadge(online);
+      if (online) {
+        const result = await replayOfflineQueue();
+        if (result && result.replayed > 0) {
+          showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
+        }
+      }
+    });
 
     // ----------------------------------------------------------
     // ALL THEMES DEFINITION
@@ -660,6 +691,7 @@
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .eq('id', userId)
         .limit(1)
         .single();
 
@@ -681,10 +713,10 @@
     // ----------------------------------------------------------
     async function loadStats() {
       const [journalRes, goalsRes, habitsRes, tasksRes] = await Promise.all([
-        supabase.from('journal_entries').select('id', { count: 'exact' }),
-        supabase.from('goals').select('id', { count: 'exact' }).eq('status', 'completed'),
-        supabase.from('habits').select('id', { count: 'exact' }),
-        supabase.from('tasks').select('id', { count: 'exact' }).eq('done', true).is('parent_id', null)
+        supabase.from('journal_entries').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('habits').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('user_id', userId).eq('done', true).is('parent_id', null)
       ]);
 
       document.getElementById('statJournalEntries').textContent = journalRes.count || 0;
@@ -700,6 +732,7 @@
       const { data, error } = await supabase
         .from('streaks')
         .select('*')
+        .eq('user_id', userId)
         .limit(1)
         .single();
 
@@ -781,10 +814,10 @@
     // ----------------------------------------------------------
     async function renderBadges(streakData) {
       const [journalRes, goalsRes, tasksRes, savingsRes] = await Promise.all([
-        supabase.from('journal_entries').select('id', { count: 'exact' }),
-        supabase.from('goals').select('id', { count: 'exact' }).eq('status', 'completed'),
-        supabase.from('tasks').select('id', { count: 'exact' }).eq('done', true).is('parent_id', null),
-        supabase.from('savings_deposits').select('id', { count: 'exact' })
+        supabase.from('journal_entries').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('user_id', userId).eq('done', true).is('parent_id', null),
+        supabase.from('savings_deposits').select('id', { count: 'exact' }).eq('user_id', userId)
       ]);
 
       const streak  = streakData?.current_streak || 0;
@@ -811,8 +844,8 @@
       grid.innerHTML = ALL_BADGES.map(badge => `
         <div class="badge-card ${earned[badge.key] ? 'earned' : 'locked'}">
           <div class="badge-icon">${badge.icon}</div>
-          <div class="badge-name">${badge.name}</div>
-          <div class="badge-req">${badge.desc}</div>
+          <div class="badge-name">${sanitize(badge.name)}</div>
+          <div class="badge-req">${sanitize(badge.desc)}</div>
           ${earned[badge.key]
             ? '<div style="font-size:0.7rem;color:var(--warning);margin-top:0.3rem;">✓ Earned</div>'
             : ''}
@@ -840,7 +873,7 @@
 
       // Check if a profile row exists
       const { data: existing } = await supabase
-        .from('profiles').select('id').limit(1).single();
+        .from('profiles').select('id').eq('id', userId).limit(1).single();
 
       let error;
       if (existing) {
@@ -851,7 +884,7 @@
       } else {
         ({ error } = await supabase
           .from('profiles')
-          .insert({ name, bio }));
+          .insert({ id: userId, name, bio }));
       }
 
       if (error) { showToast('Failed to save profile.', 'error'); return; }
@@ -879,6 +912,7 @@
       const { data, error } = await supabase
         .from('journal_entries')
         .select('title, content, mood, created_at')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error || !data) { showToast('Failed to export.', 'error'); return; }
@@ -923,10 +957,23 @@
     // INIT
     // ----------------------------------------------------------
     async function init() {
+      userId = (await getCurrentUser())?.id;
+      if (!userId) return; // safety: guard redundancy
       await Promise.all([loadProfile(), loadStats(), loadStreak()]);
       renderThemes();
     }
 
+
+    // ----------------------------------------------------------
+    // SIGN OUT
+    // ----------------------------------------------------------
+    window.signOut = async function() {
+      import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm').then(async ({ createClient }) => {
+        const sb = createClient('https://teppimpaunucbwingqac.supabase.co','sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb');
+        await sb.auth.signOut();
+        window.location.replace('login.html');
+      });
+    };
     init();
   </script>
 

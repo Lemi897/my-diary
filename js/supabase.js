@@ -14,11 +14,8 @@ const SUPABASE_KEY = 'sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb';
 // -- Initialize and export the Supabase client
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// -- Test connection (remove after confirming it works)
-supabase.from('profiles').select('*').limit(1).then(({ data, error }) => {
-  if (error) {
-    console.error('Supabase connection failed:', error.message);
-  } else {
-    console.log('Supabase connected successfully.');
-  }
-});
+// -- Auth helper: get the currently signed-in user (or null)
+export async function getCurrentUser() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session ? session.user : null;
+}
