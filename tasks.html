@@ -909,11 +909,17 @@
     // ----------------------------------------------------------
     // INIT
     // ----------------------------------------------------------
-    loaderProgress(20, 'Loading tasks...');
-    loadPageVerse();
-    await loadTasks();
-    loaderProgress(100, 'Ready!');
-    setTimeout(hideLoader, 300);
+    async function init() {
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      const userId = _s?.user?.id;
+      if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
+      loaderProgress(20, 'Loading tasks...');
+      loadPageVerse();
+      await loadTasks();
+      loaderProgress(100, 'Ready!');
+      setTimeout(hideLoader, 300);
+    }
+    init();
   </script>
 
   <script>

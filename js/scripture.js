@@ -1,6 +1,20 @@
 // scripture.js — Verse of the Day library for My Diary PWA
 
 const VERSE_LIBRARY = {
+  daily: [
+    { text: "This is the day the Lord has made; let us rejoice and be glad in it.", ref: "Psalm 118:24" },
+    { text: "The steadfast love of the Lord never ceases; his mercies never come to an end.", ref: "Lamentations 3:22-23" },
+    { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+    { text: "Trust in the Lord with all your heart and lean not on your own understanding.", ref: "Proverbs 3:5" },
+    { text: "For I know the plans I have for you, declares the Lord, plans to prosper you.", ref: "Jeremiah 29:11" },
+    { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
+    { text: "Be strong and courageous. Do not be afraid; the Lord your God will be with you.", ref: "Joshua 1:9" },
+    { text: "And we know that in all things God works for the good of those who love him.", ref: "Romans 8:28" },
+    { text: "Come to me, all who are weary and burdened, and I will give you rest.", ref: "Matthew 11:28" },
+    { text: "Delight yourself in the Lord, and he will give you the desires of your heart.", ref: "Psalm 37:4" },
+    { text: "Your word is a lamp for my feet, a light on my path.", ref: "Psalm 119:105" },
+    { text: "Give thanks to the Lord, for he is good; his love endures forever.", ref: "Psalm 107:1" },
+  ],
   dashboard: [
     { text: "This is the day the Lord has made; let us rejoice and be glad in it.", ref: "Psalm 118:24" },
     { text: "The steadfast love of the Lord never ceases; his mercies never come to an end.", ref: "Lamentations 3:22-23" },

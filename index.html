@@ -911,22 +911,6 @@
     // LOADER HELPERS
     // Controls the loading screen progress bar and status text
     // ----------------------------------------------------------
-    function loaderProgress(pct, status) {
-      const bar = document.getElementById('loaderBar');
-      const txt = document.getElementById('loaderStatus');
-      if (bar) bar.style.width = pct + '%';
-      if (txt && status) txt.textContent = status;
-    }
-
-    function hideLoader() {
-      const loader = document.getElementById('appLoader');
-      if (!loader) return;
-      loader.style.opacity = '0';
-      loader.style.visibility = 'hidden';
-      setTimeout(() => loader.remove(), 650);
-    }
-
-    // ----------------------------------------------------------
     // UPDATE STREAK ON LOGIN
     // Checks if user has already logged a streak today.
     // If not, increments current_streak by 1 (or resets to 1
@@ -989,7 +973,7 @@
     async function init() {
       const { data: { session: _s } } = await supabase.auth.getSession();
       userId = _s?.user?.id;
-      if (!userId) { window.location.replace('login.html'); return; }
+      if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
       loaderProgress(10, 'Loading...');
       setGreeting();
       loadDailyQuote();
