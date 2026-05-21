@@ -298,6 +298,17 @@
 <body>
   <!-- auth handled inside main module script -->
 <div id="authGate">
+    <!-- LOADING SCREEN -->
+  <div id="appLoader" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;">
+    <div style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;font-family:'Plus Jakarta Sans',sans-serif;animation:loaderPop 0.7s ease forwards;opacity:0;transform:scale(0.8);">My<span style="color:#e94560;">Diary</span></div>
+    <div style="font-size:0.82rem;color:#a0a0b0;margin-top:0.5rem;letter-spacing:0.06em;animation:loaderPop 0.7s ease 0.15s forwards;opacity:0;">Your personal life tracker</div>
+    <div style="width:200px;height:3px;background:rgba(255,255,255,0.08);border-radius:99px;margin-top:2.5rem;overflow:hidden;animation:loaderPop 0.7s ease 0.25s forwards;opacity:0;">
+      <div id="loaderBar" style="height:100%;width:0%;background:linear-gradient(90deg,#e94560,#f0c040);border-radius:99px;transition:width 0.35s ease;"></div>
+    </div>
+    <div id="loaderStatus" style="font-size:0.72rem;color:#505060;margin-top:0.9rem;letter-spacing:0.04em;animation:loaderPop 0.7s ease 0.35s forwards;opacity:0;">Connecting...</div>
+    <style>@keyframes loaderPop{to{opacity:1;transform:scale(1);}}</style>
+  </div>
+
   <div class="app-wrapper">
 
     <!-- --------------------------------------------------------
@@ -537,6 +548,24 @@
       truncate
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
+
+
+    // ----------------------------------------------------------
+    // LOADER HELPERS
+    // ----------------------------------------------------------
+    function loaderProgress(pct, status) {
+      const bar = document.getElementById('loaderBar');
+      const txt = document.getElementById('loaderStatus');
+      if (bar) bar.style.width = pct + '%';
+      if (txt && status) txt.textContent = status;
+    }
+    function hideLoader() {
+      const loader = document.getElementById('appLoader');
+      if (!loader) return;
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+      setTimeout(() => loader.remove(), 650);
+    }
 
     // Module-level userId — set in init(), used by all functions
     let userId = null;
@@ -1050,7 +1079,11 @@
     // ----------------------------------------------------------
     // INIT
     // ----------------------------------------------------------
-    loadGoals();
+    loaderProgress(20, 'Loading goals...');
+    loadPageVerse();
+    await loadGoals();
+    loaderProgress(100, 'Ready!');
+    setTimeout(hideLoader, 300);
   </script>
 
   <script>
