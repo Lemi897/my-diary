@@ -786,7 +786,10 @@
 
       if (error) { showToast('Failed to add subtask.', 'error'); return; }
       showToast('Subtask added.', 'success');
-      // ----------------------------------------------------------
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -794,12 +797,6 @@
       document.getElementById('tasksVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('tasksVerse_ref').textContent = verse.ref;
     }
-    loadPageVerse();
-    const { data: { session: _s } } = await supabase.auth.getSession();
-    userId = _s?.user?.id;
-    if (!userId) { window.location.replace('login.html'); }
-    else { await loadTasks(); }
-    };
 
     // ----------------------------------------------------------
     // TOGGLE TASK DONE
