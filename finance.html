@@ -1149,7 +1149,10 @@
 
       showToast(`KSH ${amount} deposited! 🏦`, 'success');
       input.value = '';
-      // ----------------------------------------------------------
+      loadAll();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -1157,12 +1160,6 @@
       document.getElementById('financeVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('financeVerse_ref').textContent = verse.ref;
     }
-    loadPageVerse();
-    const { data: { session: _s } } = await supabase.auth.getSession();
-    userId = _s?.user?.id;
-    if (!userId) { window.location.replace('login.html'); }
-    else { await loadAll(); }
-    };
 
     // ----------------------------------------------------------
     // WORLDCOIN BALANCE TRACKER

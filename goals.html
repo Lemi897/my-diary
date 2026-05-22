@@ -908,7 +908,10 @@
 
       if (error) { showToast('Failed to update goal.', 'error'); return; }
       if (newStatus === 'completed') showToast('Goal completed! 🎯', 'success');
-      // ----------------------------------------------------------
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -916,12 +919,6 @@
       document.getElementById('goalsVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('goalsVerse_ref').textContent = verse.ref;
     }
-    loadPageVerse();
-    const { data: { session: _s } } = await supabase.auth.getSession();
-    userId = _s?.user?.id;
-    if (!userId) { window.location.replace('login.html'); }
-    else { await loadGoals(); }
-    };
 
     // ----------------------------------------------------------
     // TOGGLE MILESTONE DONE
