@@ -1026,7 +1026,10 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
         showToast('Entry saved! 📖', 'success');
       }
 
-      // ----------------------------------------------------------
+      loadEntries();
+    });
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -1034,12 +1037,6 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
       document.getElementById('journalVerse_text').textContent = `"${verse.text}"`;
       document.getElementById('journalVerse_ref').textContent = verse.ref;
     }
-    loadPageVerse();
-    const { data: { session: _s } } = await supabase.auth.getSession();
-    userId = _s?.user?.id;
-    if (!userId) { window.location.replace('login.html'); }
-    else { await loadEntries(); }
-    });
 
     // ----------------------------------------------------------
     // DELETE ENTRY
