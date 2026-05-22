@@ -549,6 +549,7 @@
       sanitize
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
+    import { initNotifications } from './js/notifications.js';
 
 
     // ----------------------------------------------------------
@@ -994,6 +995,8 @@
       ]);
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
+      // Schedule daily notifications (asks permission if needed)
+      initNotifications();
     }
 
 
