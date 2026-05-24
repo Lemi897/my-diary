@@ -422,6 +422,7 @@
         <button class="section-tab active" data-section="expenses">Expenses</button>
         <button class="section-tab" data-section="debts">Debts</button>
         <button class="section-tab" data-section="savings">Savings</button>
+        <button class="section-tab" data-section="budget">Budget</button>
         <button class="section-tab" data-section="summary">Summary & AI</button>
       </div>
 
@@ -538,6 +539,22 @@
             <p>No savings goals yet.</p>
           </div>
         </div>
+      </div>
+
+      <!-- ======================================================
+        BUDGET SECTION
+      ====================================================== -->
+      <div class="section-panel" id="panel-budget">
+        <div class="flex-between mb-md">
+          <div class="card-title">Monthly Budgets</div>
+          <button class="btn btn-primary btn-sm" id="saveBudgetsBtn">
+            <i class="ri-save-line"></i> Save Budgets
+          </button>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;">
+          Set a monthly spending limit per category. You'll see a warning when you're over 80%.
+        </p>
+        <div id="budgetsList"></div>
       </div>
 
       <!-- ======================================================
@@ -879,6 +896,7 @@
         tab.classList.add('active');
         document.getElementById(`panel-${tab.dataset.section}`).classList.add('active');
         if (tab.dataset.section === 'summary') renderCharts();
+        if (tab.dataset.section === 'budget') renderBudgets();
       });
     });
 
@@ -1548,6 +1566,86 @@ Keep it friendly, practical, under 200 words, and use Kenyan context where relev
     });
 
 
+
+    // ----------------------------------------------------------
+    // BUDGET LIMITS
+    // Stored in localStorage as { Food: 2000, Transport: 500, ... }
+    // ----------------------------------------------------------
+    const BUDGET_CATEGORIES = [
+      'Food', 'Transport', 'Airtime', 'Stationery',
+      'Entertainment', 'Clothing', 'Debt Repayment', 'Other'
+    ];
+
+    function loadBudgets() {
+      return JSON.parse(localStorage.getItem('budgets') || '{}');
+    }
+
+    function saveBudgets() {
+      const budgets = {};
+      BUDGET_CATEGORIES.forEach(cat => {
+        const input = document.getElementById(`budget_${cat.replace(/\s/g, '_')}`);
+        const val = parseFloat(input?.value) || 0;
+        if (val > 0) budgets[cat] = val;
+      });
+      localStorage.setItem('budgets', JSON.stringify(budgets));
+      showToast('Budgets saved! 💰', 'success');
+      renderBudgets();
+    }
+
+    function renderBudgets() {
+      const budgets = loadBudgets();
+      const month = currentMonthRange();
+      const list = document.getElementById('budgetsList');
+      if (!list) return;
+
+      list.innerHTML = BUDGET_CATEGORIES.map(cat => {
+        const limit = budgets[cat] || 0;
+        const spent = allExpenses
+          .filter(e => e.category === cat &&
+            e.expense_date >= month.start && e.expense_date <= month.end)
+          .reduce((s, e) => s + parseFloat(e.amount_ksh || 0), 0);
+
+        const pct = limit > 0 ? Math.min(Math.round((spent / limit) * 100), 100) : 0;
+        const isOver = limit > 0 && spent > limit;
+        const isWarning = limit > 0 && pct >= 80 && !isOver;
+        const barColor = isOver ? '#ef233c' : isWarning ? '#ffd166' : '#00d4aa';
+
+        return `
+          <div class="card card-sm" style="margin-bottom:0.75rem;${isOver ? 'border-color:#ef233c;' : isWarning ? 'border-color:#ffd166;' : ''}">
+            <div class="flex-between mb-sm">
+              <div style="font-weight:600;font-size:0.95rem;">${sanitize(cat)}</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);">
+                ${isOver ? '<span style="color:#ef233c;font-weight:700;">⚠️ Over budget!</span>' :
+                  isWarning ? '<span style="color:#ffd166;font-weight:700;">⚡ Almost there</span>' : ''}
+              </div>
+            </div>
+            <div class="flex-between mb-sm">
+              <div style="font-size:0.85rem;color:var(--text-muted);">
+                Spent: <strong style="color:${isOver ? '#ef233c' : 'var(--text-primary)'};">
+                  KSH ${spent.toFixed(0)}
+                </strong>
+              </div>
+              <div style="font-size:0.85rem;color:var(--text-muted);">
+                Limit: <strong>KSH ${limit > 0 ? limit.toFixed(0) : '—'}</strong>
+              </div>
+            </div>
+            ${limit > 0 ? `
+              <div class="progress-bar-wrapper mb-sm">
+                <div class="progress-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+              </div>
+              <div style="font-size:0.75rem;color:var(--text-muted);text-align:right;">${pct}% used</div>
+            ` : ''}
+            <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+              <span style="font-size:0.82rem;color:var(--text-muted);">Set limit (KSH):</span>
+              <input type="number" id="budget_${cat.replace(/\s/g, '_')}"
+                class="form-input" style="width:120px;padding:0.3rem 0.5rem;"
+                placeholder="e.g. 2000" min="0" value="${limit > 0 ? limit : ''}" />
+            </div>
+          </div>`;
+      }).join('');
+
+      document.getElementById('saveBudgetsBtn')?.addEventListener('click', saveBudgets);
+    }
 
     // ----------------------------------------------------------
     // INIT
