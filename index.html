@@ -480,6 +480,18 @@
           </div>
         </div>
 
+        <!-- 30-Day Mood Chart -->
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">😊 Mood — Last 30 Days</div>
+            <a href="journal.html" class="btn btn-ghost btn-sm">Journal</a>
+          </div>
+          <canvas id="moodChart" height="120"></canvas>
+          <div id="moodChartEmpty" class="text-muted" style="text-align:center;padding:1rem;display:none;">
+            No mood data yet — start journaling!
+          </div>
+        </div>
+
         <!-- Daily Scripture -->
         <div class="card quote-card">
           <div class="scripture-label">📖 Verse of the Day</div>
@@ -536,6 +548,7 @@
     pending tasks preview, latest journal, active goals,
     daily quote, online/offline badge, theme unlock check.
   ============================================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
     import {
@@ -874,6 +887,83 @@
     // SCRIPTURE ENGINE
     // Curated verse library by theme. Picks a verse daily using
     // ----------------------------------------------------------
+    // 30-DAY MOOD CHART
+    // Fetches last 30 journal entries and plots mood score
+    // ----------------------------------------------------------
+    let moodChartInstance = null;
+    async function loadMoodChart() {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const fromDate = thirtyDaysAgo.toISOString();
+
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('mood_score, created_at')
+        .eq('user_id', userId)
+        .gte('created_at', fromDate)
+        .order('created_at', { ascending: true })
+        .limit(30);
+
+      const canvas = document.getElementById('moodChart');
+      const empty = document.getElementById('moodChartEmpty');
+
+      if (error || !data || data.length === 0) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      canvas.style.display = 'block';
+      empty.style.display = 'none';
+
+      const labels = data.map(e => {
+        const d = new Date(e.created_at);
+        return `${d.getDate()}/${d.getMonth()+1}`;
+      });
+      const scores = data.map(e => e.mood_score);
+      const moodEmojis = ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
+
+      if (moodChartInstance) moodChartInstance.destroy();
+      moodChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Mood',
+            data: scores,
+            borderColor: '#e94560',
+            backgroundColor: 'rgba(233,69,96,0.1)',
+            borderWidth: 2,
+            pointBackgroundColor: '#f0c040',
+            pointRadius: 4,
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${moodEmojis[ctx.raw] || ''} ${ctx.raw}/10`
+              }
+            }
+          },
+          scales: {
+            y: {
+              min: 1, max: 10,
+              ticks: { color: '#a0a0b0', stepSize: 3,
+                callback: v => moodEmojis[v] || v },
+              grid: { color: '#2a2a3e' }
+            },
+            x: { ticks: { color: '#a0a0b0' }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // ----------------------------------------------------------
     // DAILY SCRIPTURE — sync from library (no network needed)
     // ----------------------------------------------------------
     function loadDailyQuote() {
@@ -991,7 +1081,8 @@
         loadTodayMood(),
         loadSpentToday(),
         loadLatestJournal(),
-        loadActiveGoals()
+        loadActiveGoals(),
+        loadMoodChart()
       ]);
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
