@@ -758,15 +758,42 @@
         return;
       }
 
-      list.innerHTML = data.map(task => `
-        <div class="task-preview-item">
-          <div class="task-check"></div>
-          <div class="task-preview-title">${sanitize(truncate(task.title, 40))}</div>
-          <div class="task-preview-due">
-            ${task.due_date ? sanitize(formatDateShort(task.due_date)) : ''}
+      const now = new Date();
+      const overdueCount = data.filter(t => t.due_date && new Date(t.due_date) < now).length;
+
+      // Show overdue banner if any tasks are overdue
+      const banner = overdueCount > 0
+        ? `<div style="background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.3);
+            border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;
+            font-size:0.82rem;font-weight:600;color:#ef233c;display:flex;align-items:center;gap:0.5rem;">
+            <i class="ri-alarm-warning-line"></i>
+            ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''} — take action!
+          </div>`
+        : '';
+
+      list.innerHTML = banner + data.map(task => {
+        const isOverdue = task.due_date && new Date(task.due_date) < now;
+        const priorityColor = {
+          urgent: '#ef233c', high: '#fb923c', medium: '#ffd166', low: '#00d4aa'
+        }[task.priority] || '#a0a0b0';
+
+        return `
+        <div class="task-preview-item" style="${isOverdue ? 'border-left:3px solid #ef233c;padding-left:0.5rem;' : ''}">
+          <div class="task-check" style="border-color:${priorityColor};"></div>
+          <div style="flex:1;">
+            <div class="task-preview-title" style="${isOverdue ? 'color:#ef233c;' : ''}">
+              ${isOverdue ? '<i class="ri-alarm-warning-line"></i> ' : ''}${sanitize(truncate(task.title, 38))}
+            </div>
+            ${task.due_date ? `
+              <div class="task-preview-due" style="${isOverdue ? 'color:#ef233c;font-weight:600;' : ''}">
+                ${isOverdue ? '⚠️ ' : ''}${sanitize(formatDateShort(task.due_date))}
+              </div>` : ''}
           </div>
-        </div>
-      `).join('');
+          <span class="badge priority-${sanitize(task.priority || 'low')}" style="font-size:0.7rem;">
+            ${sanitize(task.priority || '')}
+          </span>
+        </div>`;
+      }).join('');
     }
 
     // ----------------------------------------------------------
