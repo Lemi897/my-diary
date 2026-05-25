@@ -356,12 +356,17 @@
         </div>
       </div>
 
-      <!-- Filter bar -->
+      <!-- Search + Filter bar -->
       <div class="filter-bar">
+        <input type="text" class="filter-select" id="taskSearch"
+          placeholder="🔍 Search tasks..."
+          style="min-width:160px;flex:1;" />
         <select class="filter-select" id="filterStatus">
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="done">Completed</option>
+          <option value="today">Due Today</option>
+          <option value="overdue">Overdue</option>
         </select>
         <select class="filter-select" id="filterCategory">
           <option value="all">All Categories</option>
@@ -381,6 +386,16 @@
           <option value="medium">Medium</option>
           <option value="low">Low</option>
         </select>
+        <select class="filter-select" id="sortTasks">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="priority">By priority</option>
+          <option value="due">By due date</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="clearDoneBtn" title="Clear all completed tasks"
+          style="white-space:nowrap;">
+          <i class="ri-delete-bin-line"></i> Clear done
+        </button>
       </div>
 
       <!-- Tasks list -->
@@ -506,7 +521,8 @@
       onConnectivityChange,
       replayOfflineQueue,
       showToast,
-      truncate
+      truncate,
+      sanitize
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
 
@@ -531,24 +547,6 @@
     // Module-level userId — set in init(), used by all functions
     let userId = null;
 
-
-    // ----------------------------------------------------------
-    // LOADER HELPERS
-    // ----------------------------------------------------------
-
-
-    // ----------------------------------------------------------
-    // SANITIZE — prevent XSS in rendered HTML
-    // ----------------------------------------------------------
-    function sanitize(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
 
     // ----------------------------------------------------------
     // THEME AND ONLINE BADGE
@@ -627,10 +625,14 @@
     // RENDER TASKS
     // Applies filters and renders task cards with subtasks
     // ----------------------------------------------------------
+    const PRIORITY_ORDER = { urgent: 0, high: 1, medium: 2, low: 3 };
+
     function renderTasks() {
       const statusFilter   = document.getElementById('filterStatus').value;
       const categoryFilter = document.getElementById('filterCategory').value;
       const priorityFilter = document.getElementById('filterPriority').value;
+      const sortVal        = document.getElementById('sortTasks').value;
+      const searchVal      = (document.getElementById('taskSearch')?.value || '').toLowerCase().trim();
 
       // Get top-level tasks only
       let topLevel = allTasks.filter(t => !t.parent_id);
@@ -638,8 +640,24 @@
       // Apply filters
       if (statusFilter === 'pending') topLevel = topLevel.filter(t => !t.done);
       if (statusFilter === 'done')    topLevel = topLevel.filter(t => t.done);
+      if (statusFilter === 'today')   topLevel = topLevel.filter(t => !t.done && t.due_date && t.due_date.startsWith(today));
+      if (statusFilter === 'overdue') topLevel = topLevel.filter(t => isOverdue(t));
       if (categoryFilter !== 'all')   topLevel = topLevel.filter(t => t.category === categoryFilter);
       if (priorityFilter !== 'all')   topLevel = topLevel.filter(t => t.priority === priorityFilter);
+      if (searchVal) topLevel = topLevel.filter(t =>
+        (t.title || '').toLowerCase().includes(searchVal) ||
+        (t.category || '').toLowerCase().includes(searchVal)
+      );
+
+      // Sort
+      if (sortVal === 'oldest')   topLevel.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+      if (sortVal === 'newest')   topLevel.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+      if (sortVal === 'priority') topLevel.sort((a,b) => (PRIORITY_ORDER[a.priority]||9) - (PRIORITY_ORDER[b.priority]||9));
+      if (sortVal === 'due')      topLevel.sort((a,b) => {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date) - new Date(b.due_date);
+      });
 
       const list = document.getElementById('tasksList');
 
@@ -766,7 +784,11 @@
     // ----------------------------------------------------------
     window.toggleSubtasksView = function(taskId) {
       const section = document.getElementById(`subtasks_${taskId}`);
-      section.classList.toggle('hidden');
+      const btn = document.querySelector(`[onclick="toggleSubtasksView('${taskId}')"]`);
+      const isHidden = section.classList.toggle('hidden');
+      if (btn) btn.innerHTML = isHidden
+        ? '<i class="ri-arrow-down-s-line"></i> Show subtasks'
+        : '<i class="ri-arrow-up-s-line"></i> Hide subtasks';
     };
 
     // ----------------------------------------------------------
@@ -851,6 +873,8 @@
     // ----------------------------------------------------------
     window.deleteTask = async function(taskId) {
       if (!confirm('Delete this task?')) return;
+      // Delete subtasks first, then the task itself
+      await supabase.from('tasks').delete().eq('parent_id', taskId).eq('user_id', userId);
       const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('user_id', userId);
       if (error) { showToast('Failed to delete task.', 'error'); return; }
       showToast('Task deleted.', 'info');
@@ -873,6 +897,11 @@
     // Close modal
     document.getElementById('taskModalClose').addEventListener('click', () => {
       document.getElementById('taskModal').classList.remove('open');
+    });
+
+    // Enter key submits task
+    document.getElementById('taskTitle').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('saveTaskBtn').click();
     });
 
     document.getElementById('taskModal').addEventListener('click', (e) => {
@@ -909,10 +938,26 @@
     });
 
     // ----------------------------------------------------------
-    // FILTER CHANGE LISTENERS
+    // FILTER / SEARCH / SORT LISTENERS
     // ----------------------------------------------------------
-    ['filterStatus', 'filterCategory', 'filterPriority'].forEach(id => {
+    ['filterStatus', 'filterCategory', 'filterPriority', 'sortTasks'].forEach(id => {
       document.getElementById(id).addEventListener('change', renderTasks);
+    });
+    document.getElementById('taskSearch').addEventListener('input', renderTasks);
+
+    // ----------------------------------------------------------
+    // CLEAR COMPLETED TASKS
+    // ----------------------------------------------------------
+    document.getElementById('clearDoneBtn').addEventListener('click', async () => {
+      const doneTasks = allTasks.filter(t => t.done && !t.parent_id);
+      if (doneTasks.length === 0) { showToast('No completed tasks to clear.', 'info'); return; }
+      if (!confirm(`Delete ${doneTasks.length} completed task(s) and their subtasks?`)) return;
+      for (const t of doneTasks) {
+        await supabase.from('tasks').delete().eq('parent_id', t.id).eq('user_id', userId);
+        await supabase.from('tasks').delete().eq('id', t.id).eq('user_id', userId);
+      }
+      showToast(`${doneTasks.length} completed task(s) cleared.`, 'success');
+      loadTasks();
     });
 
 
@@ -930,6 +975,14 @@
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
     }
+    // ----------------------------------------------------------
+    // SIGN OUT
+    // ----------------------------------------------------------
+    window.signOut = async function() {
+      await supabase.auth.signOut();
+      window.location.replace('login.html');
+    };
+
     init();
   </script>
 
