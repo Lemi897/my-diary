@@ -253,6 +253,128 @@
       font-weight: 600;
     }
 
+
+    /* Notes preview under task title */
+    .task-notes {
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      margin-top: 0.25rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      opacity: 0.75;
+    }
+
+    /* Subtask progress bar */
+    .subtask-progress {
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .subtask-progress-fill {
+      height: 100%;
+      background: #9ca3af;
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    /* Drag handle */
+    .drag-handle {
+      cursor: grab;
+      color: #d1d5db;
+      font-size: 1rem;
+      padding: 0 0.25rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+    .drag-handle:hover { opacity: 1; }
+    .task-card.dragging {
+      opacity: 0.4;
+      border: 2px dashed #9ca3af;
+    }
+    .task-card.drag-over {
+      border-color: #9ca3af;
+      background: rgba(209,213,219,0.06);
+    }
+
+    /* Repeat badge */
+    .repeat-badge {
+      font-size: 0.72rem;
+      background: rgba(209,213,219,0.2);
+      color: #9ca3af;
+      border-radius: 99px;
+      padding: 0.1rem 0.5rem;
+    }
+
+    /* Checkbox done animation */
+    @keyframes checkPop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.35); }
+      70%  { transform: scale(0.9); }
+      100% { transform: scale(1); }
+    }
+    .task-checkbox.pop { animation: checkPop 0.35s ease forwards; }
+
+    /* Focus mode overlay */
+    .focus-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+    .focus-overlay.hidden { display: none; }
+    .focus-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+    }
+    .focus-title {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      max-width: 600px;
+      margin-bottom: 0.75rem;
+    }
+    .focus-meta {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+    .focus-countdown {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: #d1d5db;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .focus-notes {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 500px;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      font-style: italic;
+    }
+    .focus-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     @media (max-width: 768px) {
       .tasks-summary {
         grid-template-columns: repeat(2, 1fr);
@@ -323,9 +445,14 @@
           <div class="page-title">Tasks</div>
           <div class="page-subtitle">Manage your to-dos and subtasks</div>
         </div>
-        <button class="btn btn-primary" id="addTaskBtn">
-          <i class="ri-add-line"></i> Add Task
-        </button>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-ghost" id="focusModeBtn" title="Focus Mode">
+            <i class="ri-focus-3-line"></i> Focus
+          </button>
+          <button class="btn btn-primary" id="addTaskBtn">
+            <i class="ri-add-line"></i> Add Task
+          </button>
+        </div>
       </div>
 
       <!-- Daily Scripture -->
@@ -391,6 +518,7 @@
           <option value="oldest">Oldest first</option>
           <option value="priority">By priority</option>
           <option value="due">By due date</option>
+          <option value="manual">Manual order</option>
         </select>
         <button class="btn btn-ghost btn-sm" id="clearDoneBtn" title="Clear all completed tasks"
           style="white-space:nowrap;">
@@ -484,6 +612,23 @@
       <div class="form-group">
         <label class="form-label">Due Date</label>
         <input type="datetime-local" class="form-input" id="taskDueDate" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Repeat</label>
+        <select class="form-select" id="taskRepeat">
+          <option value="none">No repeat</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+        <textarea class="form-input" id="taskNotes" rows="3"
+          placeholder="Extra context, links, reminders..."
+          style="resize:vertical;min-height:72px;"></textarea>
       </div>
 
       <button class="btn btn-primary btn-full mt-md" id="saveTaskBtn">
@@ -650,6 +795,7 @@
       );
 
       // Sort
+      if (sortVal === 'manual')   topLevel.sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
       if (sortVal === 'oldest')   topLevel.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
       if (sortVal === 'newest')   topLevel.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       if (sortVal === 'priority') topLevel.sort((a,b) => (PRIORITY_ORDER[a.priority]||9) - (PRIORITY_ORDER[b.priority]||9));
@@ -673,13 +819,26 @@
       list.innerHTML = topLevel.map(task => {
         const subtasks = allTasks.filter(t => t.parent_id === task.id);
         const overdue = isOverdue(task);
+        const subDone = subtasks.filter(s => s.done).length;
+        const subPct  = subtasks.length > 0 ? Math.round((subDone / subtasks.length) * 100) : 0;
 
         return `
-          <div class="task-card ${task.done ? 'done-card' : ''}" id="task_${task.id}">
+          <div class="task-card ${task.done ? 'done-card' : ''}" id="task_${task.id}"
+            draggable="true"
+            ondragstart="onDragStart(event, '${task.id}')"
+            ondragover="onDragOver(event)"
+            ondragleave="onDragLeave(event)"
+            ondrop="onDrop(event, '${task.id}')">
             <div class="task-main-row">
+
+              <!-- Drag handle -->
+              <div class="drag-handle" title="Drag to reorder">
+                <i class="ri-draggable"></i>
+              </div>
 
               <!-- Task checkbox -->
               <div class="task-checkbox ${task.done ? 'checked' : ''}"
+                id="chk_${task.id}"
                 onclick="toggleTask('${task.id}', ${task.done})">
                 ${task.done ? '<i class="ri-check-line"></i>' : ''}
               </div>
@@ -690,15 +849,13 @@
                   ${sanitize(task.title)}
                 </div>
                 <div class="task-meta">
-                  <!-- Category badge -->
                   <span class="badge badge-info">${task.category || 'Other'}</span>
-
-                  <!-- Priority badge -->
                   <span class="badge priority-${sanitize(task.priority || '')}">
                     ${sanitize(task.priority || '')}
                   </span>
-
-                  <!-- Due date -->
+                  ${task.repeat && task.repeat !== 'none' ? `
+                    <span class="repeat-badge">🔁 ${task.repeat}</span>
+                  ` : ''}
                   ${task.due_date ? `
                     <span class="${overdue ? 'due-overdue' : ''}">
                       <i class="ri-calendar-line"></i>
@@ -706,12 +863,22 @@
                       ${overdue ? ' (overdue)' : ''}
                     </span>
                   ` : ''}
-
-                  <!-- Subtask count -->
                   ${subtasks.length > 0 ? `
-                    <span>${subtasks.filter(s => s.done).length}/${subtasks.length} subtasks</span>
+                    <span>${subDone}/${subtasks.length} subtasks</span>
                   ` : ''}
                 </div>
+
+                <!-- Notes preview -->
+                ${task.notes ? `
+                  <div class="task-notes">${sanitize(task.notes)}</div>
+                ` : ''}
+
+                <!-- Subtask progress bar -->
+                ${subtasks.length > 0 ? `
+                  <div class="subtask-progress">
+                    <div class="subtask-progress-fill" style="width:${subPct}%"></div>
+                  </div>
+                ` : ''}
 
                 <!-- Toggle subtasks button -->
                 ${subtasks.length > 0 ? `
@@ -731,11 +898,18 @@
                   <i class="ri-add-line"></i>
                 </button>
                 <button class="btn btn-ghost btn-sm"
-                  onclick="openEditTask('${task.id}')">
+                  onclick="openEditTask('${task.id}')"
+                  title="Edit">
                   <i class="ri-edit-line"></i>
                 </button>
                 <button class="btn btn-ghost btn-sm"
-                  onclick="deleteTask('${task.id}')">
+                  onclick="duplicateTask('${task.id}')"
+                  title="Duplicate">
+                  <i class="ri-file-copy-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="deleteTask('${task.id}')"
+                  title="Delete">
                   <i class="ri-delete-bin-line"></i>
                 </button>
               </div>
@@ -839,12 +1013,39 @@
     // Marks a task or subtask as done or pending
     // ----------------------------------------------------------
     window.toggleTask = async function(taskId, currentDone) {
+      // Animate the checkbox
+      const chk = document.getElementById(`chk_${taskId}`);
+      if (chk) { chk.classList.add('pop'); setTimeout(() => chk.classList.remove('pop'), 400); }
+
       const { error } = await supabase
         .from('tasks')
         .update({ done: !currentDone })
         .eq('id', taskId);
 
       if (error) { showToast('Failed to update task.', 'error'); return; }
+
+      // If completing a recurring task, create the next occurrence
+      if (!currentDone) {
+        const task = allTasks.find(t => t.id === taskId);
+        if (task && task.repeat && task.repeat !== 'none' && task.due_date) {
+          const next = new Date(task.due_date);
+          if (task.repeat === 'daily')   next.setDate(next.getDate() + 1);
+          if (task.repeat === 'weekly')  next.setDate(next.getDate() + 7);
+          if (task.repeat === 'monthly') next.setMonth(next.getMonth() + 1);
+          await supabase.from('tasks').insert({
+            user_id: userId,
+            title: task.title,
+            category: task.category,
+            priority: task.priority,
+            due_date: next.toISOString(),
+            repeat: task.repeat,
+            notes: task.notes || null,
+            sort_order: task.sort_order || 0
+          });
+          showToast(`🔁 Next ${task.repeat} task created.`, 'info');
+        }
+      }
+
       loadTasks();
     };
 
@@ -864,6 +1065,8 @@
       document.getElementById('taskDueDate').value = task.due_date
         ? new Date(task.due_date).toISOString().slice(0,16)
         : '';
+      document.getElementById('taskRepeat').value = task.repeat || 'none';
+      document.getElementById('taskNotes').value = task.notes || '';
       document.getElementById('taskModal').classList.add('open');
     };
 
@@ -891,6 +1094,8 @@
       document.getElementById('taskCategory').value = 'Personal';
       document.getElementById('taskPriority').value = 'medium';
       document.getElementById('taskDueDate').value = '';
+      document.getElementById('taskRepeat').value = 'none';
+      document.getElementById('taskNotes').value = '';
       document.getElementById('taskModal').classList.add('open');
     });
 
@@ -918,10 +1123,12 @@
       const category = document.getElementById('taskCategory').value;
       const priority = document.getElementById('taskPriority').value;
       const dueDate  = document.getElementById('taskDueDate').value || null;
+      const repeat   = document.getElementById('taskRepeat').value || 'none';
+      const notes    = document.getElementById('taskNotes').value.trim() || null;
 
       if (!title) { showToast('Please enter a task title.', 'warning'); return; }
 
-      const payload = { title, category, priority, due_date: dueDate };
+      const payload = { title, category, priority, due_date: dueDate, repeat, notes };
 
       if (editingTaskId) {
         const { error } = await supabase.from('tasks').update(payload).eq('id', editingTaskId);
@@ -972,9 +1179,182 @@
       loaderProgress(20, 'Loading tasks...');
       loadPageVerse();
       await loadTasks();
+      scheduleDueNotifications();
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
     }
+
+    // ----------------------------------------------------------
+    // DRAG TO REORDER
+    // ----------------------------------------------------------
+    let dragSrcId = null;
+
+    window.onDragStart = function(e, taskId) {
+      dragSrcId = taskId;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    };
+
+    window.onDragOver = function(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+      e.dataTransfer.dropEffect = 'move';
+    };
+
+    window.onDragLeave = function(e) {
+      e.currentTarget.classList.remove('drag-over');
+    };
+
+    window.onDrop = async function(e, targetId) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      if (dragSrcId === targetId) return;
+
+      const list = document.getElementById('tasksList');
+      const cards = [...list.querySelectorAll('.task-card[id^="task_"]')];
+      const ids = cards.map(c => c.id.replace('task_', ''));
+
+      const srcIdx = ids.indexOf(dragSrcId);
+      const tgtIdx = ids.indexOf(targetId);
+      ids.splice(srcIdx, 1);
+      ids.splice(tgtIdx, 0, dragSrcId);
+
+      // Update sort_order in DB
+      await Promise.all(ids.map((id, i) =>
+        supabase.from('tasks').update({ sort_order: i }).eq('id', id).eq('user_id', userId)
+      ));
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // DUPLICATE TASK
+    // ----------------------------------------------------------
+    window.duplicateTask = async function(taskId) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+      const { error } = await supabase.from('tasks').insert({
+        user_id: userId,
+        title: task.title + ' (copy)',
+        category: task.category,
+        priority: task.priority,
+        due_date: task.due_date || null,
+        repeat: task.repeat || 'none',
+        notes: task.notes || null
+      });
+      if (error) { showToast('Failed to duplicate.', 'error'); return; }
+      showToast('Task duplicated! 📋', 'success');
+      loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // DUE DATE NOTIFICATIONS
+    // Schedules a browser notification for each pending task with a due date
+    // ----------------------------------------------------------
+    async function scheduleDueNotifications() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      if (Notification.permission !== 'granted') return;
+
+      const now = Date.now();
+      allTasks
+        .filter(t => !t.done && !t.parent_id && t.due_date)
+        .forEach(task => {
+          const due = new Date(task.due_date).getTime();
+          const msUntilDue = due - now;
+          const msUntil15Min = due - 15 * 60 * 1000 - now;
+
+          // Notify 15 min before due
+          if (msUntil15Min > 0 && msUntil15Min < 24 * 60 * 60 * 1000) {
+            setTimeout(() => {
+              new Notification('⏰ Task due soon!', {
+                body: `"${task.title}" is due in 15 minutes.`,
+                icon: '/icon-192.png'
+              });
+            }, msUntil15Min);
+          }
+          // Notify at due time
+          if (msUntilDue > 0 && msUntilDue < 24 * 60 * 60 * 1000) {
+            setTimeout(() => {
+              new Notification('🔔 Task is due now!', {
+                body: `"${task.title}" is due right now.`,
+                icon: '/icon-192.png'
+              });
+            }, msUntilDue);
+          }
+        });
+    }
+
+    // ----------------------------------------------------------
+    // FOCUS MODE
+    // Shows the most urgent pending task fullscreen with countdown
+    // ----------------------------------------------------------
+    let focusTask = null;
+    let focusInterval = null;
+
+    function updateFocusCountdown() {
+      if (!focusTask?.due_date) {
+        document.getElementById('focusCountdown').textContent = '';
+        return;
+      }
+      const diff = new Date(focusTask.due_date) - new Date();
+      if (diff <= 0) {
+        document.getElementById('focusCountdown').textContent = '⚠️ Overdue';
+        document.getElementById('focusCountdown').style.color = 'var(--danger)';
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      document.getElementById('focusCountdown').textContent =
+        h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+    }
+
+    document.getElementById('focusModeBtn').addEventListener('click', () => {
+      // Pick most urgent non-done top-level task
+      const pending = allTasks
+        .filter(t => !t.done && !t.parent_id)
+        .sort((a,b) => (PRIORITY_ORDER[a.priority]||9) - (PRIORITY_ORDER[b.priority]||9));
+      if (pending.length === 0) { showToast('No pending tasks!', 'info'); return; }
+      focusTask = pending[0];
+
+      document.getElementById('focusTaskTitle').textContent = focusTask.title;
+      document.getElementById('focusTaskMeta').textContent =
+        `${focusTask.category || 'Other'} • ${focusTask.priority} priority` +
+        (focusTask.due_date ? ` • Due ${formatDateShort(focusTask.due_date)}` : '');
+      document.getElementById('focusTaskNotes').textContent = focusTask.notes || '';
+      updateFocusCountdown();
+      focusInterval = setInterval(updateFocusCountdown, 1000);
+      document.getElementById('focusOverlay').classList.remove('hidden');
+    });
+
+    document.getElementById('focusExitBtn').addEventListener('click', () => {
+      clearInterval(focusInterval);
+      document.getElementById('focusOverlay').classList.add('hidden');
+      focusTask = null;
+    });
+
+    document.getElementById('focusDoneBtn').addEventListener('click', async () => {
+      if (!focusTask) return;
+      clearInterval(focusInterval);
+      document.getElementById('focusOverlay').classList.add('hidden');
+      await toggleTask(focusTask.id, false);
+      focusTask = null;
+    });
+
+    // Keyboard shortcut: N = new task, F = focus mode, Escape = close overlays
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'n' || e.key === 'N') document.getElementById('addTaskBtn').click();
+      if (e.key === 'f' || e.key === 'F') document.getElementById('focusModeBtn').click();
+      if (e.key === 'Escape') {
+        document.getElementById('focusOverlay').classList.add('hidden');
+        document.getElementById('taskModal').classList.remove('open');
+        clearInterval(focusInterval);
+      }
+    });
+
     // ----------------------------------------------------------
     // SIGN OUT
     // ----------------------------------------------------------
@@ -991,6 +1371,25 @@
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
   </script>
+
+  <!-- ============================================================
+    FOCUS MODE OVERLAY
+  ============================================================ -->
+  <div class="focus-overlay hidden" id="focusOverlay">
+    <div class="focus-label">🎯 Focus Mode</div>
+    <div class="focus-title" id="focusTaskTitle">No tasks</div>
+    <div class="focus-meta" id="focusTaskMeta"></div>
+    <div class="focus-countdown" id="focusCountdown"></div>
+    <div class="focus-notes" id="focusTaskNotes"></div>
+    <div class="focus-actions">
+      <button class="btn btn-primary" id="focusDoneBtn">
+        <i class="ri-check-line"></i> Mark Done
+      </button>
+      <button class="btn btn-ghost" id="focusExitBtn">
+        <i class="ri-close-line"></i> Exit Focus
+      </button>
+    </div>
+  </div>
 
 </div><!-- /authGate -->
 </body>
