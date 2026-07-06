@@ -186,6 +186,70 @@
       color: var(--text-muted);
       margin-top: 0.3rem;
     }
+
+    /* 7-day history strip */
+    .habit-week-strip {
+      display: flex;
+      gap: 0.3rem;
+      margin-top: 0.5rem;
+    }
+    .week-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+    }
+    .week-dot.done {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .week-dot.today {
+      border-color: var(--accent-1);
+    }
+
+    /* Drag-to-reorder */
+    .drag-handle {
+      cursor: grab;
+      color: var(--text-muted);
+      opacity: 0.4;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .drag-handle:hover { opacity: 1; }
+    .habit-card.dragging {
+      opacity: 0.4;
+      border: 2px dashed var(--text-muted);
+    }
+    .habit-card.drag-over {
+      border-color: var(--text-muted);
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* Best streak */
+    .best-streak-label {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    /* Archived view */
+    .habit-card.archived-card {
+      opacity: 0.65;
+    }
+    .archive-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .archive-toggle-btn:hover {
+      border-color: var(--accent-1);
+      color: var(--accent-1);
+    }
   </style>
 </head>
 
@@ -251,9 +315,14 @@
           <div class="page-title">Habits</div>
           <div class="page-subtitle" id="todayLabel">Loading...</div>
         </div>
-        <button class="btn btn-primary" id="addHabitBtn">
-          <i class="ri-add-line"></i> Add Habit
-        </button>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="archive-toggle-btn" id="archiveToggleBtn" onclick="toggleArchivedView()">
+            📦 Archived (<span id="archivedCount">0</span>)
+          </button>
+          <button class="btn btn-primary" id="addHabitBtn">
+            <i class="ri-add-line"></i> Add Habit
+          </button>
+        </div>
       </div>
 
       <!-- Daily summary stats -->
@@ -327,7 +396,7 @@
         <a href="finance.html" class="bottom-nav-link">
           <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
         </a>
-        <a href="profile.html" class="bottom-nav-link active">
+        <a href="profile.html" class="bottom-nav-link">
           <i class="ri-user-3-line nav-icon"></i>
           <span>Profile</span>
         </a>
@@ -428,6 +497,7 @@
       isOnline,
       onConnectivityChange,
       replayOfflineQueue,
+      queueOfflineAction,
       showToast,
       capitalize
     } from './js/utils.js';
@@ -508,8 +578,10 @@
     // ----------------------------------------------------------
     let allHabits = [];
     let todayLogs = {};
+    let weekLogs = {};
     let activeCategory = 'all';
     let editingHabitId = null;
+    let showArchived = false;
     const today = todayDate();
 
     document.getElementById('todayLabel').textContent = formatDate(today);
@@ -534,13 +606,28 @@
     }
 
     // ----------------------------------------------------------
-    // LOAD HABITS AND TODAY'S LOGS
-    // Fetches all habits and their logs for today from Supabase
+    // LOAD HABITS, TODAY'S LOGS, AND LAST-7-DAYS HISTORY
     // ----------------------------------------------------------
+    function last7Dates() {
+      const dates = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        dates.push(d.toISOString().split('T')[0]);
+      }
+      return dates;
+    }
+
     async function loadHabits() {
-      const [habitsRes, logsRes] = await Promise.all([
-        supabase.from('habits').select('*').eq('user_id', userId).order('created_at', { ascending: true }),
-        supabase.from('habit_logs').select('*').eq('user_id', userId).eq('log_date', today)
+      const weekStart = last7Dates()[0];
+
+      const [habitsRes, logsRes, weekRes] = await Promise.all([
+        supabase.from('habits').select('*').eq('user_id', userId)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true }),
+        supabase.from('habit_logs').select('*').eq('user_id', userId).eq('log_date', today),
+        supabase.from('habit_logs').select('habit_id, log_date').eq('user_id', userId)
+          .eq('done', true).gte('log_date', weekStart)
       ]);
 
       if (habitsRes.error) {
@@ -556,8 +643,20 @@
         todayLogs[log.habit_id] = log;
       });
 
+      // Map last-7-days done dates by habit_id, for the history strip
+      weekLogs = {};
+      (weekRes.data || []).forEach(row => {
+        if (!weekLogs[row.habit_id]) weekLogs[row.habit_id] = new Set();
+        weekLogs[row.habit_id].add(row.log_date);
+      });
+
+      const archivedCount = allHabits.filter(h => h.archived).length;
+      const archivedCountEl = document.getElementById('archivedCount');
+      if (archivedCountEl) archivedCountEl.textContent = archivedCount;
+
       renderHabits();
       updateSummary();
+      maybeShowStreakAtRiskAlert();
     }
 
     // ----------------------------------------------------------
@@ -574,7 +673,7 @@
         .order('log_date', { ascending: false })
         .limit(60);
 
-      if (error || !data || data.length === 0) return 0;
+      if (error || !data || data.length === 0) return { streak: 0, lastDoneDate: null };
 
       let streak = 0;
       const check = new Date(today);
@@ -589,7 +688,52 @@
           break;
         }
       }
-      return streak;
+      return { streak, lastDoneDate: data[0].log_date };
+    }
+
+    // ----------------------------------------------------------
+    // REFRESH + PERSIST HABIT STREAK
+    // Actually wires calculateHabitStreak() into the habits table.
+    // Online: recompute the exact streak from full log history.
+    // Offline: estimate from what we already have loaded, and
+    // queue the update — it'll self-correct next time loadHabits()
+    // runs online, since that always reflects real log history.
+    // ----------------------------------------------------------
+    async function refreshHabitStreak(habitId, newDone) {
+      const habit = allHabits.find(h => h.id === habitId);
+      if (!habit) return;
+
+      let newStreak, newLastDone;
+
+      if (isOnline()) {
+        const result = await calculateHabitStreak(habitId);
+        newStreak = result.streak;
+        newLastDone = result.lastDoneDate;
+      } else {
+        const y = new Date(today);
+        y.setDate(y.getDate() - 1);
+        const yesterday = y.toISOString().split('T')[0];
+        if (newDone) {
+          if (habit.last_done_date === today) { newStreak = habit.streak || 0; }
+          else if (habit.last_done_date === yesterday) { newStreak = (habit.streak || 0) + 1; }
+          else { newStreak = 1; }
+          newLastDone = today;
+        } else {
+          newStreak = Math.max((habit.streak || 0) - 1, 0);
+          newLastDone = habit.last_done_date === today ? null : habit.last_done_date;
+        }
+      }
+
+      habit.streak = newStreak;
+      habit.last_done_date = newLastDone;
+      habit.best_streak = Math.max(habit.best_streak || 0, newStreak);
+
+      const payload = { streak: newStreak, last_done_date: newLastDone, best_streak: habit.best_streak };
+      if (isOnline()) {
+        await supabase.from('habits').update(payload).eq('id', habitId).eq('user_id', userId);
+      } else {
+        queueOfflineAction('habits', 'update', { id: habitId, ...payload });
+      }
     }
 
     // ----------------------------------------------------------
@@ -599,15 +743,16 @@
     function renderHabits() {
       const list = document.getElementById('habitsList');
 
-      const filtered = activeCategory === 'all'
-        ? allHabits
-        : allHabits.filter(h => h.category === activeCategory);
+      let filtered = allHabits.filter(h => !!h.archived === showArchived);
+      if (activeCategory !== 'all') {
+        filtered = filtered.filter(h => h.category === activeCategory);
+      }
 
       if (filtered.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">✅</div>
-            <p>No habits in this category yet.</p>
+            <div class="empty-icon">${showArchived ? '📦' : '✅'}</div>
+            <p>${showArchived ? 'No archived habits.' : 'No habits in this category yet.'}</p>
           </div>`;
         return;
       }
@@ -617,32 +762,77 @@
         const isDone = log?.done || false;
         const currentValue = log?.value || 0;
 
+        // 7-day history strip — only meaningful for the active view
+        const weekStrip = !showArchived ? `
+          <div class="habit-week-strip">
+            ${last7Dates().map(d => {
+              const done = weekLogs[habit.id]?.has(d);
+              const isToday = d === today;
+              return `<div class="week-dot ${done ? 'done' : ''} ${isToday ? 'today' : ''}" title="${d}"></div>`;
+            }).join('')}
+          </div>` : '';
+
+        const streakMeta = habit.streak > 0
+          ? `<span style="color:#f0c040;font-weight:700;">🔥 ${habit.streak} day${habit.streak === 1 ? '' : 's'}</span>`
+          : '';
+        const bestStreakMeta = habit.best_streak > 0
+          ? `<span class="best-streak-label">Best: ${habit.best_streak}</span>`
+          : '';
+
+        const actions = showArchived ? `
+            <div class="habit-actions">
+              <button class="btn btn-ghost btn-sm" title="Restore" onclick="unarchiveHabit('${habit.id}')">
+                <i class="ri-inbox-unarchive-line"></i>
+              </button>
+              <button class="btn btn-ghost btn-sm" title="Delete forever" onclick="deleteHabit('${habit.id}')">
+                <i class="ri-delete-bin-line"></i>
+              </button>
+            </div>` : `
+            <div class="habit-actions">
+              <button class="btn btn-ghost btn-sm" title="Edit" onclick="openEditModal('${habit.id}')">
+                <i class="ri-edit-line"></i>
+              </button>
+              <button class="btn btn-ghost btn-sm" title="Archive" onclick="archiveHabit('${habit.id}')">
+                <i class="ri-archive-line"></i>
+              </button>
+            </div>`;
+
+        const dragAttrs = !showArchived
+          ? `draggable="true" ondragstart="onHabitDragStart(event, '${habit.id}')" ondragover="onHabitDragOver(event)" ondragleave="onHabitDragLeave(event)" ondrop="onHabitDrop(event, '${habit.id}')"`
+          : '';
+        const dragHandle = !showArchived
+          ? `<i class="ri-draggable drag-handle"></i>` : '';
+
         return `
-          <div class="habit-card" data-id="${habit.id}">
+          <div class="habit-card ${showArchived ? 'archived-card' : ''}" id="habit_${habit.id}" data-id="${habit.id}" ${dragAttrs}>
+
+            ${dragHandle}
 
             <!-- Done toggle button -->
+            ${!showArchived ? `
             <button class="habit-toggle ${isDone ? 'done' : ''}"
               data-id="${habit.id}" data-type="${habit.tracking_type}"
               onclick="toggleHabit('${habit.id}', '${habit.tracking_type}')">
               ${isDone ? '<i class="ri-check-line"></i>' : ''}
-            </button>
+            </button>` : ''}
 
             <!-- Habit info -->
             <div class="habit-info">
               <div class="habit-name ${isDone ? 'text-muted' : ''}"
-                style="${isDone ? 'text-decoration:line-through;' : ''}">
+                style="${isDone && !showArchived ? 'text-decoration:line-through;' : ''}">
                 ${habit.name}
               </div>
               <div class="habit-meta">
                 <span class="badge ${getCatClass(habit.category)}">${sanitize(habit.category)}</span>
-                ${habit.tracking_type === 'target'
+                ${!showArchived && habit.tracking_type === 'target'
                   ? `<span>${currentValue} / ${sanitize(String(habit.target_value))} ${sanitize(habit.target_unit || '')}</span>`
                   : ''}
-                ${habit.streak > 0 ? `<span style="color:#f0c040;font-weight:700;">🔥 ${habit.streak} day${habit.streak === 1 ? '' : 's'}</span>` : ''}
+                ${!showArchived ? streakMeta : ''}
+                ${!showArchived ? bestStreakMeta : ''}
               </div>
 
-              <!-- Target input row (only for target-type habits) -->
-              ${habit.tracking_type === 'target' ? `
+              <!-- Target input row (only for target-type habits, active view only) -->
+              ${!showArchived && habit.tracking_type === 'target' ? `
                 <div class="habit-target-row">
                   <input type="number" class="habit-target-input"
                     id="targetInput_${habit.id}"
@@ -660,19 +850,12 @@
                   </div>
                 </div>
               ` : ''}
+
+              ${weekStrip}
             </div>
 
-            <!-- Edit and delete actions -->
-            <div class="habit-actions">
-              <button class="btn btn-ghost btn-sm"
-                onclick="openEditModal('${habit.id}')">
-                <i class="ri-edit-line"></i>
-              </button>
-              <button class="btn btn-ghost btn-sm"
-                onclick="deleteHabit('${habit.id}')">
-                <i class="ri-delete-bin-line"></i>
-              </button>
-            </div>
+            <!-- Edit/archive or restore/delete actions -->
+            ${actions}
 
           </div>
         `;
@@ -682,10 +865,12 @@
     // ----------------------------------------------------------
     // UPDATE SUMMARY STATS
     // Recalculates done count, total, and completion rate
+    // (archived habits are excluded — they're not "active" habits)
     // ----------------------------------------------------------
     function updateSummary() {
-      const total = allHabits.length;
-      const done = allHabits.filter(h => todayLogs[h.id]?.done).length;
+      const active = allHabits.filter(h => !h.archived);
+      const total = active.length;
+      const done = active.filter(h => todayLogs[h.id]?.done).length;
       const rate = total > 0 ? Math.round((done / total) * 100) : 0;
 
       document.getElementById('doneCount').textContent = done;
@@ -702,31 +887,31 @@
 
       const existing = todayLogs[habitId];
       const newDone = !(existing?.done || false);
+      const id = existing?.id || crypto.randomUUID();
+      const fields = { done: newDone };
 
-      if (existing) {
-        // Update existing log
-        const { error } = await supabase
-          .from('habit_logs')
-          .update({ done: newDone })
-          .eq('id', existing.id);
+      if (isOnline()) {
+        let error;
+        if (existing) {
+          ({ error } = await supabase.from('habit_logs').update(fields).eq('id', id));
+        } else {
+          ({ error } = await supabase.from('habit_logs').insert({ id, user_id: userId, habit_id: habitId, log_date: today, ...fields }));
+        }
         if (error) { showToast('Failed to update habit.', 'error'); return; }
-        todayLogs[habitId].done = newDone;
       } else {
-        // Insert new log
-        const { data, error } = await supabase
-          .from('habit_logs')
-          .insert({ user_id: userId, habit_id: habitId, log_date: today, done: newDone })
-          .select()
-          .single();
-        if (error) { showToast('Failed to log habit.', 'error'); return; }
-        todayLogs[habitId] = data;
+        queueOfflineAction('habit_logs', existing ? 'update' : 'insert',
+          existing ? { id, ...fields } : { id, user_id: userId, habit_id: habitId, log_date: today, ...fields });
       }
+      todayLogs[habitId] = { ...(existing || {}), id, user_id: userId, habit_id: habitId, log_date: today, ...fields };
 
+      await refreshHabitStreak(habitId, newDone);
       renderHabits();
       updateSummary();
       if (newDone) {
         const verse = getVerseFromLibrary('habits');
-          showToast(`💪 "${verse.text.substring(0,55)}..." — ${verse.ref}`, 'success');
+        showToast(`💪 "${verse.text.substring(0,55)}..." — ${verse.ref}`, 'success');
+      } else if (!isOnline()) {
+        showToast('Saved offline — will sync when back online.', 'info');
       }
     };
 
@@ -738,28 +923,28 @@
       const numVal = parseInt(value) || 0;
       const isDone = numVal >= parseInt(targetValue);
       const existing = todayLogs[habitId];
+      const id = existing?.id || crypto.randomUUID();
+      const fields = { value: numVal, done: isDone };
 
-      if (existing) {
-        const { error } = await supabase
-          .from('habit_logs')
-          .update({ value: numVal, done: isDone })
-          .eq('id', existing.id);
+      if (isOnline()) {
+        let error;
+        if (existing) {
+          ({ error } = await supabase.from('habit_logs').update(fields).eq('id', id));
+        } else {
+          ({ error } = await supabase.from('habit_logs').insert({ id, user_id: userId, habit_id: habitId, log_date: today, ...fields }));
+        }
         if (error) { showToast('Failed to update progress.', 'error'); return; }
-        todayLogs[habitId].value = numVal;
-        todayLogs[habitId].done = isDone;
       } else {
-        const { data, error } = await supabase
-          .from('habit_logs')
-          .insert({ user_id: userId, habit_id: habitId, log_date: today, value: numVal, done: isDone })
-          .select()
-          .single();
-        if (error) { showToast('Failed to log progress.', 'error'); return; }
-        todayLogs[habitId] = data;
+        queueOfflineAction('habit_logs', existing ? 'update' : 'insert',
+          existing ? { id, ...fields } : { id, user_id: userId, habit_id: habitId, log_date: today, ...fields });
       }
+      todayLogs[habitId] = { ...(existing || {}), id, user_id: userId, habit_id: habitId, log_date: today, ...fields };
 
+      await refreshHabitStreak(habitId, isDone);
       renderHabits();
       updateSummary();
       if (isDone) showToast('Target reached! 🎉', 'success');
+      else if (!isOnline()) showToast('Saved offline — will sync when back online.', 'info');
     };
 
     // ----------------------------------------------------------
@@ -805,6 +990,7 @@
     // Inserts or updates a habit in Supabase
     // ----------------------------------------------------------
     document.getElementById('saveHabitBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to add or edit habits.', 'warning'); return; }
       const name = document.getElementById('habitName').value.trim();
       const category = document.getElementById('habitCategory').value;
       const trackingType = document.getElementById('habitTrackingType').value;
@@ -828,10 +1014,11 @@
         if (error) { showToast('Failed to update habit.', 'error'); return; }
         showToast('Habit updated.', 'success');
       } else {
-        // Insert new habit
+        // Insert new habit — append to the end of the current order
+        const nextSortOrder = allHabits.filter(h => !h.archived).length;
         const { error } = await supabase
           .from('habits')
-          .insert({ ...payload, user_id: userId });
+          .insert({ ...payload, user_id: userId, sort_order: nextSortOrder });
         if (error) { showToast('Failed to save habit.', 'error'); return; }
         showToast('Habit added! 💪', 'success');
       }
@@ -866,16 +1053,125 @@
     };
 
     // ----------------------------------------------------------
-    // DELETE HABIT
+    // DELETE HABIT (permanent — only reachable from the archived view)
     // Removes habit and all its logs from Supabase
     // ----------------------------------------------------------
     window.deleteHabit = async function(habitId) {
-      if (!confirm('Delete this habit and all its history?')) return;
+      if (!isOnline()) { showToast('Connect to the internet to delete a habit.', 'warning'); return; }
+      if (!confirm('Permanently delete this habit and all its history? This cannot be undone.')) return;
+      // Delete logs explicitly first — works regardless of whether the
+      // foreign key cascades, so this can never fail partway through.
+      await supabase.from('habit_logs').delete().eq('habit_id', habitId).eq('user_id', userId);
       const { error } = await supabase.from('habits').delete().eq('id', habitId).eq('user_id', userId);
       if (error) { showToast('Failed to delete habit.', 'error'); return; }
       showToast('Habit deleted.', 'info');
       loadHabits();
     };
+
+    // ----------------------------------------------------------
+    // ARCHIVE / UNARCHIVE / VIEW TOGGLE
+    // Archiving hides a habit from daily tracking without losing
+    // its history — a reversible alternative to deleting.
+    // ----------------------------------------------------------
+    window.archiveHabit = async function(habitId) {
+      if (!isOnline()) { showToast('Connect to the internet to archive a habit.', 'warning'); return; }
+      const { error } = await supabase.from('habits').update({ archived: true }).eq('id', habitId).eq('user_id', userId);
+      if (error) { showToast('Failed to archive habit.', 'error'); return; }
+      showToast('Habit archived.', 'info');
+      loadHabits();
+    };
+
+    window.unarchiveHabit = async function(habitId) {
+      if (!isOnline()) { showToast('Connect to the internet to restore a habit.', 'warning'); return; }
+      const { error } = await supabase.from('habits').update({ archived: false }).eq('id', habitId).eq('user_id', userId);
+      if (error) { showToast('Failed to restore habit.', 'error'); return; }
+      showToast('Habit restored.', 'success');
+      loadHabits();
+    };
+
+    window.toggleArchivedView = function() {
+      showArchived = !showArchived;
+      const btn = document.getElementById('archiveToggleBtn');
+      btn.innerHTML = showArchived
+        ? `← Back to Habits`
+        : `📦 Archived (<span id="archivedCount">${allHabits.filter(h => h.archived).length}</span>)`;
+      document.getElementById('addHabitBtn').style.display = showArchived ? 'none' : '';
+      renderHabits();
+    };
+
+    // ----------------------------------------------------------
+    // DRAG-TO-REORDER
+    // Same pattern as tasks.html — updates sort_order on drop.
+    // Only active in the non-archived view.
+    // ----------------------------------------------------------
+    let habitDragSrcId = null;
+
+    window.onHabitDragStart = function(e, habitId) {
+      habitDragSrcId = habitId;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    };
+
+    window.onHabitDragOver = function(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over');
+      e.dataTransfer.dropEffect = 'move';
+    };
+
+    window.onHabitDragLeave = function(e) {
+      e.currentTarget.classList.remove('drag-over');
+    };
+
+    window.onHabitDrop = async function(e, targetId) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over');
+      document.querySelectorAll('.habit-card.dragging').forEach(c => c.classList.remove('dragging'));
+      if (!isOnline()) { showToast('Connect to the internet to reorder habits.', 'warning'); return; }
+      if (habitDragSrcId === targetId) return;
+
+      const list = document.getElementById('habitsList');
+      const cards = [...list.querySelectorAll('.habit-card[id^="habit_"]')];
+      const ids = cards.map(c => c.id.replace('habit_', ''));
+
+      const srcIdx = ids.indexOf(habitDragSrcId);
+      const tgtIdx = ids.indexOf(targetId);
+      if (srcIdx === -1 || tgtIdx === -1) return;
+      ids.splice(srcIdx, 1);
+      ids.splice(tgtIdx, 0, habitDragSrcId);
+
+      await Promise.all(ids.map((id, i) =>
+        supabase.from('habits').update({ sort_order: i }).eq('id', id).eq('user_id', userId)
+      ));
+      loadHabits();
+    };
+
+    // ----------------------------------------------------------
+    // STREAK-AT-RISK NOTIFICATION
+    // Habit-specific (unlike the generic reminders in notifications.js):
+    // if it's evening and an active-streak habit hasn't been done
+    // today, nudge once per day. Only fires if notification
+    // permission is already granted (asked centrally from index.html).
+    // ----------------------------------------------------------
+    function maybeShowStreakAtRiskAlert() {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      if (new Date().getHours() < 18) return; // only nudge in the evening
+
+      const alertKey = `habit_streak_alert_${today}`;
+      if (localStorage.getItem(alertKey)) return;
+
+      const atRisk = allHabits.filter(h =>
+        !h.archived && h.streak > 0 && !(todayLogs[h.id]?.done)
+      );
+      if (atRisk.length === 0) return;
+
+      const habit = atRisk.sort((a, b) => b.streak - a.streak)[0];
+      new Notification('🔥 Streak at risk!', {
+        body: `You haven't done "${habit.name}" yet today — don't lose your ${habit.streak}-day streak.`,
+        icon: '/icon-192.png',
+        tag: 'habit-streak-risk'
+      });
+      localStorage.setItem(alertKey, 'true');
+    }
 
     // ----------------------------------------------------------
     // CATEGORY FILTER TABS
