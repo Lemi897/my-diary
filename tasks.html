@@ -446,6 +446,9 @@
           <div class="page-subtitle">Manage your to-dos and subtasks</div>
         </div>
         <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-ghost" id="archiveToggleBtn" onclick="toggleArchivedView()">
+            📦 Archived (<span id="archivedCount">0</span>)
+          </button>
           <button class="btn btn-ghost" id="focusModeBtn" title="Focus Mode">
             <i class="ri-focus-3-line"></i> Focus
           </button>
@@ -497,21 +500,11 @@
         </select>
         <select class="filter-select" id="filterCategory">
           <option value="all">All Categories</option>
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="School">School</option>
-          <option value="Finance">Finance</option>
-          <option value="Health">Health</option>
-          <option value="Social">Social</option>
-          <option value="Errands">Errands</option>
-          <option value="Other">Other</option>
+          <!-- populated from CATEGORIES array — see script below -->
         </select>
         <select class="filter-select" id="filterPriority">
           <option value="all">All Priorities</option>
-          <option value="urgent">Urgent</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <!-- populated from PRIORITIES array — see script below -->
         </select>
         <select class="filter-select" id="sortTasks">
           <option value="newest">Newest first</option>
@@ -588,24 +581,14 @@
       <div class="form-group">
         <label class="form-label">Category</label>
         <select class="form-select" id="taskCategory">
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="School">School</option>
-          <option value="Finance">Finance</option>
-          <option value="Health">Health</option>
-          <option value="Social">Social</option>
-          <option value="Errands">Errands</option>
-          <option value="Other">Other</option>
+          <!-- populated from CATEGORIES array — see script below -->
         </select>
       </div>
 
       <div class="form-group">
         <label class="form-label">Priority</label>
         <select class="form-select" id="taskPriority">
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="urgent">Urgent</option>
+          <!-- populated from PRIORITIES array — see script below -->
         </select>
       </div>
 
@@ -722,7 +705,31 @@
     // ----------------------------------------------------------
     let allTasks = [];
     let editingTaskId = null;
+    let showArchived = false;
     const today = todayDate();
+
+    // ----------------------------------------------------------
+    // CATEGORIES / PRIORITIES — single source of truth.
+    // Previously these were hardcoded separately in both the
+    // add/edit modal AND the filter bar — the same copy-paste
+    // fragility pattern behind several other bugs in this app.
+    // Now both dropdowns are populated from these two arrays.
+    // ----------------------------------------------------------
+    const CATEGORIES = ['Work','Personal','School','Finance','Health','Social','Errands','Other'];
+    const PRIORITIES = ['low','medium','high','urgent'];
+
+    function populateDropdowns() {
+      const catOptions = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('taskCategory').innerHTML = catOptions;
+      document.getElementById('filterCategory').insertAdjacentHTML('beforeend', catOptions);
+
+      const prioOptions = PRIORITIES.map(p =>
+        `<option value="${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</option>`
+      ).join('');
+      document.getElementById('taskPriority').innerHTML = prioOptions;
+      document.getElementById('filterPriority').insertAdjacentHTML('beforeend', prioOptions);
+    }
+    populateDropdowns();
 
     // ----------------------------------------------------------
     // LOAD ALL TASKS AND SUBTASKS
@@ -738,6 +745,11 @@
       if (error) { showToast('Failed to load tasks.', 'error'); return; }
 
       allTasks = data || [];
+
+      const archivedCount = allTasks.filter(t => !t.parent_id && t.archived).length;
+      const archivedCountEl = document.getElementById('archivedCount');
+      if (archivedCountEl) archivedCountEl.textContent = archivedCount;
+
       renderTasks();
       updateSummary();
       scheduleDueNotifications();
@@ -753,10 +765,10 @@
     }
 
     // ----------------------------------------------------------
-    // UPDATE SUMMARY STATS
+    // UPDATE SUMMARY STATS (archived tasks excluded)
     // ----------------------------------------------------------
     function updateSummary() {
-      const topLevel = allTasks.filter(t => !t.parent_id);
+      const topLevel = allTasks.filter(t => !t.parent_id && !t.archived);
       const total = topLevel.length;
       const done = topLevel.filter(t => t.done).length;
       const pending = total - done;
@@ -781,20 +793,23 @@
       const sortVal        = document.getElementById('sortTasks').value;
       const searchVal      = (document.getElementById('taskSearch')?.value || '').toLowerCase().trim();
 
-      // Get top-level tasks only
-      let topLevel = allTasks.filter(t => !t.parent_id);
+      // Get top-level tasks only, scoped to the current archived-view state
+      let topLevel = allTasks.filter(t => !t.parent_id && !!t.archived === showArchived);
 
-      // Apply filters
-      if (statusFilter === 'pending') topLevel = topLevel.filter(t => !t.done);
-      if (statusFilter === 'done')    topLevel = topLevel.filter(t => t.done);
-      if (statusFilter === 'today')   topLevel = topLevel.filter(t => !t.done && t.due_date && t.due_date.startsWith(today));
-      if (statusFilter === 'overdue') topLevel = topLevel.filter(t => isOverdue(t));
-      if (categoryFilter !== 'all')   topLevel = topLevel.filter(t => t.category === categoryFilter);
-      if (priorityFilter !== 'all')   topLevel = topLevel.filter(t => t.priority === priorityFilter);
-      if (searchVal) topLevel = topLevel.filter(t =>
-        (t.title || '').toLowerCase().includes(searchVal) ||
-        (t.category || '').toLowerCase().includes(searchVal)
-      );
+      // Apply filters (skip status/search filters in the archived view —
+      // archived tasks are just a flat list to restore or delete)
+      if (!showArchived) {
+        if (statusFilter === 'pending') topLevel = topLevel.filter(t => !t.done);
+        if (statusFilter === 'done')    topLevel = topLevel.filter(t => t.done);
+        if (statusFilter === 'today')   topLevel = topLevel.filter(t => !t.done && t.due_date && t.due_date.startsWith(today));
+        if (statusFilter === 'overdue') topLevel = topLevel.filter(t => isOverdue(t));
+        if (categoryFilter !== 'all')   topLevel = topLevel.filter(t => t.category === categoryFilter);
+        if (priorityFilter !== 'all')   topLevel = topLevel.filter(t => t.priority === priorityFilter);
+        if (searchVal) topLevel = topLevel.filter(t =>
+          (t.title || '').toLowerCase().includes(searchVal) ||
+          (t.category || '').toLowerCase().includes(searchVal)
+        );
+      }
 
       // Sort
       if (sortVal === 'manual')   topLevel.sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
@@ -812,8 +827,8 @@
       if (topLevel.length === 0) {
         list.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <p>No tasks found.</p>
+            <div class="empty-icon">${showArchived ? '📦' : '📋'}</div>
+            <p>${showArchived ? 'No archived tasks.' : 'No tasks found.'}</p>
           </div>`;
         return;
       }
@@ -824,19 +839,51 @@
         const subDone = subtasks.filter(s => s.done).length;
         const subPct  = subtasks.length > 0 ? Math.round((subDone / subtasks.length) * 100) : 0;
 
+        const dragAttrs = !showArchived
+          ? `draggable="true" ondragstart="onDragStart(event, '${task.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event, '${task.id}')"`
+          : '';
+
+        const actions = showArchived ? `
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-sm" onclick="unarchiveTask('${task.id}')" title="Restore">
+                  <i class="ri-inbox-unarchive-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteTask('${task.id}')" title="Delete forever">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>` : `
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-sm"
+                  onclick="openAddSubtaskRow('${task.id}')"
+                  title="Add subtask">
+                  <i class="ri-add-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="openEditTask('${task.id}')"
+                  title="Edit">
+                  <i class="ri-edit-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="duplicateTask('${task.id}')"
+                  title="Duplicate">
+                  <i class="ri-file-copy-line"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm"
+                  onclick="archiveTask('${task.id}')"
+                  title="Archive">
+                  <i class="ri-archive-line"></i>
+                </button>
+              </div>`;
+
         return `
-          <div class="task-card ${task.done ? 'done-card' : ''}" id="task_${task.id}"
-            draggable="true"
-            ondragstart="onDragStart(event, '${task.id}')"
-            ondragover="onDragOver(event)"
-            ondragleave="onDragLeave(event)"
-            ondrop="onDrop(event, '${task.id}')">
+          <div class="task-card ${task.done ? 'done-card' : ''}" id="task_${task.id}" ${dragAttrs}>
             <div class="task-main-row">
 
               <!-- Drag handle -->
+              ${!showArchived ? `
               <div class="drag-handle" title="Drag to reorder">
                 <i class="ri-draggable"></i>
-              </div>
+              </div>` : ''}
 
               <!-- Task checkbox -->
               <div class="task-checkbox ${task.done ? 'checked' : ''}"
@@ -893,28 +940,7 @@
               </div>
 
               <!-- Task actions -->
-              <div class="task-actions">
-                <button class="btn btn-ghost btn-sm"
-                  onclick="openAddSubtaskRow('${task.id}')"
-                  title="Add subtask">
-                  <i class="ri-add-line"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm"
-                  onclick="openEditTask('${task.id}')"
-                  title="Edit">
-                  <i class="ri-edit-line"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm"
-                  onclick="duplicateTask('${task.id}')"
-                  title="Duplicate">
-                  <i class="ri-file-copy-line"></i>
-                </button>
-                <button class="btn btn-ghost btn-sm"
-                  onclick="deleteTask('${task.id}')"
-                  title="Delete">
-                  <i class="ri-delete-bin-line"></i>
-                </button>
-              </div>
+              ${actions}
             </div>
 
             <!-- Subtasks section (hidden by default) -->
@@ -922,8 +948,7 @@
               ${subtasks.map(sub => `
                 <div class="subtask-item" id="subtask_${sub.id}">
                   <div class="subtask-checkbox ${sub.done ? 'checked' : ''}"
-                    onclick="toggleTask('${sub.id}', ${sub.done})">
-                    ${sub.done ? '<i class="ri-check-line"></i>' : ''}
+                    onclick="toggleTask('${sub.id}', ${sub.done})">                    ${sub.done ? '<i class="ri-check-line"></i>' : ''}
                   </div>
                   <div class="subtask-title ${sub.done ? 'done-text' : ''}">
                     ${sanitize(sub.title)}
@@ -1088,18 +1113,52 @@
     };
 
     // ----------------------------------------------------------
-    // DELETE TASK
+    // DELETE TASK (permanent — only reachable from the archived view)
     // Removes task and all its subtasks from Supabase
     // ----------------------------------------------------------
     window.deleteTask = async function(taskId) {
       if (!isOnline()) { showToast('Connect to the internet to delete a task.', 'warning'); return; }
-      if (!confirm('Delete this task?')) return;
+      if (!confirm('Permanently delete this task and its subtasks? This cannot be undone.')) return;
       // Delete subtasks first, then the task itself
       await supabase.from('tasks').delete().eq('parent_id', taskId).eq('user_id', userId);
       const { error } = await supabase.from('tasks').delete().eq('id', taskId).eq('user_id', userId);
       if (error) { showToast('Failed to delete task.', 'error'); return; }
       showToast('Task deleted.', 'info');
       loadTasks();
+    };
+
+    // ----------------------------------------------------------
+    // ARCHIVE / UNARCHIVE / VIEW TOGGLE
+    // Archiving hides a task from the main list without losing it
+    // (and its due-date notifications) — a reversible alternative
+    // to deleting, same pattern as habits.html.
+    // ----------------------------------------------------------
+    window.archiveTask = async function(taskId) {
+      if (!isOnline()) { showToast('Connect to the internet to archive a task.', 'warning'); return; }
+      const { error } = await supabase.from('tasks').update({ archived: true }).eq('id', taskId).eq('user_id', userId);
+      if (error) { showToast('Failed to archive task.', 'error'); return; }
+      showToast('Task archived.', 'info');
+      loadTasks();
+    };
+
+    window.unarchiveTask = async function(taskId) {
+      if (!isOnline()) { showToast('Connect to the internet to restore a task.', 'warning'); return; }
+      const { error } = await supabase.from('tasks').update({ archived: false }).eq('id', taskId).eq('user_id', userId);
+      if (error) { showToast('Failed to restore task.', 'error'); return; }
+      showToast('Task restored.', 'success');
+      loadTasks();
+    };
+
+    window.toggleArchivedView = function() {
+      showArchived = !showArchived;
+      const btn = document.getElementById('archiveToggleBtn');
+      const count = allTasks.filter(t => !t.parent_id && t.archived).length;
+      btn.innerHTML = showArchived
+        ? `← Back to Tasks`
+        : `📦 Archived (<span id="archivedCount">${count}</span>)`;
+      document.getElementById('addTaskBtn').style.display = showArchived ? 'none' : '';
+      document.getElementById('focusModeBtn').style.display = showArchived ? 'none' : '';
+      renderTasks();
     };
 
     // ----------------------------------------------------------
@@ -1158,7 +1217,7 @@
         if (error) { showToast('Failed to update task.', 'error'); return; }
         showToast('Task updated.', 'success');
       } else {
-        const nextSortOrder = allTasks.filter(t => !t.parent_id).length;
+        const nextSortOrder = allTasks.filter(t => !t.parent_id && !t.archived).length;
         const { error } = await supabase.from('tasks').insert({ ...payload, user_id: userId, sort_order: nextSortOrder });
         if (error) { showToast('Failed to save task.', 'error'); return; }
         showToast('Task added! 📋', 'success');
@@ -1262,7 +1321,7 @@
       if (!isOnline()) { showToast('Connect to the internet to duplicate a task.', 'warning'); return; }
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
-      const nextSortOrder = allTasks.filter(t => !t.parent_id).length;
+      const nextSortOrder = allTasks.filter(t => !t.parent_id && !t.archived).length;
       const { error } = await supabase.from('tasks').insert({
         user_id: userId,
         title: task.title + ' (copy)',

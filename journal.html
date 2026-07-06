@@ -276,33 +276,6 @@
       outline: none;
     }
 
-    /* AI health response box */
-    .ai-health-response {
-      margin-top: 0.75rem;
-      background-color: var(--bg-secondary);
-      border: 1px solid var(--accent-3);
-      border-radius: var(--radius-sm);
-      padding: 1rem;
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      line-height: 1.7;
-      display: none;
-    }
-
-    .ai-health-response.visible {
-      display: block;
-    }
-
-    .ai-health-response .ai-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--accent-3);
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
     /* Tags section */
     .tags-section {
       padding: 1rem 1.25rem;
@@ -533,27 +506,16 @@
             </div>
           </div>
 
-          <!-- Health status -->
+          <!-- Health notes -->
           <div class="health-section">
             <div class="health-section-title">
-              🩺 Health Status
+              🩺 Health Notes
               <span style="font-weight:400;color:var(--text-muted);font-size:0.78rem;">
-                (optional - describe how your body feels)
+                (optional - how does your body feel today?)
               </span>
             </div>
             <textarea class="health-textarea" id="healthNotes"
               placeholder="e.g. Headache since morning, feeling tired, slight sore throat..."></textarea>
-            <button class="btn btn-secondary btn-sm mt-sm" id="getAiHealthBtn">
-              <i class="ri-robot-line"></i> Get AI Health Suggestion
-            </button>
-
-            <!-- AI response box -->
-            <div class="ai-health-response" id="aiHealthResponse">
-              <div class="ai-label">
-                <i class="ri-robot-line"></i> AI Health Assistant
-              </div>
-              <div id="aiHealthText"></div>
-            </div>
           </div>
 
           <!-- Tags section -->
@@ -645,6 +607,7 @@
       isOnline,
       onConnectivityChange,
       replayOfflineQueue,
+      queueOfflineAction,
       showToast,
       truncate
     } from './js/utils.js';
@@ -865,7 +828,7 @@
         <div class="entry-item ${editingEntryId === entry.id ? 'active' : ''}"
           onclick="openEntry('${entry.id}')">
           <div class="entry-item-title">
-            ${entry.title || 'Untitled Entry'}
+            ${sanitize(entry.title) || 'Untitled Entry'}
           </div>
           <div class="entry-item-meta">
             <span>${moodMap[entry.mood_score]?.emoji || '😐'}</span>
@@ -903,14 +866,6 @@
       currentTags = entry.tags || [];
       renderTags();
 
-      // Show AI response if it exists
-      if (entry.health_ai_response) {
-        document.getElementById('aiHealthText').textContent = entry.health_ai_response;
-        document.getElementById('aiHealthResponse').classList.add('visible');
-      } else {
-        document.getElementById('aiHealthResponse').classList.remove('visible');
-      }
-
       // Show delete button
       document.getElementById('deleteEntryBtn').style.display = 'inline-flex';
 
@@ -933,70 +888,11 @@
       moodEmoji.textContent = '😐';
       moodLabel.textContent = 'Neutral';
       document.getElementById('healthNotes').value = '';
-      document.getElementById('aiHealthResponse').classList.remove('visible');
-      document.getElementById('aiHealthText').textContent = '';
       document.getElementById('editorDateLabel').textContent = 'New entry';
       document.getElementById('deleteEntryBtn').style.display = 'none';
       currentTags = [];
       renderTags();
     }
-
-    // ----------------------------------------------------------
-    // AI HEALTH SUGGESTION
-    // Sends health notes to Claude API and shows suggestions
-    // Only works when online
-    // ----------------------------------------------------------
-    document.getElementById('getAiHealthBtn').addEventListener('click', async () => {
-      const healthNotes = document.getElementById('healthNotes').value.trim();
-
-      if (!healthNotes) {
-        showToast('Please describe your health status first.', 'warning');
-        return;
-      }
-
-      if (!isOnline()) {
-        showToast('AI suggestions require an internet connection.', 'warning');
-        return;
-      }
-
-      const btn = document.getElementById('getAiHealthBtn');
-      btn.textContent = 'Thinking...';
-      btn.disabled = true;
-
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{
-              role: 'user',
-              content: `You are a friendly health assistant. The user has described their health status as follows: "${healthNotes}". 
-
-Please provide:
-1. A brief assessment of the symptoms
-2. Simple first aid or home remedies they can try
-3. Whether they should see a doctor and how urgently
-
-Keep your response clear, friendly, and under 200 words. Always remind them you are not a doctor and this is not a diagnosis.`
-            }]
-          })
-        });
-
-        const data = await response.json();
-        const aiText = data.content?.[0]?.text || 'No response received.';
-
-        document.getElementById('aiHealthText').textContent = aiText;
-        document.getElementById('aiHealthResponse').classList.add('visible');
-
-      } catch (err) {
-        showToast('Failed to get AI suggestion. Try again.', 'error');
-      } finally {
-        btn.innerHTML = '<i class="ri-robot-line"></i> Get AI Health Suggestion';
-        btn.disabled = false;
-      }
-    });
 
     // ----------------------------------------------------------
     // SAVE ENTRY
@@ -1008,7 +904,6 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
       const moodScore   = parseInt(moodSlider.value);
       const mood        = moodMap[moodScore].label;
       const healthNotes = document.getElementById('healthNotes').value.trim();
-      const aiResponse  = document.getElementById('aiHealthText').textContent || null;
 
       if (!content || content === '<p><br></p>') {
         showToast('Please write something before saving.', 'warning');
@@ -1021,26 +916,46 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
         mood,
         mood_score: moodScore,
         health_notes: healthNotes || null,
-        health_ai_response: aiResponse,
         tags: currentTags.length > 0 ? currentTags : null
       };
 
-      if (editingEntryId) {
-        const { error } = await supabase
-          .from('journal_entries')
-          .update(payload)
-          .eq('id', editingEntryId);
-        if (error) { showToast('Failed to update entry.', 'error'); return; }
-        showToast('Entry updated.', 'success');
+      if (isOnline()) {
+        if (editingEntryId) {
+          const { error } = await supabase
+            .from('journal_entries')
+            .update(payload)
+            .eq('id', editingEntryId);
+          if (error) { showToast('Failed to update entry.', 'error'); return; }
+          showToast('Entry updated.', 'success');
+        } else {
+          const { error } = await supabase
+            .from('journal_entries')
+            .insert({ ...payload, user_id: userId });
+          if (error) { showToast('Failed to save entry.', 'error'); return; }
+          showToast('Entry saved! 📖', 'success');
+        }
+        loadEntries();
       } else {
-        const { error } = await supabase
-          .from('journal_entries')
-          .insert({ ...payload, user_id: userId });
-        if (error) { showToast('Failed to save entry.', 'error'); return; }
-        showToast('Entry saved! 📖', 'success');
-      }
+        // Offline: queue the write and update local state optimistically
+        // so the entry shows up immediately and survives a page reload
+        // even before it's actually synced.
+        const isNew = !editingEntryId;
+        const id = editingEntryId || crypto.randomUUID();
+        const record = { id, user_id: userId, created_at: new Date().toISOString(), ...payload };
 
-      loadEntries();
+        if (isNew) {
+          queueOfflineAction('journal_entries', 'insert', record);
+          allEntries.unshift(record);
+        } else {
+          queueOfflineAction('journal_entries', 'update', { id, ...payload });
+          const idx = allEntries.findIndex(e => e.id === id);
+          if (idx !== -1) allEntries[idx] = { ...allEntries[idx], ...payload };
+        }
+
+        showToast('Saved offline — will sync when back online.', 'info');
+        clearEditor();
+        renderEntriesList(allEntries);
+      }
     });
 
     // ----------------------------------------------------------
@@ -1057,6 +972,7 @@ Keep your response clear, friendly, and under 200 words. Always remind them you 
     // ----------------------------------------------------------
     document.getElementById('deleteEntryBtn').addEventListener('click', async () => {
       if (!editingEntryId) return;
+      if (!isOnline()) { showToast('Connect to the internet to delete an entry.', 'warning'); return; }
       if (!confirm('Delete this journal entry?')) return;
 
       const { error } = await supabase
