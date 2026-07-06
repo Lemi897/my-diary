@@ -665,6 +665,7 @@
       isOnline,
       onConnectivityChange,
       replayOfflineQueue,
+      queueOfflineAction,
       showToast,
       truncate,
       sanitize
@@ -739,6 +740,7 @@
       allTasks = data || [];
       renderTasks();
       updateSummary();
+      scheduleDueNotifications();
     }
 
     // ----------------------------------------------------------
@@ -982,6 +984,7 @@
     // Creates a new task with parent_id set to the parent task
     // ----------------------------------------------------------
     window.saveSubtask = async function(parentId) {
+      if (!isOnline()) { showToast('Connect to the internet to add a subtask.', 'warning'); return; }
       const input = document.getElementById(`subInput_${parentId}`);
       const title = input.value.trim();
       if (!title) return;
@@ -1017,36 +1020,50 @@
       const chk = document.getElementById(`chk_${taskId}`);
       if (chk) { chk.classList.add('pop'); setTimeout(() => chk.classList.remove('pop'), 400); }
 
-      const { error } = await supabase
-        .from('tasks')
-        .update({ done: !currentDone })
-        .eq('id', taskId);
+      const newDone = !currentDone;
+      const task = allTasks.find(t => t.id === taskId);
 
-      if (error) { showToast('Failed to update task.', 'error'); return; }
-
-      // If completing a recurring task, create the next occurrence
-      if (!currentDone) {
-        const task = allTasks.find(t => t.id === taskId);
-        if (task && task.repeat && task.repeat !== 'none' && task.due_date) {
-          const next = new Date(task.due_date);
-          if (task.repeat === 'daily')   next.setDate(next.getDate() + 1);
-          if (task.repeat === 'weekly')  next.setDate(next.getDate() + 7);
-          if (task.repeat === 'monthly') next.setMonth(next.getMonth() + 1);
-          await supabase.from('tasks').insert({
-            user_id: userId,
-            title: task.title,
-            category: task.category,
-            priority: task.priority,
-            due_date: next.toISOString(),
-            repeat: task.repeat,
-            notes: task.notes || null,
-            sort_order: task.sort_order || 0
-          });
-          showToast(`🔁 Next ${task.repeat} task created.`, 'info');
-        }
+      if (isOnline()) {
+        const { error } = await supabase.from('tasks').update({ done: newDone }).eq('id', taskId);
+        if (error) { showToast('Failed to update task.', 'error'); return; }
+      } else {
+        queueOfflineAction('tasks', 'update', { id: taskId, done: newDone });
+        if (task) task.done = newDone;
       }
 
-      loadTasks();
+      // If completing a recurring task, create the next occurrence
+      if (newDone && task && task.repeat && task.repeat !== 'none' && task.due_date) {
+        const next = new Date(task.due_date);
+        if (task.repeat === 'daily')   next.setDate(next.getDate() + 1);
+        if (task.repeat === 'weekly')  next.setDate(next.getDate() + 7);
+        if (task.repeat === 'monthly') next.setMonth(next.getMonth() + 1);
+        const nextTask = {
+          id: crypto.randomUUID(),
+          user_id: userId,
+          title: task.title,
+          category: task.category,
+          priority: task.priority,
+          due_date: next.toISOString(),
+          repeat: task.repeat,
+          notes: task.notes || null,
+          sort_order: task.sort_order || 0
+        };
+        if (isOnline()) {
+          await supabase.from('tasks').insert(nextTask);
+        } else {
+          queueOfflineAction('tasks', 'insert', nextTask);
+          allTasks.push(nextTask);
+        }
+        showToast(`🔁 Next ${task.repeat} task created.`, 'info');
+      }
+
+      if (isOnline()) {
+        loadTasks();
+      } else {
+        renderTasks();
+        updateSummary();
+        showToast('Saved offline — will sync when back online.', 'info');
+      }
     };
 
     // ----------------------------------------------------------
@@ -1075,6 +1092,7 @@
     // Removes task and all its subtasks from Supabase
     // ----------------------------------------------------------
     window.deleteTask = async function(taskId) {
+      if (!isOnline()) { showToast('Connect to the internet to delete a task.', 'warning'); return; }
       if (!confirm('Delete this task?')) return;
       // Delete subtasks first, then the task itself
       await supabase.from('tasks').delete().eq('parent_id', taskId).eq('user_id', userId);
@@ -1119,6 +1137,7 @@
     // SAVE TASK (add or edit)
     // ----------------------------------------------------------
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to add or edit tasks.', 'warning'); return; }
       const title    = document.getElementById('taskTitle').value.trim();
       const category = document.getElementById('taskCategory').value;
       const priority = document.getElementById('taskPriority').value;
@@ -1127,6 +1146,10 @@
       const notes    = document.getElementById('taskNotes').value.trim() || null;
 
       if (!title) { showToast('Please enter a task title.', 'warning'); return; }
+      if (repeat !== 'none' && !dueDate) {
+        showToast('Repeating tasks need a due date to know when to recur — add one, or set Repeat to "No repeat."', 'warning');
+        return;
+      }
 
       const payload = { title, category, priority, due_date: dueDate, repeat, notes };
 
@@ -1135,7 +1158,8 @@
         if (error) { showToast('Failed to update task.', 'error'); return; }
         showToast('Task updated.', 'success');
       } else {
-        const { error } = await supabase.from('tasks').insert({ ...payload, user_id: userId });
+        const nextSortOrder = allTasks.filter(t => !t.parent_id).length;
+        const { error } = await supabase.from('tasks').insert({ ...payload, user_id: userId, sort_order: nextSortOrder });
         if (error) { showToast('Failed to save task.', 'error'); return; }
         showToast('Task added! 📋', 'success');
       }
@@ -1156,6 +1180,7 @@
     // CLEAR COMPLETED TASKS
     // ----------------------------------------------------------
     document.getElementById('clearDoneBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to clear completed tasks.', 'warning'); return; }
       const doneTasks = allTasks.filter(t => t.done && !t.parent_id);
       if (doneTasks.length === 0) { showToast('No completed tasks to clear.', 'info'); return; }
       if (!confirm(`Delete ${doneTasks.length} completed task(s) and their subtasks?`)) return;
@@ -1179,7 +1204,6 @@
       loaderProgress(20, 'Loading tasks...');
       loadPageVerse();
       await loadTasks();
-      scheduleDueNotifications();
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
     }
@@ -1208,14 +1232,19 @@
     window.onDrop = async function(e, targetId) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
+      if (!isOnline()) { showToast('Connect to the internet to reorder tasks.', 'warning'); return; }
       if (dragSrcId === targetId) return;
 
-      const list = document.getElementById('tasksList');
-      const cards = [...list.querySelectorAll('.task-card[id^="task_"]')];
-      const ids = cards.map(c => c.id.replace('task_', ''));
+      // Reorder against the FULL top-level task list (by current
+      // sort_order), not just whatever's currently visible under the
+      // active filter — otherwise filtered-out tasks get scrambled.
+      const topLevel = allTasks.filter(t => !t.parent_id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const ids = topLevel.map(t => t.id);
 
       const srcIdx = ids.indexOf(dragSrcId);
       const tgtIdx = ids.indexOf(targetId);
+      if (srcIdx === -1 || tgtIdx === -1) return;
       ids.splice(srcIdx, 1);
       ids.splice(tgtIdx, 0, dragSrcId);
 
@@ -1230,8 +1259,10 @@
     // DUPLICATE TASK
     // ----------------------------------------------------------
     window.duplicateTask = async function(taskId) {
+      if (!isOnline()) { showToast('Connect to the internet to duplicate a task.', 'warning'); return; }
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
+      const nextSortOrder = allTasks.filter(t => !t.parent_id).length;
       const { error } = await supabase.from('tasks').insert({
         user_id: userId,
         title: task.title + ' (copy)',
@@ -1239,7 +1270,8 @@
         priority: task.priority,
         due_date: task.due_date || null,
         repeat: task.repeat || 'none',
-        notes: task.notes || null
+        notes: task.notes || null,
+        sort_order: nextSortOrder
       });
       if (error) { showToast('Failed to duplicate.', 'error'); return; }
       showToast('Task duplicated! 📋', 'success');
@@ -1248,9 +1280,23 @@
 
     // ----------------------------------------------------------
     // DUE DATE NOTIFICATIONS
-    // Schedules a browser notification for each pending task with a due date
+    // Schedules a browser notification for each pending task with a due date.
+    // LIMITATION (being upfront about it): this uses setTimeout, so it only
+    // fires while this tab stays open. Closing the tab or the phone locking
+    // will cancel it. A fully reliable "notify even when closed" reminder
+    // needs server-side push, which is a real infrastructure addition, not
+    // a quick fix — flagging rather than quietly pretending this covers it.
     // ----------------------------------------------------------
+    let scheduledNotificationTimeouts = [];
+
+    function clearScheduledNotifications() {
+      scheduledNotificationTimeouts.forEach(id => clearTimeout(id));
+      scheduledNotificationTimeouts = [];
+    }
+
     async function scheduleDueNotifications() {
+      clearScheduledNotifications();
+
       if (!('Notification' in window)) return;
       if (Notification.permission === 'default') {
         await Notification.requestPermission();
@@ -1258,6 +1304,8 @@
       if (Notification.permission !== 'granted') return;
 
       const now = Date.now();
+      let scheduledCount = 0;
+
       allTasks
         .filter(t => !t.done && !t.parent_id && t.due_date)
         .forEach(task => {
@@ -1267,23 +1315,32 @@
 
           // Notify 15 min before due
           if (msUntil15Min > 0 && msUntil15Min < 24 * 60 * 60 * 1000) {
-            setTimeout(() => {
+            const id = setTimeout(() => {
               new Notification('⏰ Task due soon!', {
                 body: `"${task.title}" is due in 15 minutes.`,
                 icon: '/icon-192.png'
               });
             }, msUntil15Min);
+            scheduledNotificationTimeouts.push(id);
+            scheduledCount++;
           }
           // Notify at due time
           if (msUntilDue > 0 && msUntilDue < 24 * 60 * 60 * 1000) {
-            setTimeout(() => {
+            const id = setTimeout(() => {
               new Notification('🔔 Task is due now!', {
                 body: `"${task.title}" is due right now.`,
                 icon: '/icon-192.png'
               });
             }, msUntilDue);
+            scheduledNotificationTimeouts.push(id);
+            scheduledCount++;
           }
         });
+
+      if (scheduledCount > 0 && !localStorage.getItem('due_notif_disclaimer_shown')) {
+        showToast('📌 Reminders only fire while this tab stays open.', 'info');
+        localStorage.setItem('due_notif_disclaimer_shown', 'true');
+      }
     }
 
     // ----------------------------------------------------------
