@@ -1,41 +1,119 @@
 /* ============================================================
    main.css - Global styles for My Diary PWA
-   Covers: reset, layout, navbar, cards, buttons, forms,
-   toasts, offline badge, and shared components.
-   Page-specific styles go in their own <style> blocks.
-   Themes (colors only) are handled in css/themes.css
+   Redesigned: Mission Control — per-page accent system
+   Base: #0d1117 dark universe, each page owns its accent
    ============================================================ */
 
 
 /* ------------------------------------------------------------
-   CSS VARIABLES - Default theme (overridden by themes.css)
+   CSS VARIABLES - Default base (overridden by themes.css)
    ------------------------------------------------------------ */
 :root {
-  --bg-primary: #0f0f0f;
-  --bg-secondary: #1a1a2e;
-  --bg-card: #16213e;
-  --accent-1: #e94560;
-  --accent-2: #0f3460;
-  --accent-3: #533483;
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b0;
-  --text-muted: #606070;
-  --border: #2a2a3e;
-  --success: #00d4aa;
-  --warning: #ffd166;
-  --danger: #ef233c;
-  --info: #4cc9f0;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  /* Base dark universe */
+  --bg-primary:    #0d1117;
+  --bg-secondary:  #0d1117;
+  --bg-card:       #161b22;
+  --border:        #1e2d3d;
+  --border-subtle: #151c25;
+
+  /* Default accent (Dashboard — violet) */
+  --accent-1:      #7c3aed;
+  --accent-2:      #06b6d4;
+  --accent-3:      #f59e0b;
+  --accent-dim:    rgba(124,58,237,0.1);
+
+  /* Text */
+  --text-primary:  #e2e8f0;
+  --text-secondary:#64748b;
+  --text-muted:    #334155;
+
+  /* Semantic */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #06b6d4;
+
+  /* Structure */
+  --radius:    10px;
+  --radius-sm: 6px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.4);
   --font-main: 'Plus Jakarta Sans', sans-serif;
-  --transition: all 0.25s ease;
+  --font-mono: 'JetBrains Mono', monospace;
+  --transition: all 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   PER-PAGE ACCENT OVERRIDES
+   Add data-page="habits" etc. to <html> on each page
+   ------------------------------------------------------------ */
+
+/* Dashboard — Violet + Cyan + Amber triadic */
+[data-page="dashboard"] {
+  --accent-1:   #7c3aed;
+  --accent-2:   #06b6d4;
+  --accent-3:   #f59e0b;
+  --accent-dim: rgba(124,58,237,0.1);
+}
+
+/* Habits — Deep emerald monochromatic */
+[data-page="habits"] {
+  --accent-1:   #059669;
+  --accent-2:   #34d399;
+  --accent-3:   #6ee7b7;
+  --accent-dim: rgba(5,150,105,0.1);
+}
+
+/* Tasks — Rose red + orange split */
+[data-page="tasks"] {
+  --accent-1:   #e11d48;
+  --accent-2:   #fb7185;
+  --accent-3:   #f97316;
+  --accent-dim: rgba(225,29,72,0.1);
+}
+
+/* Journal — Violet into fuchsia */
+[data-page="journal"] {
+  --accent-1:   #7c3aed;
+  --accent-2:   #a78bfa;
+  --accent-3:   #e879f9;
+  --accent-dim: rgba(124,58,237,0.1);
+}
+
+/* Goals — Sky blue horizon */
+[data-page="goals"] {
+  --accent-1:   #0ea5e9;
+  --accent-2:   #38bdf8;
+  --accent-3:   #7dd3fc;
+  --accent-dim: rgba(14,165,233,0.1);
+}
+
+/* Finance — Precision gold (already built, keep it) */
+[data-page="finance"] {
+  --accent-1:   #c8943a;
+  --accent-2:   #4a9e6e;
+  --accent-3:   #9e4a4a;
+  --accent-dim: rgba(200,148,58,0.1);
+}
+
+/* Profile — Burnt amber */
+[data-page="profile"] {
+  --accent-1:   #d97706;
+  --accent-2:   #f59e0b;
+  --accent-3:   #fbbf24;
+  --accent-dim: rgba(217,119,6,0.1);
+}
+
+/* Review — Teal (weekly review page) */
+[data-page="review"] {
+  --accent-1:   #0d9488;
+  --accent-2:   #2dd4bf;
+  --accent-3:   #99f6e4;
+  --accent-dim: rgba(13,148,136,0.1);
 }
 
 
 /* ------------------------------------------------------------
    RESET AND BASE
-   Supports: consistent rendering across browsers and devices
    ------------------------------------------------------------ */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -67,9 +145,7 @@ img {
   display: block;
 }
 
-ul, ol {
-  list-style: none;
-}
+ul, ol { list-style: none; }
 
 button {
   cursor: pointer;
@@ -87,16 +163,15 @@ input, textarea, select {
 
 /* ------------------------------------------------------------
    TYPOGRAPHY
-   Supports: consistent text sizing across all pages
    ------------------------------------------------------------ */
-h1 { font-size: 2rem; font-weight: 700; }
+h1 { font-size: 2rem;   font-weight: 700; }
 h2 { font-size: 1.5rem; font-weight: 600; }
-h3 { font-size: 1.25rem; font-weight: 600; }
-h4 { font-size: 1rem; font-weight: 600; }
-p  { font-size: 0.95rem; color: var(--text-secondary); }
+h3 { font-size: 1.25rem;font-weight: 600; }
+h4 { font-size: 1rem;   font-weight: 600; }
+p  { font-size: 0.95rem;color: var(--text-secondary); }
 
-.text-muted  { color: var(--text-muted); font-size: 0.85rem; }
-.text-accent { color: var(--accent-1); }
+.text-muted   { color: var(--text-muted);  font-size: 0.85rem; }
+.text-accent  { color: var(--accent-1); }
 .text-success { color: var(--success); }
 .text-danger  { color: var(--danger); }
 .text-warning { color: var(--warning); }
@@ -104,8 +179,8 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 
 /* ------------------------------------------------------------
    LAYOUT
-   Supports: main page wrapper and content area sizing
    ------------------------------------------------------------ */
+.app-container,
 .app-wrapper {
   display: flex;
   min-height: 100vh;
@@ -116,25 +191,24 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   margin-left: 240px;
   padding: 2rem;
   max-width: 1200px;
+  background: var(--bg-primary);
 }
 
-/* Mobile: full width when sidebar collapses */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
     padding: 1rem;
-    padding-bottom: 80px; /* space for bottom nav */
+    padding-bottom: 80px;
   }
 }
 
 
 /* ------------------------------------------------------------
    SIDEBAR NAVIGATION (Desktop)
-   Supports: page navigation on screens wider than 768px
    ------------------------------------------------------------ */
 .sidebar {
   width: 240px;
-  background-color: var(--bg-secondary);
+  background-color: #0a0e17;
   border-right: 1px solid var(--border);
   position: fixed;
   top: 0;
@@ -148,90 +222,87 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .sidebar-logo {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: var(--accent-1);
+  color: var(--text-primary);
   margin-bottom: 2rem;
-  padding-left: 0.5rem;
-  letter-spacing: 1px;
+  padding-left: 0.75rem;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-logo span {
-  color: var(--text-primary);
+  color: var(--accent-1);
 }
 
 .nav-links {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 2px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.75rem;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   transition: var(--transition);
+  border-left: 2px solid transparent;
 }
 
 .nav-link:hover {
   background-color: var(--bg-card);
   color: var(--text-primary);
+  border-left-color: var(--border);
 }
 
 .nav-link.active {
-  background-color: var(--accent-1);
-  color: #fff;
+  background-color: var(--accent-dim);
+  color: var(--accent-1);
+  border-left-color: var(--accent-1);
 }
 
 .nav-link .nav-icon {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
-/* Online/Offline badge in sidebar */
+/* Online/Offline badge */
 .online-badge {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   margin-top: auto;
+  font-family: var(--font-mono);
 }
 
 .online-badge .dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background-color: var(--success);
+  flex-shrink: 0;
 }
 
-.online-badge.offline .dot {
-  background-color: var(--danger);
-}
+.online-badge.offline .dot        { background-color: var(--danger); }
+.online-badge.offline .status-text { color: var(--danger); }
 
-.online-badge.offline .status-text {
-  color: var(--danger);
-}
-
-/* Hide sidebar on mobile */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
+  .sidebar { display: none; }
 }
 
 
 /* ------------------------------------------------------------
    BOTTOM NAVIGATION (Mobile)
-   Supports: page navigation on screens 768px and below
    ------------------------------------------------------------ */
 .bottom-nav {
   display: none;
@@ -239,9 +310,9 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: var(--bg-secondary);
+  background-color: #0a0e17;
   border-top: 1px solid var(--border);
-  padding: 0.5rem 0;
+  padding: 0.4rem 0;
   z-index: 100;
 }
 
@@ -258,48 +329,44 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   gap: 0.15rem;
   padding: 0.35rem 0.4rem;
   color: var(--text-muted);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
+  font-weight: 500;
   border-radius: var(--radius-sm);
   transition: var(--transition);
   flex: 1;
+  letter-spacing: 0.02em;
 }
 
-.bottom-nav-link .nav-icon {
-  font-size: 1.1rem;
-}
+.bottom-nav-link .nav-icon { font-size: 1.1rem; }
 
 .bottom-nav-link.active {
   color: var(--accent-1);
 }
 
 @media (max-width: 768px) {
-  .bottom-nav {
-    display: block;
-  }
+  .bottom-nav { display: block; }
 }
 
 
 /* ------------------------------------------------------------
    CARDS
-   Supports: content containers used across all modules
    ------------------------------------------------------------ */
 .card {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 1.5rem;
-  box-shadow: var(--shadow);
 }
 
-.card-sm {
-  padding: 1rem;
-}
+.card-sm { padding: 1rem; }
 
 .card-title {
-  font-size: 1rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
   margin-bottom: 1rem;
-  color: var(--text-primary);
 }
 
 .card-grid {
@@ -311,7 +378,6 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 
 /* ------------------------------------------------------------
    BUTTONS
-   Supports: primary, secondary, danger, ghost button styles
    ------------------------------------------------------------ */
 .btn {
   display: inline-flex;
@@ -319,64 +385,58 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   gap: 0.5rem;
   padding: 0.6rem 1.25rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   transition: var(--transition);
+  letter-spacing: 0.01em;
 }
 
 .btn-primary {
   background-color: var(--accent-1);
   color: #fff;
+  border: 1px solid var(--accent-1);
 }
 
-.btn-primary:hover {
-  opacity: 0.85;
-}
+.btn-primary:hover { opacity: 0.85; }
 
 .btn-secondary {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background-color: transparent;
+  color: var(--text-secondary);
   border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
   border-color: var(--accent-1);
   color: var(--accent-1);
+  background-color: var(--accent-dim);
 }
 
 .btn-danger {
   background-color: var(--danger);
   color: #fff;
+  border: 1px solid var(--danger);
 }
 
-.btn-danger:hover {
-  opacity: 0.85;
-}
+.btn-danger:hover { opacity: 0.85; }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
   padding: 0.5rem;
+  border: 1px solid transparent;
 }
 
 .btn-ghost:hover {
   color: var(--accent-1);
+  border-color: var(--border);
 }
 
-.btn-sm {
-  padding: 0.4rem 0.9rem;
-  font-size: 0.8rem;
-}
-
-.btn-full {
-  width: 100%;
-  justify-content: center;
-}
+.btn-sm   { padding: 0.35rem 0.85rem; font-size: 0.8rem; }
+.btn-full { width: 100%; justify-content: center; }
 
 
 /* ------------------------------------------------------------
    FORM ELEMENTS
-   Supports: inputs, textareas, selects used in all modules
    ------------------------------------------------------------ */
 .form-group {
   display: flex;
@@ -386,15 +446,17 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .form-label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-secondary);
 }
 
 .form-input,
 .form-select,
 .form-textarea {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.65rem 1rem;
@@ -409,6 +471,7 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 .form-textarea:focus {
   border-color: var(--accent-1);
   background-color: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .form-textarea {
@@ -417,19 +480,18 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .form-select option {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-card);
   color: var(--text-primary);
 }
 
 
 /* ------------------------------------------------------------
    PROGRESS BAR
-   Supports: goal progress, habit targets, savings goals
    ------------------------------------------------------------ */
 .progress-bar-wrapper {
-  background-color: var(--bg-secondary);
+  background-color: var(--border);
   border-radius: 99px;
-  height: 8px;
+  height: 6px;
   overflow: hidden;
   width: 100%;
 }
@@ -437,38 +499,38 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 .progress-bar-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+  background: var(--accent-1);
   transition: width 0.5s ease;
 }
 
 
 /* ------------------------------------------------------------
    BADGES AND TAGS
-   Supports: habit categories, task priorities, mood tags
    ------------------------------------------------------------ */
 .badge {
   display: inline-block;
   padding: 0.2rem 0.6rem;
-  border-radius: 99px;
-  font-size: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.badge-success { background-color: rgba(0,212,170,0.15); color: var(--success); }
-.badge-danger  { background-color: rgba(239,35,60,0.15);  color: var(--danger); }
-.badge-warning { background-color: rgba(255,209,102,0.15); color: var(--warning); }
-.badge-info    { background-color: rgba(76,201,240,0.15);  color: var(--info); }
-.badge-accent  { background-color: rgba(233,69,96,0.15);   color: var(--accent-1); }
+.badge-success { background: rgba(16,185,129,0.12);  color: var(--success); }
+.badge-danger  { background: rgba(239,68,68,0.12);   color: var(--danger); }
+.badge-warning { background: rgba(245,158,11,0.12);  color: var(--warning); }
+.badge-info    { background: rgba(6,182,212,0.12);   color: var(--info); }
+.badge-accent  { background: var(--accent-dim);       color: var(--accent-1); }
 
 
 /* ------------------------------------------------------------
    MODAL
-   Supports: add/edit forms shown as overlays on all pages
    ------------------------------------------------------------ */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.7);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -476,7 +538,7 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   padding: 1rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.2s ease;
 }
 
 .modal-overlay.open {
@@ -493,8 +555,8 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  transform: translateY(20px);
-  transition: transform 0.25s ease;
+  transform: translateY(16px);
+  transition: transform 0.2s ease;
 }
 
 .modal-overlay.open .modal {
@@ -509,28 +571,28 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .modal-title {
-  font-size: 1.1rem;
+  font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-1);
 }
 
 .modal-close {
   background: transparent;
-  color: var(--text-muted);
-  font-size: 1.4rem;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
   line-height: 1;
   cursor: pointer;
   border: none;
+  transition: var(--transition);
 }
 
-.modal-close:hover {
-  color: var(--danger);
-}
+.modal-close:hover { color: var(--danger); }
 
 
 /* ------------------------------------------------------------
    TOAST NOTIFICATIONS
-   Supports: success, error, warning, info messages
-   Triggered via showToast() in utils.js
    ------------------------------------------------------------ */
 .toast {
   position: fixed;
@@ -538,19 +600,21 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
   right: 1.5rem;
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   color: #fff;
   z-index: 9999;
   animation: slideUp 0.3s ease;
   max-width: 320px;
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
 }
 
-.toast-success { background-color: var(--success); color: #000; }
-.toast-error   { background-color: var(--danger); }
-.toast-warning { background-color: var(--warning); color: #000; }
-.toast-info    { background-color: var(--info); color: #000; }
+.toast-success { background-color: rgba(16,185,129,0.95);  color: #fff; }
+.toast-error   { background-color: rgba(239,68,68,0.95); }
+.toast-warning { background-color: rgba(245,158,11,0.95);  color: #000; }
+.toast-info    { background-color: rgba(6,182,212,0.95);   color: #000; }
 
 .toast-hide {
   animation: slideDown 0.4s ease forwards;
@@ -569,7 +633,6 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 
 /* ------------------------------------------------------------
    PAGE HEADER
-   Supports: title and action button row at top of each page
    ------------------------------------------------------------ */
 .page-header {
   display: flex;
@@ -581,20 +644,22 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .page-title {
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .page-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
   margin-top: 0.2rem;
+  font-family: var(--font-mono);
 }
 
 
 /* ------------------------------------------------------------
    EMPTY STATE
-   Supports: shown when a module has no data yet
    ------------------------------------------------------------ */
 .empty-state {
   text-align: center;
@@ -603,41 +668,28 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 }
 
 .empty-state .empty-icon {
-  font-size: 3rem;
+  font-size: 2.5rem;
   margin-bottom: 1rem;
+  opacity: 0.4;
 }
 
 .empty-state p {
-  font-size: 0.95rem;
-  color: var(--text-muted);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 
 /* ------------------------------------------------------------
    SCROLLBAR
-   Supports: custom scrollbar styling for webkit browsers
    ------------------------------------------------------------ */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 99px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-1);
-}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
 
 
 /* ------------------------------------------------------------
    UTILITY CLASSES
-   Supports: quick layout and spacing helpers
    ------------------------------------------------------------ */
 .flex         { display: flex; }
 .flex-center  { display: flex; align-items: center; justify-content: center; }
@@ -655,4 +707,4 @@ p  { font-size: 0.95rem; color: var(--text-secondary); }
 .w-full       { width: 100%; }
 .hidden       { display: none !important; }
 .rounded      { border-radius: var(--radius); }
-.rounded-sm   { border-radius: var(--radius-sm); }/* cache bust */
+.rounded-sm   { border-radius: var(--radius-sm); }

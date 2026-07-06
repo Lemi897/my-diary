@@ -1,316 +1,89 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="">
+<html lang="en" data-theme="" data-page="dashboard">
 <head>
-  <!-- ============================================================
-    index.html - Dashboard / Home Page
-    Shows: daily summary, streak counter, pending tasks,
-    today's mood, money spent today, motivational quote.
-    All data is pulled from Supabase via js/supabase.js.
-    Offline support handled by service-worker.js
-  ============================================================ -->
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="My Diary - Personal life tracker" />
   <meta name="theme-color" content="#0f0f0f" />
-
-  <!-- PWA manifest link -->
   <link rel="manifest" href="manifest.json" />
-
   <title>My Diary</title>
-
-  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Remix Icons for nav and UI icons -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
-
-  <!-- Global styles -->
   <link rel="stylesheet" href="css/main.css" />
-
-  <!-- Theme styles -->
   <link rel="stylesheet" href="css/themes.css" />
-  <!-- Blocking theme loader: runs before first paint to prevent flash -->
-  <script>
-    (function(){
-      var t = localStorage.getItem('active_theme') || '';
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
-
+  <script>(function(){ var t=localStorage.getItem('active_theme')||''; document.documentElement.setAttribute('data-theme',t); })();</script>
   <style>
-    /* --------------------------------------------------------
-       Dashboard-specific styles
-       These only apply to index.html
-    -------------------------------------------------------- */
-
-    /* Greeting section at top of dashboard */
-    .greeting-section {
-      margin-bottom: 2rem;
-    }
-
-    .greeting-time {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 0.25rem;
-    }
-
-    .greeting-name {
-      font-size: 2rem;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-
-    .greeting-name span {
-      color: var(--accent-1);
-    }
-
-    /* Streak card with animated flame */
+    .greeting-section { margin-bottom: 2rem; }
+    .greeting-time { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .greeting-name { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+    .greeting-name span { color: var(--accent-1); }
     .streak-card {
       background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
-      border: none;
-      position: relative;
-      overflow: hidden;
+      border: none; position: relative; overflow: hidden;
     }
-
     .streak-card::before {
-      content: '';
-      position: absolute;
-      top: -40px;
-      right: -40px;
-      width: 120px;
-      height: 120px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 50%;
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;
     }
-
-    .streak-number {
-      font-size: 3.5rem;
-      font-weight: 800;
-      line-height: 1;
-      color: #fff;
-    }
-
-    .streak-label {
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.75);
-      margin-top: 0.25rem;
-    }
-
-    .streak-flame {
-      font-size: 2.5rem;
-      animation: flamePulse 1.5s ease-in-out infinite;
-    }
-
-    /* Flame grows and shrinks to simulate burning */
+    .streak-number { font-size: 3.5rem; font-weight: 800; line-height: 1; color: #fff; }
+    .streak-label { font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-top: 0.25rem; }
+    .streak-flame { font-size: 2.5rem; animation: flamePulse 1.5s ease-in-out infinite; }
     @keyframes flamePulse {
       0%, 100% { transform: scale(1) rotate(-5deg); }
       50%       { transform: scale(1.2) rotate(5deg); }
     }
-
-    .streak-xp {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.6);
-      margin-top: 0.5rem;
-    }
-
-    .streak-best {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.6);
-    }
-
-    /* Summary stat cards row */
+    .streak-xp   { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.5rem; }
+    .streak-best { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
     .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
     }
-
     .stat-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
+      background-color: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
     }
-
-    .stat-icon {
-      font-size: 1.4rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    /* Today's mood display */
-    .mood-display {
-      font-size: 2rem;
-      line-height: 1;
-    }
-
-    .mood-label {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      margin-top: 0.25rem;
-    }
-
-    /* Scripture card */
+    .stat-icon  { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+    .mood-display { font-size: 2rem; line-height: 1; }
+    .mood-label   { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
     .quote-card {
       background: linear-gradient(135deg, #1a1a2e, #16213e);
-      border-left: 4px solid #f0c040;
-      position: relative;
-      overflow: hidden;
+      border-left: 4px solid #f0c040; position: relative; overflow: hidden;
     }
-
     .quote-card::after {
-      content: '✝';
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 3rem;
-      opacity: 0.07;
-      color: #f0c040;
+      content: '✝'; position: absolute; right: 1rem; top: 50%;
+      transform: translateY(-50%); font-size: 3rem; opacity: 0.07; color: #f0c040;
     }
-
-    .scripture-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: #f0c040;
-      margin-bottom: 0.5rem;
-    }
-
-    .quote-text {
-      font-size: 1rem;
-      font-style: italic;
-      color: #e8e8f0;
-      line-height: 1.8;
-    }
-
-    .quote-author {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #f0c040;
-      margin-top: 0.6rem;
-    }
-
-    .scripture-theme-tag {
-      display: inline-block;
-      font-size: 0.7rem;
-      background: rgba(240,192,64,0.15);
-      color: #f0c040;
-      border-radius: 20px;
-      padding: 0.15rem 0.6rem;
-      margin-top: 0.5rem;
-    }
-
-    /* Pending tasks preview */
-    .task-preview-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .task-preview-item:last-child {
-      border-bottom: none;
-    }
-
-    .task-check {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .task-preview-title {
-      font-size: 0.9rem;
-      flex: 1;
-    }
-
-    .task-preview-due {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Recent journal entry preview */
+    .scripture-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #f0c040; margin-bottom: 0.5rem; }
+    .quote-text   { font-size: 1rem; font-style: italic; color: #e8e8f0; line-height: 1.8; }
+    .quote-author { font-size: 0.82rem; font-weight: 600; color: #f0c040; margin-top: 0.6rem; }
+    .scripture-theme-tag { display: inline-block; font-size: 0.7rem; background: rgba(240,192,64,0.15); color: #f0c040; border-radius: 20px; padding: 0.15rem 0.6rem; margin-top: 0.5rem; }
+    .task-preview-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .task-preview-item:last-child { border-bottom: none; }
+    .task-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+    .task-preview-title { font-size: 0.9rem; flex: 1; }
+    .task-preview-due   { font-size: 0.75rem; color: var(--text-muted); }
     .journal-preview {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
     }
-
-    .journal-preview-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    /* Bottom dashboard grid */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Theme unlock notification badge */
+    .journal-preview-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
     .theme-unlock-banner {
       background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
-      border-radius: var(--radius);
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      display: none; /* shown via JS when a theme unlocks */
+      border-radius: var(--radius); padding: 1rem 1.5rem;
+      display: none; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
     }
-
-    .theme-unlock-banner.visible {
-      display: flex;
-    }
-
-    .theme-unlock-text {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #fff;
-    }
+    .theme-unlock-banner.visible { display: flex; }
+    .theme-unlock-text { font-size: 0.9rem; font-weight: 600; color: #fff; }
   </style>
 </head>
-
 <body>
-  <!-- auth handled inside main module script -->
-    <!-- LOADING SCREEN -->
   <div id="appLoader" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.6s ease,visibility 0.6s ease;">
     <div style="font-size:2.8rem;font-weight:800;letter-spacing:-0.02em;font-family:'Plus Jakarta Sans',sans-serif;animation:loaderPop 0.7s ease forwards;opacity:0;transform:scale(0.8);">My<span style="color:#e94560;">Diary</span></div>
     <div style="font-size:0.82rem;color:#a0a0b0;margin-top:0.5rem;letter-spacing:0.06em;animation:loaderPop 0.7s ease 0.15s forwards;opacity:0;">Your personal life tracker</div>
@@ -322,73 +95,35 @@
   </div>
 
   <div class="app-wrapper">
-
-    <!-- --------------------------------------------------------
-      SIDEBAR NAVIGATION (desktop)
-      Active link is highlighted. Update active class per page.
-    -------------------------------------------------------- -->
     <aside class="sidebar">
       <div class="sidebar-logo">My<span>Diary</span></div>
-
       <nav class="nav-links">
-        <a href="index.html" class="nav-link active">
-          <i class="ri-home-5-line nav-icon"></i> Dashboard
-        </a>
-        <a href="habits.html" class="nav-link">
-          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
-        </a>
-        <a href="tasks.html" class="nav-link">
-          <i class="ri-task-line nav-icon"></i> Tasks
-        </a>
-        <a href="journal.html" class="nav-link">
-          <i class="ri-quill-pen-line nav-icon"></i> Journal
-        </a>
-        <a href="goals.html" class="nav-link">
-          <i class="ri-focus-3-line nav-icon"></i> Goals
-        </a>
-        <a href="finance.html" class="nav-link">
-          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
-        </a>
-        <a href="profile.html" class="nav-link">
-          <i class="ri-user-3-line nav-icon"></i> Profile
-        </a>
+        <a href="index.html"   class="nav-link active"><i class="ri-home-5-line nav-icon"></i> Dashboard</a>
+        <a href="habits.html"  class="nav-link"><i class="ri-checkbox-circle-line nav-icon"></i> Habits</a>
+        <a href="tasks.html"   class="nav-link"><i class="ri-task-line nav-icon"></i> Tasks</a>
+        <a href="journal.html" class="nav-link"><i class="ri-quill-pen-line nav-icon"></i> Journal</a>
+        <a href="goals.html"   class="nav-link"><i class="ri-focus-3-line nav-icon"></i> Goals</a>
+        <a href="finance.html" class="nav-link"><i class="ri-money-dollar-circle-line nav-icon"></i> Finance</a>
+        <a href="profile.html" class="nav-link"><i class="ri-user-3-line nav-icon"></i> Profile</a>
       </nav>
-
-      <!-- Online/Offline status badge -->
       <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
-      <div class="online-badge" id="onlineBadge">
-        <div class="dot"></div>
-        <span class="status-text">Online</span>
-      </div>
+      <div class="online-badge" id="onlineBadge"><div class="dot"></div><span class="status-text">Online</span></div>
     </aside>
 
-    <!-- --------------------------------------------------------
-      MAIN CONTENT AREA
-    -------------------------------------------------------- -->
     <main class="main-content">
-
-      <!-- Theme unlock banner (shown via JS when milestone hit) -->
       <div class="theme-unlock-banner" id="themeUnlockBanner">
         <span style="font-size:1.5rem;">🎨</span>
         <div>
-          <div class="theme-unlock-text" id="themeUnlockText">
-            New theme unlocked!
-          </div>
-          <div style="font-size:0.8rem;color:rgba(255,255,255,0.75);">
-            Go to Profile to apply it.
-          </div>
+          <div class="theme-unlock-text" id="themeUnlockText">New theme unlocked!</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.75);">Go to Profile to apply it.</div>
         </div>
       </div>
 
-      <!-- Greeting section -->
       <section class="greeting-section">
         <div class="greeting-time" id="greetingTime">Good morning</div>
-        <div class="greeting-name">
-          Hey, <span id="userName">Maestro</span> 👋
-        </div>
+        <div class="greeting-name">Hey, <span id="userName">Maestro</span> 👋</div>
       </section>
 
-      <!-- Streak card -->
       <div class="card streak-card mb-lg flex-between">
         <div>
           <div class="streak-number" id="streakCount">0</div>
@@ -402,172 +137,98 @@
         </div>
       </div>
 
-      <!-- Stats summary row -->
       <div class="stats-row">
-
-        <!-- Habits done today -->
         <div class="stat-card">
           <div class="stat-icon">✅</div>
           <div class="stat-value" id="habitsDoneToday">0</div>
           <div class="stat-label">Habits done today</div>
         </div>
-
-        <!-- Pending tasks -->
         <div class="stat-card">
           <div class="stat-icon">📋</div>
           <div class="stat-value" id="pendingTasksCount">0</div>
           <div class="stat-label">Pending tasks</div>
         </div>
-
-        <!-- Today's mood -->
         <div class="stat-card">
           <div class="mood-display" id="todayMoodEmoji">😐</div>
           <div class="mood-label" id="todayMoodLabel">No entry yet</div>
           <div class="stat-label">Today's mood</div>
         </div>
-
-        <!-- Money spent today -->
         <div class="stat-card">
           <div class="stat-icon">💸</div>
           <div class="stat-value" id="spentToday">KSH 0</div>
           <div class="stat-label">Spent today</div>
         </div>
-
       </div>
 
-      <!-- Dashboard bottom grid -->
       <div class="dashboard-grid">
-
-        <!-- Pending tasks preview -->
         <div class="card">
           <div class="flex-between mb-md">
             <div class="card-title">Pending Tasks</div>
             <a href="tasks.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="pendingTasksList">
-            <div class="empty-state">
-              <div class="empty-icon">📋</div>
-              <p>No pending tasks</p>
-            </div>
+            <div class="empty-state"><div class="empty-icon">📋</div><p>No pending tasks</p></div>
           </div>
         </div>
 
-        <!-- Latest journal entry preview -->
         <div class="card">
           <div class="flex-between mb-md">
             <div class="card-title">Latest Journal Entry</div>
             <a href="journal.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="latestJournalEntry">
-            <div class="empty-state">
-              <div class="empty-icon">📖</div>
-              <p>No journal entries yet</p>
-            </div>
+            <div class="empty-state"><div class="empty-icon">📖</div><p>No journal entries yet</p></div>
           </div>
         </div>
 
-        <!-- Active goals preview -->
         <div class="card">
           <div class="flex-between mb-md">
             <div class="card-title">Active Goals</div>
             <a href="goals.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="activeGoalsList">
-            <div class="empty-state">
-              <div class="empty-icon">🎯</div>
-              <p>No active goals</p>
-            </div>
+            <div class="empty-state"><div class="empty-icon">🎯</div><p>No active goals</p></div>
           </div>
         </div>
 
-        <!-- 30-Day Mood Chart -->
         <div class="card">
           <div class="flex-between mb-md">
             <div class="card-title">😊 Mood — Last 30 Days</div>
             <a href="journal.html" class="btn btn-ghost btn-sm">Journal</a>
           </div>
           <canvas id="moodChart" height="120"></canvas>
-          <div id="moodChartEmpty" class="text-muted" style="text-align:center;padding:1rem;display:none;">
-            No mood data yet — start journaling!
-          </div>
+          <div id="moodChartEmpty" class="text-muted" style="text-align:center;padding:1rem;display:none;">No mood data yet — start journaling!</div>
         </div>
 
-        <!-- Daily Scripture -->
         <div class="card quote-card">
           <div class="scripture-label">📖 Verse of the Day</div>
           <div class="quote-text" id="dailyQuote">Loading scripture...</div>
           <div class="quote-author" id="quoteAuthor"></div>
           <div class="scripture-theme-tag" id="scriptureThemeTag"></div>
         </div>
-
       </div>
-
     </main>
 
-    <!-- --------------------------------------------------------
-      BOTTOM NAVIGATION (mobile only)
-    -------------------------------------------------------- -->
     <nav class="bottom-nav">
       <div class="bottom-nav-links">
-        <a href="index.html" class="bottom-nav-link active">
-          <i class="ri-home-5-line nav-icon"></i>
-          <span>Home</span>
-        </a>
-        <a href="habits.html" class="bottom-nav-link">
-          <i class="ri-checkbox-circle-line nav-icon"></i>
-          <span>Habits</span>
-        </a>
-        <a href="tasks.html" class="bottom-nav-link">
-          <i class="ri-task-line nav-icon"></i>
-          <span>Tasks</span>
-        </a>
-        <a href="journal.html" class="bottom-nav-link">
-          <i class="ri-quill-pen-line nav-icon"></i>
-          <span>Journal</span>
-        </a>
-        <a href="goals.html" class="bottom-nav-link">
-          <i class="ri-focus-3-line nav-icon"></i>
-          <span>Goals</span>
-        </a>
-        <a href="finance.html" class="bottom-nav-link">
-          <i class="ri-money-dollar-circle-line nav-icon"></i>
-          <span>Finance</span>
-        </a>
-        <a href="profile.html" class="bottom-nav-link">
-          <i class="ri-user-3-line nav-icon"></i>
-          <span>Profile</span>
-        </a>
+        <a href="index.html"   class="bottom-nav-link active"><i class="ri-home-5-line nav-icon"></i><span>Home</span></a>
+        <a href="habits.html"  class="bottom-nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+        <a href="tasks.html"   class="bottom-nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+        <a href="journal.html" class="bottom-nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+        <a href="goals.html"   class="bottom-nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+        <a href="finance.html" class="bottom-nav-link"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+        <a href="profile.html" class="bottom-nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
       </div>
     </nav>
-
   </div>
 
-  <!-- ============================================================
-    DASHBOARD JAVASCRIPT
-    Handles: greeting, streak display, stats summary,
-    pending tasks preview, latest journal, active goals,
-    daily quote, online/offline badge, theme unlock check.
-  ============================================================ -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
-    import {
-      todayDate,
-      formatDateShort,
-      formatKSH,
-      isOnline,
-      onConnectivityChange,
-      truncate,
-      replayOfflineQueue,
-      sanitize
-    } from './js/utils.js';
+    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
     import { initNotifications } from './js/notifications.js';
 
-
-    // ----------------------------------------------------------
-    // LOADER HELPERS
-    // ----------------------------------------------------------
     function loaderProgress(pct, status) {
       const bar = document.getElementById('loaderBar');
       const txt = document.getElementById('loaderStatus');
@@ -582,47 +243,23 @@
       setTimeout(() => loader.remove(), 650);
     }
 
-    // Module-level userId — set after auth check below
     let userId = null;
 
-    // ----------------------------------------------------------
-    // AUTH CHECK — single client, runs before init()
-    // ----------------------------------------------------------
-    {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        window.location.replace('login.html');
-      }
-    }
+    { const { data: { session } } = await supabase.auth.getSession(); if (!session) window.location.replace('login.html'); }
 
-    // Theme already applied in <head> blocking script — no re-apply needed
-
-    // ----------------------------------------------------------
-    // GREETING
-    // Shows Good morning / afternoon / evening based on time
-    // ----------------------------------------------------------
     function setGreeting() {
       const hour = new Date().getHours();
-      const greetingEl = document.getElementById('greetingTime');
-      if (hour < 12)       greetingEl.textContent = 'Good morning ☀️';
-      else if (hour < 17)  greetingEl.textContent = 'Good afternoon 🌤️';
-      else                 greetingEl.textContent = 'Good evening 🌙';
+      const el = document.getElementById('greetingTime');
+      if (hour < 12) el.textContent = 'Good morning ☀️';
+      else if (hour < 17) el.textContent = 'Good afternoon 🌤️';
+      else el.textContent = 'Good evening 🌙';
     }
 
-    // ----------------------------------------------------------
-    // ONLINE / OFFLINE BADGE
-    // Updates the sidebar badge in real time
-    // ----------------------------------------------------------
     function updateOnlineBadge(online) {
       const badge = document.getElementById('onlineBadge');
       const text = badge.querySelector('.status-text');
-      if (online) {
-        badge.classList.remove('offline');
-        text.textContent = 'Online';
-      } else {
-        badge.classList.add('offline');
-        text.textContent = 'Offline';
-      }
+      if (online) { badge.classList.remove('offline'); text.textContent = 'Online'; }
+      else { badge.classList.add('offline'); text.textContent = 'Offline'; }
     }
 
     updateOnlineBadge(isOnline());
@@ -630,266 +267,125 @@
       updateOnlineBadge(online);
       if (online) {
         const result = await replayOfflineQueue();
-        if (result && result.replayed > 0) {
-          showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
-        }
+        if (result && result.replayed > 0) showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
       }
     });
 
-    // ----------------------------------------------------------
-    // STREAK DISPLAY
-    // Reads streak from Supabase and checks for theme unlocks
-    // ----------------------------------------------------------
     const THEME_MILESTONES = {
-      7:   { name: 'Tokyo Night', key: 'tokyo-night' },
-      14:  { name: 'Dracula',     key: 'dracula' },
-      21:  { name: 'Catppuccin',  key: 'catppuccin' },
-      30:  { name: 'Nord',        key: 'nord' },
-      45:  { name: 'Gruvbox',     key: 'gruvbox' },
-      60:  { name: 'Sunset',      key: 'sunset' },
-      75:  { name: 'Ocean Deep',  key: 'ocean-deep' },
-      90:  { name: 'Sakura',      key: 'sakura' },
-      120: { name: 'Forest',      key: 'forest' },
-      150: { name: 'Cyberpunk',   key: 'cyberpunk' }
+      7:{name:'Tokyo Night',key:'tokyo-night'},14:{name:'Dracula',key:'dracula'},
+      21:{name:'Catppuccin',key:'catppuccin'},30:{name:'Nord',key:'nord'},
+      45:{name:'Gruvbox',key:'gruvbox'},60:{name:'Sunset',key:'sunset'},
+      75:{name:'Ocean Deep',key:'ocean-deep'},90:{name:'Sakura',key:'sakura'},
+      120:{name:'Forest',key:'forest'},150:{name:'Cyberpunk',key:'cyberpunk'}
     };
 
     async function loadStreak() {
-      const { data, error } = await supabase
-        .from('streaks')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1)
-        .single();
-
+      const { data, error } = await supabase.from('streaks').select('*').eq('user_id', userId).limit(1).single();
       if (error || !data) return;
-
       document.getElementById('streakCount').textContent = data.current_streak;
       document.getElementById('streakBest').textContent = `Best: ${data.longest_streak} days`;
       document.getElementById('streakXP').textContent = `${data.total_xp} XP earned`;
-
-      // Find next theme milestone to show hint
-      const milestones = Object.keys(THEME_MILESTONES).map(Number).sort((a,b) => a-b);
+      const milestones = Object.keys(THEME_MILESTONES).map(Number).sort((a,b)=>a-b);
       const next = milestones.find(m => m > data.current_streak);
       if (next) {
         const daysLeft = next - data.current_streak;
-        document.getElementById('nextThemeHint').textContent =
-          `${daysLeft} days to unlock ${THEME_MILESTONES[next].name}`;
+        document.getElementById('nextThemeHint').textContent = `${daysLeft} days to unlock ${THEME_MILESTONES[next].name}`;
       }
-
-      // Check if a new theme was just unlocked
       const justUnlocked = THEME_MILESTONES[data.current_streak];
       if (justUnlocked) {
         const alreadyShown = localStorage.getItem(`theme_shown_${justUnlocked.key}`);
         if (!alreadyShown) {
-          // Save unlocked theme to localStorage
+          await supabase.from('unlocked_themes').upsert(
+            { user_id: userId, theme_name: justUnlocked.key },
+            { onConflict: 'user_id,theme_name' }
+          );
           const unlocked = JSON.parse(localStorage.getItem('unlocked_themes') || '[]');
-          if (!unlocked.includes(justUnlocked.key)) {
-            unlocked.push(justUnlocked.key);
-            localStorage.setItem('unlocked_themes', JSON.stringify(unlocked));
-          }
-          // Show unlock banner
-          document.getElementById('themeUnlockText').textContent =
-            `🎨 You unlocked the "${justUnlocked.name}" theme!`;
+          if (!unlocked.includes(justUnlocked.key)) { unlocked.push(justUnlocked.key); localStorage.setItem('unlocked_themes', JSON.stringify(unlocked)); }
+          document.getElementById('themeUnlockText').textContent = `🎨 You unlocked the "${justUnlocked.name}" theme!`;
           document.getElementById('themeUnlockBanner').classList.add('visible');
           localStorage.setItem(`theme_shown_${justUnlocked.key}`, 'true');
         }
       }
     }
 
-    // ----------------------------------------------------------
-    // HABITS DONE TODAY
-    // Counts habit logs where done = true for today
-    // ----------------------------------------------------------
     async function loadHabitsDoneToday() {
       const today = todayDate();
-      const { data, error } = await supabase
-        .from('habit_logs')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('log_date', today)
-        .eq('done', true);
-
-      if (!error && data) {
-        document.getElementById('habitsDoneToday').textContent = data.length;
-      }
+      const { data, error } = await supabase.from('habit_logs').select('id').eq('user_id', userId).eq('log_date', today).eq('done', true);
+      if (!error && data) document.getElementById('habitsDoneToday').textContent = data.length;
     }
 
-    // ----------------------------------------------------------
-    // PENDING TASKS COUNT AND PREVIEW
-    // Shows count and top 3 pending tasks on dashboard
-    // ----------------------------------------------------------
     async function loadPendingTasks() {
-      // Two queries in parallel:
-      // 1. Full count of all pending top-level tasks (for the stat badge)
-      // 2. Top 3 by due date (for the dashboard preview list)
       const [countRes, previewRes] = await Promise.all([
-        supabase
-          .from('tasks')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('done', false)
-          .is('parent_id', null),
-        supabase
-          .from('tasks')
-          .select('id, title, due_date, priority')
-          .eq('user_id', userId)
-          .eq('done', false)
-          .is('parent_id', null)
-          .order('due_date', { ascending: true })
-          .limit(3)
+        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('done', false).is('parent_id', null),
+        supabase.from('tasks').select('id, title, due_date, priority').eq('user_id', userId).eq('done', false).is('parent_id', null).order('due_date', { ascending: true }).limit(3)
       ]);
-
       const totalCount = countRes.count ?? 0;
       const data = previewRes.data || [];
-      const error = previewRes.error;
-
-      if (error) return;
-
+      if (previewRes.error) return;
       document.getElementById('pendingTasksCount').textContent = totalCount;
-
       const list = document.getElementById('pendingTasksList');
-
-      if (data.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <p>No pending tasks</p>
-          </div>`;
-        return;
-      }
-
+      if (data.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No pending tasks</p></div>`; return; }
       const now = new Date();
       const overdueCount = data.filter(t => t.due_date && new Date(t.due_date) < now).length;
-
-      // Show overdue banner if any tasks are overdue
       const banner = overdueCount > 0
-        ? `<div style="background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.3);
-            border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;
-            font-size:0.82rem;font-weight:600;color:#ef233c;display:flex;align-items:center;gap:0.5rem;">
-            <i class="ri-alarm-warning-line"></i>
-            ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''} — take action!
-          </div>`
-        : '';
-
+        ? `<div style="background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.3);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.82rem;font-weight:600;color:#ef233c;display:flex;align-items:center;gap:0.5rem;"><i class="ri-alarm-warning-line"></i>${overdueCount} overdue task${overdueCount>1?'s':''} — take action!</div>` : '';
       list.innerHTML = banner + data.map(task => {
         const isOverdue = task.due_date && new Date(task.due_date) < now;
-        const priorityColor = {
-          urgent: '#ef233c', high: '#fb923c', medium: '#ffd166', low: '#00d4aa'
-        }[task.priority] || '#a0a0b0';
-
-        return `
-        <div class="task-preview-item" style="${isOverdue ? 'border-left:3px solid #ef233c;padding-left:0.5rem;' : ''}">
+        const priorityColor = {urgent:'#ef233c',high:'#fb923c',medium:'#ffd166',low:'#00d4aa'}[task.priority] || '#a0a0b0';
+        return `<div class="task-preview-item" style="${isOverdue?'border-left:3px solid #ef233c;padding-left:0.5rem;':''}">
           <div class="task-check" style="border-color:${priorityColor};"></div>
           <div style="flex:1;">
-            <div class="task-preview-title" style="${isOverdue ? 'color:#ef233c;' : ''}">
-              ${isOverdue ? '<i class="ri-alarm-warning-line"></i> ' : ''}${sanitize(truncate(task.title, 38))}
-            </div>
-            ${task.due_date ? `
-              <div class="task-preview-due" style="${isOverdue ? 'color:#ef233c;font-weight:600;' : ''}">
-                ${isOverdue ? '⚠️ ' : ''}${sanitize(formatDateShort(task.due_date))}
-              </div>` : ''}
+            <div class="task-preview-title" style="${isOverdue?'color:#ef233c;':''}">${isOverdue?'<i class="ri-alarm-warning-line"></i> ':''}${sanitize(truncate(task.title,38))}</div>
+            ${task.due_date?`<div class="task-preview-due" style="${isOverdue?'color:#ef233c;font-weight:600;':''}">${isOverdue?'⚠️ ':''}${sanitize(formatDateShort(task.due_date))}</div>`:''}
           </div>
-          <span class="badge priority-${sanitize(task.priority || 'low')}" style="font-size:0.7rem;">
-            ${sanitize(task.priority || '')}
-          </span>
+          <span class="badge priority-${sanitize(task.priority||'low')}" style="font-size:0.7rem;">${sanitize(task.priority||'')}</span>
         </div>`;
       }).join('');
     }
 
-    // ----------------------------------------------------------
-    // TODAY'S MOOD
-    // Gets the most recent journal entry mood for today
-    // ----------------------------------------------------------
     async function loadTodayMood() {
       const today = todayDate();
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .select('mood, mood_score')
-        .eq('user_id', userId)
-        .gte('created_at', `${today}T00:00:00`)
-        .lte('created_at', `${today}T23:59:59`)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
+      const { data, error } = await supabase.from('journal_entries').select('mood, mood_score').eq('user_id', userId).gte('created_at', `${today}T00:00:00`).lte('created_at', `${today}T23:59:59`).order('created_at', { ascending: false }).limit(1).single();
       if (error || !data) return;
-
-      // Map mood score to emoji
-      const moodMap = {
-        1: '😭', 2: '😔', 3: '😟', 4: '😕', 5: '😐',
-        6: '🙂', 7: '😊', 8: '😄', 9: '🤩', 10: '🥳'
-      };
-
-      document.getElementById('todayMoodEmoji').textContent =
-        moodMap[data.mood_score] || '😐';
-      document.getElementById('todayMoodLabel').textContent =
-        data.mood || 'No label';
+      const moodMap = {1:'😭',2:'😔',3:'😟',4:'😕',5:'😐',6:'🙂',7:'😊',8:'😄',9:'🤩',10:'🥳'};
+      document.getElementById('todayMoodEmoji').textContent = moodMap[data.mood_score] || '😐';
+      document.getElementById('todayMoodLabel').textContent = data.mood || 'No label';
     }
 
-    // ----------------------------------------------------------
-    // MONEY SPENT TODAY
-    // Sums all expenses logged today in KSH
-    // ----------------------------------------------------------
+    // FIX 2: Use date range query for timestamptz column + include mpesa_fee in sum
     async function loadSpentToday() {
       const today = todayDate();
       const { data, error } = await supabase
         .from('expenses')
-        .select('amount_ksh')
+        .select('amount_ksh, mpesa_fee')
         .eq('user_id', userId)
-        .eq('expense_date', today);
-
+        .gte('expense_date', `${today}T00:00:00`)
+        .lte('expense_date', `${today}T23:59:59`);
       if (error || !data) return;
-
-      const total = data.reduce((sum, e) => sum + parseFloat(e.amount_ksh || 0), 0);
+      const total = data.reduce((sum, e) => sum + parseFloat(e.amount_ksh || 0) + parseFloat(e.mpesa_fee || 0), 0);
       document.getElementById('spentToday').textContent = formatKSH(total);
     }
 
-    // ----------------------------------------------------------
-    // LATEST JOURNAL ENTRY PREVIEW
-    // Shows title, mood, and a short snippet of last entry
-    // ----------------------------------------------------------
+    // FIX 1: Strip HTML tags from journal content before displaying
     async function loadLatestJournal() {
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .select('title, content, mood, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
+      const { data, error } = await supabase.from('journal_entries').select('title, content, mood, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).single();
       if (error || !data) return;
-
       const container = document.getElementById('latestJournalEntry');
+      // Strip HTML tags so raw <p> tags don't show as text
+      const plainText = (data.content || '').replace(/<[^>]*>/g, '').trim();
       container.innerHTML = `
         <div class="journal-preview-meta">
           <span>${sanitize(formatDateShort(data.created_at))}</span>
           <span>•</span>
           <span>${sanitize(data.mood || 'No mood')}</span>
         </div>
-        <div style="font-weight:600;margin-bottom:0.4rem;">
-          ${sanitize(data.title || 'Untitled Entry')}
-        </div>
-        <div class="journal-preview">
-          ${sanitize(truncate(data.content || '', 150))}
-        </div>
-      `;
+        <div style="font-weight:600;margin-bottom:0.4rem;">${sanitize(data.title || 'Untitled Entry')}</div>
+        <div class="journal-preview">${sanitize(truncate(plainText, 150))}</div>`;
     }
 
-    // ----------------------------------------------------------
-    // ACTIVE GOALS PREVIEW
-    // Shows top 3 active goals with progress bars
-    // ----------------------------------------------------------
     async function loadActiveGoals() {
-      const { data, error } = await supabase
-        .from('goals')
-        .select('id, title, progress, target_date, category')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(3);
-
+      const { data, error } = await supabase.from('goals').select('id, title, progress, target_date, category').eq('user_id', userId).eq('status', 'active').order('created_at', { ascending: false }).limit(3);
       if (error || !data || data.length === 0) return;
-
       const list = document.getElementById('activeGoalsList');
       list.innerHTML = data.map(goal => `
         <div style="margin-bottom:1rem;">
@@ -897,197 +393,70 @@
             <div style="font-size:0.9rem;font-weight:600;">${sanitize(truncate(goal.title, 35))}</div>
             <div class="text-muted">${sanitize(String(goal.progress))}%</div>
           </div>
-          <div class="progress-bar-wrapper">
-            <div class="progress-bar-fill" style="width:${sanitize(String(goal.progress))}%"></div>
-          </div>
-          ${goal.target_date ? `
-            <div class="text-muted mt-sm">Due: ${sanitize(formatDateShort(goal.target_date))}</div>
-          ` : ''}
-        </div>
-      `).join('');
+          <div class="progress-bar-wrapper"><div class="progress-bar-fill" style="width:${sanitize(String(goal.progress))}%"></div></div>
+          ${goal.target_date ? `<div class="text-muted mt-sm">Due: ${sanitize(formatDateShort(goal.target_date))}</div>` : ''}
+        </div>`).join('');
     }
 
-    // ----------------------------------------------------------
-    // DAILY MOTIVATIONAL QUOTE
-    // Rotates through a local list daily using date as seed
-    // ----------------------------------------------------------
-    // SCRIPTURE ENGINE
-    // Curated verse library by theme. Picks a verse daily using
-    // ----------------------------------------------------------
-    // 30-DAY MOOD CHART
-    // Fetches last 30 journal entries and plots mood score
-    // ----------------------------------------------------------
     let moodChartInstance = null;
     async function loadMoodChart() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const fromDate = thirtyDaysAgo.toISOString();
-
-      const { data, error } = await supabase
-        .from('journal_entries')
-        .select('mood_score, created_at')
-        .eq('user_id', userId)
-        .gte('created_at', fromDate)
-        .order('created_at', { ascending: true })
-        .limit(30);
-
+      const { data, error } = await supabase.from('journal_entries').select('mood_score, created_at').eq('user_id', userId).gte('created_at', thirtyDaysAgo.toISOString()).order('created_at', { ascending: true }).limit(30);
       const canvas = document.getElementById('moodChart');
       const empty = document.getElementById('moodChartEmpty');
-
-      if (error || !data || data.length === 0) {
-        canvas.style.display = 'none';
-        empty.style.display = 'block';
-        return;
-      }
-
-      canvas.style.display = 'block';
-      empty.style.display = 'none';
-
-      const labels = data.map(e => {
-        const d = new Date(e.created_at);
-        return `${d.getDate()}/${d.getMonth()+1}`;
-      });
+      if (error || !data || data.length === 0) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
+      canvas.style.display = 'block'; empty.style.display = 'none';
+      const labels = data.map(e => { const d = new Date(e.created_at); return `${d.getDate()}/${d.getMonth()+1}`; });
       const scores = data.map(e => e.mood_score);
       const moodEmojis = ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
-
       if (moodChartInstance) moodChartInstance.destroy();
       moodChartInstance = new Chart(canvas.getContext('2d'), {
         type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Mood',
-            data: scores,
-            borderColor: '#e94560',
-            backgroundColor: 'rgba(233,69,96,0.1)',
-            borderWidth: 2,
-            pointBackgroundColor: '#f0c040',
-            pointRadius: 4,
-            tension: 0.4,
-            fill: true
-          }]
-        },
+        data: { labels, datasets: [{ label: 'Mood', data: scores, borderColor: '#e94560', backgroundColor: 'rgba(233,69,96,0.1)', borderWidth: 2, pointBackgroundColor: '#f0c040', pointRadius: 4, tension: 0.4, fill: true }] },
         options: {
           responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => `${moodEmojis[ctx.raw] || ''} ${ctx.raw}/10`
-              }
-            }
-          },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${moodEmojis[ctx.raw]||''} ${ctx.raw}/10` } } },
           scales: {
-            y: {
-              min: 1, max: 10,
-              ticks: { color: '#a0a0b0', stepSize: 3,
-                callback: v => moodEmojis[v] || v },
-              grid: { color: '#2a2a3e' }
-            },
-            x: { ticks: { color: '#a0a0b0' }, grid: { display: false } }
+            y: { min:1, max:10, ticks: { color:'#a0a0b0', stepSize:3, callback: v => moodEmojis[v]||v }, grid: { color:'#2a2a3e' } },
+            x: { ticks: { color:'#a0a0b0' }, grid: { display:false } }
           }
         }
       });
     }
 
-    // ----------------------------------------------------------
-    // DAILY SCRIPTURE — sync from library (no network needed)
-    // ----------------------------------------------------------
     function loadDailyQuote() {
       try {
         const verse = getVerseFromLibrary('daily');
         document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
         document.getElementById('quoteAuthor').textContent = verse.ref;
-        if (verse.apply) {
-          document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
-        }
+        if (verse.apply) document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
       } catch(e) {
         document.getElementById('dailyQuote').textContent = '"This is the day the LORD has made; let us rejoice and be glad in it."';
         document.getElementById('quoteAuthor').textContent = 'Psalm 118:24';
       }
     }
 
-    // ----------------------------------------------------------
-    // ----------------------------------------------------------
-    // PROFILE NAME LOADER
-    // Loads user's name from Supabase profiles table
-    // ----------------------------------------------------------
     async function loadUserName() {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', userId)
-        .limit(1)
-        .single();
-
-      if (!error && data && data.name) {
-        document.getElementById('userName').textContent = data.name;
-      }
+      const { data, error } = await supabase.from('profiles').select('name').eq('id', userId).limit(1).single();
+      if (!error && data && data.name) document.getElementById('userName').textContent = data.name;
     }
 
-    // ----------------------------------------------------------
-    // LOADER HELPERS
-    // Controls the loading screen progress bar and status text
-    // ----------------------------------------------------------
-    // UPDATE STREAK ON LOGIN
-    // Checks if user has already logged a streak today.
-    // If not, increments current_streak by 1 (or resets to 1
-    // if last activity was more than 1 day ago), and updates
-    // longest_streak and total_xp accordingly.
-    // Upserts a row if none exists yet (first-time users).
-    // ----------------------------------------------------------
     async function updateStreakOnLogin() {
       const today = todayDate();
-
-      // Fetch existing streak row
-      const { data, error } = await supabase
-        .from('streaks')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.warn('Streak fetch error:', error.message);
-        return;
-      }
-
-      if (!data) {
-        // First time — create a fresh streak row
-        await supabase.from('streaks').insert({
-          user_id: userId,
-          current_streak: 1,
-          longest_streak: 1,
-          total_xp: 10,
-          last_active_date: today
-        });
-        return;
-      }
-
-      // Already updated today — do nothing
+      const { data, error } = await supabase.from('streaks').select('*').eq('user_id', userId).limit(1).maybeSingle();
+      if (error) return;
+      if (!data) { await supabase.from('streaks').insert({ user_id: userId, current_streak: 1, longest_streak: 1, total_xp: 10, last_active_date: today }); return; }
       if (data.last_active_date === today) return;
-
-      // Check if yesterday — if so, continue streak; else reset
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().split('T')[0];
-
       const continued = data.last_active_date === yesterdayStr;
       const newStreak = continued ? data.current_streak + 1 : 1;
       const newLongest = Math.max(newStreak, data.longest_streak || 0);
       const newXP = (data.total_xp || 0) + 10;
-
-      await supabase.from('streaks').update({
-        current_streak: newStreak,
-        longest_streak: newLongest,
-        total_xp: newXP,
-        last_active_date: today
-      }).eq('id', data.id);
+      await supabase.from('streaks').update({ current_streak: newStreak, longest_streak: newLongest, total_xp: newXP, last_active_date: today }).eq('id', data.id);
     }
 
-    // ----------------------------------------------------------
-    // INIT - Run all loaders when page loads
-    // ----------------------------------------------------------
     async function init() {
       const { data: { session: _s } } = await supabase.auth.getSession();
       userId = _s?.user?.id;
@@ -1100,42 +469,15 @@
       loaderProgress(40, 'Updating streak...');
       await updateStreakOnLogin();
       loaderProgress(60, 'Loading your data...');
-      await Promise.all([
-        loadUserName(),
-        loadStreak(),
-        loadHabitsDoneToday(),
-        loadPendingTasks(),
-        loadTodayMood(),
-        loadSpentToday(),
-        loadLatestJournal(),
-        loadActiveGoals(),
-        loadMoodChart()
-      ]);
+      await Promise.all([loadUserName(), loadStreak(), loadHabitsDoneToday(), loadPendingTasks(), loadTodayMood(), loadSpentToday(), loadLatestJournal(), loadActiveGoals(), loadMoodChart()]);
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
-      // Schedule daily notifications (asks permission if needed)
       initNotifications();
     }
 
-
-    // ----------------------------------------------------------
-    // SIGN OUT
-    // ----------------------------------------------------------
-    window.signOut = async function() {
-      await supabase.auth.signOut();
-      window.location.replace('login.html');
-    };
+    window.signOut = async function() { await supabase.auth.signOut(); window.location.replace('login.html'); };
     init();
   </script>
-
-  <!-- Register service worker for offline support -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log('Service worker registered.'))
-        .catch(err => console.error('Service worker error:', err));
-    }
-  </script>
-
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').then(()=>{}).catch(err=>{});}</script>
 </body>
 </html>

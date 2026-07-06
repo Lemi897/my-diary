@@ -13,7 +13,8 @@
   <link rel="stylesheet" href="css/themes.css" />
   <script>(function(){ var t=localStorage.getItem('active_theme')||''; document.documentElement.setAttribute('data-theme',t); })();</script>
   <style>
-    :root {
+    /* Ledger-specific variables scoped to main content only */
+    .ledger-root {
       --lg:#0c0c0c; --ls:#111111; --lr:#141414; --lh:#181818;
       --lb:#222222; --lb2:#2a2a2a; --lo:#c8943a;
       --lo-dim:rgba(200,148,58,0.15);
@@ -21,7 +22,7 @@
       --lt:#e8e8e8; --lm:#555555; --lsu:#888888;
       --mono:'JetBrains Mono',monospace;
     }
-    .app-container,.main-content{background:var(--lg);}
+    .ledger-root { background: var(--lg); }
     .wallet-card{background:var(--ls);border:1px solid var(--lb);padding:1.75rem 1.5rem 1.5rem;margin-bottom:1px;position:relative;}
     .wallet-label{font-size:.65rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--lm);margin-bottom:.6rem;}
     .wallet-amount-row{display:flex;align-items:center;gap:1rem;margin-bottom:.4rem;}
@@ -89,10 +90,14 @@
     .log-search::placeholder{color:var(--lm);}
     .log-filter-btn{background:none;border:1px solid var(--lb2);color:var(--lm);font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .15s;}
     .log-filter-btn.active,.log-filter-btn:hover{border-color:var(--lo);color:var(--lo);}
-    .tx-row{display:grid;grid-template-columns:60px 1fr auto;align-items:start;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--lb);border-left:2px solid transparent;padding-left:.75rem;transition:background .15s;cursor:pointer;}
+    .tx-row{display:grid;grid-template-columns:60px 1fr auto auto;align-items:start;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--lb);border-left:2px solid transparent;padding-left:.75rem;transition:background .15s;}
     .tx-row:hover{background:var(--lh);}
     .tx-row.income{border-left-color:var(--lg2);}
     .tx-row.mpesa{border-left-color:var(--lo);}
+    .tx-actions{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;}
+    .tx-action-btn{background:none;border:1px solid var(--lb2);color:var(--lm);font-size:.55rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .4rem;cursor:pointer;transition:all .15s;font-family:inherit;}
+    .tx-action-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .tx-action-btn.del:hover{border-color:var(--lr2);color:var(--lr2);}
     .tx-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);padding-top:.1rem;}
     .tx-desc{font-size:.82rem;color:var(--lt);margin-bottom:.2rem;}
     .tx-meta{display:flex;gap:.5rem;align-items:center;}
@@ -158,30 +163,85 @@
     .log-section{margin-bottom:6rem;}
     .income-section{margin-bottom:1.5rem;}
     .cat-bars-section{margin-bottom:1.5rem;}
+    /* Set Budget button — ledger style but won't conflict */
+    .set-budget-btn{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.4rem .75rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;}
+    .set-budget-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .savings-section-header{display:flex;align-items:center;justify-content:space-between;padding:0 0 .75rem;border-bottom:1px solid var(--lb);margin-bottom:1rem;}
+    .savings-add-btn{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.35rem .7rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;}
+    .savings-add-btn:hover{border-color:var(--lg2);color:var(--lg2);}
+    .savings-goal-card{border:1px solid var(--lb);border-top:none;background:var(--ls);}
+    .savings-goal-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;cursor:pointer;transition:background .15s;user-select:none;}
+    .savings-goal-header:hover{background:var(--lh);}
+    .savings-goal-title{font-size:.85rem;color:var(--lt);margin-bottom:.35rem;}
+    .savings-goal-nums{font-family:var(--mono);font-size:.7rem;color:var(--lm);}
+    .savings-goal-nums span{color:var(--lg2);}
+    .savings-goal-right{display:flex;align-items:center;gap:.75rem;}
+    .savings-goal-meta{text-align:right;}
+    .savings-goal-days{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .savings-goal-days.reached{color:var(--lg2);font-weight:600;}
+    .savings-chevron{color:var(--lm);font-size:.8rem;transition:transform .2s;}
+    .savings-goal-card.open .savings-chevron{transform:rotate(180deg);}
+    .savings-progress-track{height:2px;background:var(--lb2);margin:0 1.25rem .9rem;}
+    .savings-progress-fill{height:100%;background:var(--lg2);transition:width .5s ease;max-width:100%;}
+    .savings-goal-body{display:none;background:var(--lr);}
+    .savings-goal-card.open .savings-goal-body{display:block;}
+    .savings-goal-body-inner{padding:1rem 1.25rem;}
+    .savings-goal-actions{display:flex;gap:.5rem;margin-bottom:1rem;}
+    .savings-deposit-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--lb);}
+    .savings-deposit-row:last-child{border-bottom:none;}
+    .savings-deposit-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .savings-deposit-note{font-size:.75rem;color:var(--lsu);margin-top:.15rem;}
+    .savings-deposit-amount{font-family:var(--mono);font-size:.82rem;color:var(--lg2);font-weight:500;}
+    .savings-empty{padding:2.5rem 0;text-align:center;font-size:.78rem;color:var(--lm);letter-spacing:.05em;}
+    .debts-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--lb);margin-bottom:1.5rem;}
+    .debts-summary-figure{padding:.85rem 1rem;border-right:1px solid var(--lb);}
+    .debts-summary-figure:last-child{border-right:none;}
+    .debts-summary-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--lm);margin-bottom:.3rem;}
+    .debts-summary-value{font-family:var(--mono);font-size:1.1rem;font-weight:600;}
+    .debts-summary-value.owe{color:var(--lr2);}
+    .debts-summary-value.owed{color:var(--lg2);}
+    .debts-filter-row{display:flex;gap:.5rem;padding:.75rem 0;border-bottom:1px solid var(--lb);margin-bottom:0;}
+    .debt-row{display:grid;grid-template-columns:75px 1fr auto auto;align-items:start;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--lb);}
+    .debt-row.paid{opacity:.45;}
+    .debt-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);padding-top:.1rem;}
+    .debt-desc{font-size:.82rem;color:var(--lt);margin-bottom:.25rem;}
+    .debt-meta{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+    .debt-person{font-size:.65rem;color:var(--lm);}
+    .debt-type-badge{font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.12rem .4rem;border:1px solid var(--lb2);}
+    .debt-type-badge.owe{border-color:var(--lr2);color:var(--lr2);}
+    .debt-type-badge.owed{border-color:var(--lg2);color:var(--lg2);}
+    .debt-amount{font-family:var(--mono);font-size:.9rem;font-weight:500;text-align:right;}
+    .debt-amount.owe{color:var(--lr2);}
+    .debt-amount.owed{color:var(--lg2);}
+    .debt-actions{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;}
   </style>
 </head>
 <body>
 <div class="app-container">
   <aside class="sidebar">
-    <div class="sidebar-logo">MyDiary</div>
-    <nav class="sidebar-nav">
-      <a href="index.html"   class="sidebar-link"><i class="ri-home-5-line"></i><span>Dashboard</span></a>
-      <a href="habits.html"  class="sidebar-link"><i class="ri-checkbox-circle-line"></i><span>Habits</span></a>
-      <a href="tasks.html"   class="sidebar-link"><i class="ri-task-line"></i><span>Tasks</span></a>
-      <a href="journal.html" class="sidebar-link"><i class="ri-quill-pen-line"></i><span>Journal</span></a>
-      <a href="goals.html"   class="sidebar-link"><i class="ri-focus-3-line"></i><span>Goals</span></a>
-      <a href="finance.html" class="sidebar-link active"><i class="ri-money-dollar-circle-line"></i><span>Finance</span></a>
-      <a href="profile.html" class="sidebar-link"><i class="ri-user-3-line"></i><span>Profile</span></a>
+    <div class="sidebar-logo">My<span>Diary</span></div>
+    <nav class="nav-links">
+      <a href="index.html"   class="nav-link"><i class="ri-home-5-line nav-icon"></i><span>Dashboard</span></a>
+      <a href="habits.html"  class="nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+      <a href="tasks.html"   class="nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+      <a href="journal.html" class="nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+      <a href="goals.html"   class="nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+      <a href="finance.html" class="nav-link active"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+      <a href="profile.html" class="nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
     </nav>
+    <div class="online-badge" id="onlineBadge">
+      <div class="dot"></div>
+      <span class="status-text">Online</span>
+    </div>
   </aside>
 
-  <main class="main-content">
+  <main class="main-content ledger-root">
     <div class="page-header" style="margin-bottom:1.5rem;">
       <div>
         <div class="page-title" style="font-size:1.1rem;letter-spacing:.05em;">THE LEDGER</div>
         <div style="font-size:.7rem;color:var(--lm);font-family:var(--mono);margin-top:.2rem;" id="ledgerSubtitle">loading...</div>
       </div>
-      <button class="ledger-btn" style="flex:0;padding:.4rem .75rem;font-size:.6rem;" onclick="openBudgetModal()">SET BUDGET</button>
+      <button class="set-budget-btn" onclick="openBudgetModal()">SET BUDGET</button>
     </div>
 
     <div class="scripture-strip">
@@ -236,6 +296,8 @@
       <button class="ledger-tab active" onclick="switchTab('weeks',this)">Weeks</button>
       <button class="ledger-tab" onclick="switchTab('categories',this)">Categories</button>
       <button class="ledger-tab" onclick="switchTab('income',this)">Income</button>
+      <button class="ledger-tab" onclick="switchTab('savings',this)">Savings</button>
+      <button class="ledger-tab" onclick="switchTab('debts',this)">Debts</button>
       <button class="ledger-tab" onclick="switchTab('log',this)">Log</button>
     </div>
 
@@ -257,6 +319,41 @@
       <div class="income-section">
         <div class="section-header" style="margin-bottom:0;">Income Log</div>
         <div id="incomeLogContainer"><div class="tx-empty">No income recorded this month.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-savings">
+      <div class="savings-section">
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Savings Goals</div>
+          <button class="savings-add-btn" onclick="openSavingsGoalModal()">+ NEW GOAL</button>
+        </div>
+        <div id="savingsGoalsContainer"><div class="savings-empty">No savings goals yet.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-debts">
+      <div class="debts-section">
+        <div class="debts-summary">
+          <div class="debts-summary-figure">
+            <div class="debts-summary-label">You Owe</div>
+            <div class="debts-summary-value owe" id="debtsSummaryOwe">KSH 0</div>
+          </div>
+          <div class="debts-summary-figure">
+            <div class="debts-summary-label">Owed To You</div>
+            <div class="debts-summary-value owed" id="debtsSummaryOwed">KSH 0</div>
+          </div>
+        </div>
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Debts</div>
+          <button class="savings-add-btn" onclick="openDebtModal()">+ NEW DEBT</button>
+        </div>
+        <div class="debts-filter-row">
+          <button class="log-filter-btn active" onclick="setDebtFilter('all',this)">All</button>
+          <button class="log-filter-btn" onclick="setDebtFilter('owe',this)">I Owe</button>
+          <button class="log-filter-btn" onclick="setDebtFilter('owed_to_me',this)">Owed to Me</button>
+        </div>
+        <div id="debtsContainer"><div class="savings-empty">No debts logged.</div></div>
       </div>
     </div>
 
@@ -395,6 +492,54 @@
   </div>
 </div>
 
+<!-- EDIT EXPENSE MODAL -->
+<div class="ledger-modal-overlay" id="editExpenseModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span>EDIT EXPENSE</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" style="flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteExpenseFromEditModal()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('editExpenseModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Description</label><input class="ledger-input" id="edit_desc" type="text" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="edit_amount" type="number" oninput="calcEditFee()" /></div>
+      <div class="ledger-field"><label class="ledger-label">Method</label>
+        <select class="ledger-input" id="edit_method" onchange="calcEditFee()">
+          <option value="mpesa_send">M-Pesa Send</option>
+          <option value="mpesa_withdraw">M-Pesa Withdraw</option>
+          <option value="cash">Cash</option>
+          <option value="lipa">Lipa na M-Pesa</option>
+        </select>
+      </div>
+    </div>
+    <div class="ledger-field" id="editFeeField">
+      <label class="ledger-label">M-Pesa Fee</label>
+      <input class="ledger-input" id="edit_fee" type="number" placeholder="0" />
+      <div class="fee-note" id="editFeeNote"></div>
+    </div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Category</label>
+        <select class="ledger-input" id="edit_category">
+          <option>Food &amp; Drinks</option><option>Transport</option>
+          <option>Airtime &amp; Data</option><option>Personal Care</option>
+          <option>Clothing</option><option>Entertainment</option>
+          <option>Giving</option><option>Education</option>
+          <option>Household</option><option>Emergency</option>
+          <option>Miscellaneous</option>
+        </select>
+      </div>
+      <div class="ledger-field"><label class="ledger-label">Date &amp; Time</label><input class="ledger-input" id="edit_date" type="datetime-local" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="edit_note" type="text" /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('editExpenseModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="updateExpense()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- BUDGET MODAL -->
 <div class="ledger-modal-overlay" id="budgetModal">
   <div class="ledger-modal">
@@ -412,10 +557,95 @@
   </div>
 </div>
 
+<!-- SAVINGS GOAL MODAL -->
+<div class="ledger-modal-overlay" id="savingsGoalModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="savingsGoalModalTitle">NEW SAVINGS GOAL</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="savingsGoalDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteSavingsGoal()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('savingsGoalModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Goal Title</label><input class="ledger-input" id="goal_title" type="text" placeholder="e.g. Emergency Fund" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Target Amount (KSH)</label><input class="ledger-input" id="goal_target" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Target Date (optional)</label><input class="ledger-input" id="goal_date" type="date" /></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('savingsGoalModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveSavingsGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div class="ledger-modal-overlay" id="depositModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>ADD DEPOSIT</span><button class="modal-close" onclick="closeModal('depositModal')"><i class="ri-close-line"></i></button></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="dep_amount" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Date</label><input class="ledger-input" id="dep_date" type="date" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="dep_note" type="text" placeholder="any context..." /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('depositModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveDeposit()">Add Deposit</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBT MODAL -->
+<div class="ledger-modal-overlay" id="debtModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="debtModalTitle">NEW DEBT</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="debtDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteDebt()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('debtModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Description</label><input class="ledger-input" id="debt_desc" type="text" placeholder="e.g. Laptop repair loan" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="debt_amount" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Type</label>
+        <select class="ledger-input" id="debt_type">
+          <option value="owe">I Owe</option>
+          <option value="owed_to_me">Owed to Me</option>
+        </select>
+      </div>
+    </div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Person (optional)</label><input class="ledger-input" id="debt_person" type="text" placeholder="who?" /></div>
+      <div class="ledger-field"><label class="ledger-label">Due Date (optional)</label><input class="ledger-input" id="debt_due" type="date" /></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('debtModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveDebt()">Save Debt</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { supabase } from './js/supabase.js';
-  import { isOnline, onConnectivityChange, showToast } from './js/utils.js';
+  import { isOnline, onConnectivityChange, showToast, todayDate } from './js/utils.js';
   import { getVerseFromLibrary } from './js/scripture.js';
+
+  // ----------------------------------------------------------
+  // AUTH CHECK — runs first, before anything else.
+  // Redirects to login if there's no active session, and sets
+  // userId (module-level) so every query/write below can use it.
+  // Matches the pattern used in habits.html / tasks.html / etc.
+  // ----------------------------------------------------------
+  let userId = null;
+  {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.replace('login.html');
+    } else {
+      userId = session.user.id;
+    }
+  }
 
   const CATEGORIES = ['Food & Drinks','Transport','Airtime & Data','Personal Care','Clothing','Entertainment','Giving','Education','Household','Emergency','Miscellaneous'];
 
@@ -431,6 +661,10 @@
 
   let currentMonthYear = getMonthYear(new Date());
   let allExpenses=[], allIncome=[], catBudgets={}, balanceBlurred=true;
+  let allSavingsGoals=[];
+  let depositsByGoal={};
+  let allDebts=[];
+  let debtFilter='all';
   let selectedQuickCat = CATEGORIES[0];
   let activeFilter = 'all';
 
@@ -489,7 +723,7 @@
     updateOnline();
     onConnectivityChange(updateOnline);
     updateMonthLabel();
-    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets()]);
+    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets(),loadSavingsGoals(),loadDebts()]);
     render();
   }
 
@@ -517,26 +751,42 @@
   async function loadExpenses() {
     const [y,m]=currentMonthYear.split('-').map(Number);
     const s=new Date(y,m-1,1).toISOString(), e=new Date(y,m,0,23,59,59).toISOString();
-    const {data,error}=await supabase.from('expenses').select('*').gte('expense_date',s).lte('expense_date',e).order('expense_date',{ascending:false});
+    const {data,error}=await supabase.from('expenses').select('*').eq('user_id',userId).gte('expense_date',s).lte('expense_date',e).order('expense_date',{ascending:false});
     if(!error) allExpenses=data||[];
   }
 
   async function loadIncome() {
     const [y,m]=currentMonthYear.split('-').map(Number);
     const s=new Date(y,m-1,1).toISOString(), e=new Date(y,m,0,23,59,59).toISOString();
-    const {data,error}=await supabase.from('income_logs').select('*').gte('received_at',s).lte('received_at',e).order('received_at',{ascending:false});
+    const {data,error}=await supabase.from('income_logs').select('*').eq('user_id',userId).gte('received_at',s).lte('received_at',e).order('received_at',{ascending:false});
     if(!error) allIncome=data||[];
   }
 
   async function loadCatBudgets() {
-    const {data,error}=await supabase.from('category_budgets').select('*').eq('month_year',currentMonthYear);
+    const {data,error}=await supabase.from('category_budgets').select('*').eq('user_id',userId).eq('month_year',currentMonthYear);
     catBudgets={};
     if(!error&&data) data.forEach(r=>{catBudgets[r.category]=Number(r.budgeted_amount);});
   }
 
+  async function loadSavingsGoals() {
+    const {data,error}=await supabase.from('savings_goals').select('*').eq('user_id',userId).order('created_at',{ascending:true});
+    if(!error) allSavingsGoals=data||[];
+  }
+
+  async function loadDepositsForGoal(goalId) {
+    const {data,error}=await supabase.from('savings_deposits').select('*').eq('user_id',userId).eq('savings_goal_id',goalId).order('deposit_date',{ascending:false});
+    if(!error) depositsByGoal[goalId]=data||[];
+    return depositsByGoal[goalId]||[];
+  }
+
+  async function loadDebts() {
+    const {data,error}=await supabase.from('debts').select('*').eq('user_id',userId).order('paid',{ascending:true}).order('due_date',{ascending:true,nullsFirst:false});
+    if(!error) allDebts=data||[];
+  }
+
   function render() {
     renderWallet(); renderMonthOverview(); renderWeeks();
-    renderCatBars(); renderIncomeLog(); renderTxLog();
+    renderCatBars(); renderIncomeLog(); renderTxLog(); renderSavings(); renderDebts();
   }
 
   function renderWallet() {
@@ -642,9 +892,196 @@
       allIncome.map(r=>`<div class="income-row">
         <div class="income-date">${fmtDate(r.received_at)}<br>${fmtTime(r.received_at)}</div>
         <div><div class="income-source">${r.label||r.source}</div><div class="income-label">${r.source} · ${r.method}</div></div>
-        <div class="income-amount">+ ${fmtKSH(r.amount)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
+          <div class="income-amount">+ ${fmtKSH(r.amount)}</div>
+          <button class="tx-action-btn del" onclick="deleteIncome('${r.id}')">del</button>
+        </div>
       </div>`).join('');
   }
+
+  function fmtDateOnly(dt) { return new Date(dt).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'}); }
+
+  function daysLeftLabel(targetDate) {
+    if(!targetDate) return '';
+    const diff=Math.ceil((new Date(targetDate)-new Date())/(1000*60*60*24));
+    if(diff<0) return 'past due';
+    if(diff===0) return 'due today';
+    return diff+' days left';
+  }
+
+  function renderSavings() {
+    const container=document.getElementById('savingsGoalsContainer');
+    if(allSavingsGoals.length===0){ container.innerHTML='<div class="savings-empty">No savings goals yet. Tap + New Goal to start one.</div>'; return; }
+    container.innerHTML=allSavingsGoals.map(g=>{
+      const current=Number(g.current_amount)||0;
+      const target=Number(g.target_amount)||0;
+      const pct=target?Math.min((current/target)*100,100):0;
+      const reached=target>0&&current>=target;
+      const deposits=depositsByGoal[g.id];
+      const isOpen=deposits!==undefined;
+      return `<div class="savings-goal-card${isOpen?' open':''}" id="goalCard-${g.id}">
+        <div class="savings-goal-header" onclick="toggleSavingsGoal('${g.id}')">
+          <div>
+            <div class="savings-goal-title">${g.title}</div>
+            <div class="savings-goal-nums"><span>${fmtKSH(current)}</span> of ${fmtKSH(target)}</div>
+          </div>
+          <div class="savings-goal-right">
+            <div class="savings-goal-meta">
+              <div class="savings-goal-days${reached?' reached':''}">${reached?'GOAL REACHED':daysLeftLabel(g.target_date)}</div>
+            </div>
+            <i class="ri-arrow-down-s-line savings-chevron"></i>
+          </div>
+        </div>
+        <div class="savings-progress-track"><div class="savings-progress-fill" style="width:${pct}%"></div></div>
+        <div class="savings-goal-body" id="goalBody-${g.id}">
+          <div class="savings-goal-body-inner">
+            <div class="savings-goal-actions">
+              <button class="ledger-btn confirm" style="flex:0;padding:.5rem .9rem;" onclick="openDepositModal('${g.id}')">+ Add Deposit</button>
+              <button class="ledger-btn" style="flex:0;padding:.5rem .9rem;" onclick="openSavingsGoalModal('${g.id}')">Edit</button>
+            </div>
+            <div id="depositsList-${g.id}"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Re-render any already-open deposit lists (data persists across full re-renders)
+    Object.keys(depositsByGoal).forEach(goalId=>renderDepositsList(goalId));
+  }
+
+  function renderDepositsList(goalId) {
+    const el=document.getElementById(`depositsList-${goalId}`);
+    if(!el) return;
+    const deposits=depositsByGoal[goalId]||[];
+    el.innerHTML=deposits.length===0?'<div class="savings-empty" style="padding:1.25rem 0;">No deposits logged yet.</div>':
+      deposits.map(d=>`<div class="savings-deposit-row">
+        <div>
+          <div class="savings-deposit-date">${fmtDateOnly(d.deposit_date)}</div>
+          ${d.note?`<div class="savings-deposit-note">${d.note}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <div class="savings-deposit-amount">+ ${fmtKSH(d.amount)}</div>
+          <button class="tx-action-btn del" onclick="deleteDeposit('${d.id}','${goalId}')">del</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.toggleSavingsGoal=async function(goalId){
+    const card=document.getElementById(`goalCard-${goalId}`);
+    const isOpen=card.classList.contains('open');
+    if(isOpen){
+      card.classList.remove('open');
+      delete depositsByGoal[goalId];
+      return;
+    }
+    card.classList.add('open');
+    await loadDepositsForGoal(goalId);
+    renderDepositsList(goalId);
+  };
+
+  function renderDebts() {
+    const owe=allDebts.filter(d=>d.type==='owe'&&!d.paid).reduce((s,d)=>s+Number(d.amount_ksh),0);
+    const owed=allDebts.filter(d=>d.type==='owed_to_me'&&!d.paid).reduce((s,d)=>s+Number(d.amount_ksh),0);
+    document.getElementById('debtsSummaryOwe').textContent=fmtKSH(owe);
+    document.getElementById('debtsSummaryOwed').textContent=fmtKSH(owed);
+
+    const container=document.getElementById('debtsContainer');
+    let rows=allDebts;
+    if(debtFilter!=='all') rows=rows.filter(d=>d.type===debtFilter);
+    if(rows.length===0){ container.innerHTML='<div class="savings-empty">No debts logged.</div>'; return; }
+    container.innerHTML=rows.map(d=>{
+      const isOwe=d.type==='owe';
+      const dueLabel=d.due_date?fmtDateOnly(d.due_date):'no due date';
+      return `<div class="debt-row${d.paid?' paid':''}">
+        <div class="debt-date">${dueLabel}</div>
+        <div>
+          <div class="debt-desc">${d.description}</div>
+          <div class="debt-meta">
+            <span class="debt-type-badge ${isOwe?'owe':'owed'}">${isOwe?'I Owe':'Owed to Me'}</span>
+            ${d.person_name?`<span class="debt-person">${d.person_name}</span>`:''}
+            ${d.paid?'<span class="debt-person">PAID</span>':''}
+          </div>
+        </div>
+        <div class="debt-amount ${isOwe?'owe':'owed'}">${fmtKSH(d.amount_ksh)}</div>
+        <div class="debt-actions">
+          <button class="tx-action-btn" onclick="toggleDebtPaid('${d.id}')">${d.paid?'unpaid':'paid'}</button>
+          <button class="tx-action-btn" onclick="openDebtModal('${d.id}')">edit</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.setDebtFilter=function(f,btn){
+    debtFilter=f;
+    document.querySelectorAll('.debts-filter-row .log-filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDebts();
+  };
+
+  window.toggleDebtPaid=async function(id){
+    const d=allDebts.find(x=>x.id===id);
+    if(!d) return;
+    const {error}=await supabase.from('debts').update({paid:!d.paid}).eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to update','error');return;}
+    await loadDebts(); renderDebts();
+  };
+
+  window.openDebtModal=function(debtId){
+    const modal=document.getElementById('debtModal');
+    const deleteBtn=document.getElementById('debtDeleteBtn');
+    if(debtId){
+      const d=allDebts.find(x=>x.id===debtId);
+      if(!d) return;
+      modal._editId=debtId;
+      document.getElementById('debtModalTitle').textContent='EDIT DEBT';
+      document.getElementById('debt_desc').value=d.description||'';
+      document.getElementById('debt_amount').value=d.amount_ksh||'';
+      document.getElementById('debt_type').value=d.type||'owe';
+      document.getElementById('debt_person').value=d.person_name||'';
+      document.getElementById('debt_due').value=d.due_date||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      document.getElementById('debtModalTitle').textContent='NEW DEBT';
+      document.getElementById('debt_desc').value='';
+      document.getElementById('debt_amount').value='';
+      document.getElementById('debt_type').value='owe';
+      document.getElementById('debt_person').value='';
+      document.getElementById('debt_due').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveDebt=async function(){
+    const description=document.getElementById('debt_desc').value.trim();
+    const amount_ksh=Number(document.getElementById('debt_amount').value);
+    const type=document.getElementById('debt_type').value;
+    const person_name=document.getElementById('debt_person').value.trim()||null;
+    const due_date=document.getElementById('debt_due').value||null;
+    if(!description||!amount_ksh){showToast('Enter a description and amount','error');return;}
+    const editId=document.getElementById('debtModal')._editId;
+    let error;
+    if(editId){
+      ({error}=await supabase.from('debts').update({description,amount_ksh,type,person_name,due_date}).eq('id',editId).eq('user_id',userId));
+    } else {
+      ({error}=await supabase.from('debts').insert({description,amount_ksh,type,person_name,due_date,paid:false,user_id:userId}));
+    }
+    if(error){showToast('Failed to save debt','error');return;}
+    showToast('Debt saved','success');
+    closeModal('debtModal');
+    await loadDebts(); renderDebts();
+  };
+
+  window.deleteDebt=async function(){
+    const debtId=document.getElementById('debtModal')._editId;
+    if(!debtId) return;
+    if(!confirm('Delete this debt?')) return;
+    const {error}=await supabase.from('debts').delete().eq('id',debtId).eq('user_id',userId);
+    if(error){showToast('Failed to delete debt','error');return;}
+    showToast('Debt deleted','success');
+    closeModal('debtModal');
+    await loadDebts(); renderDebts();
+  };
 
   function renderTxLog() {
     const c=document.getElementById('txLogContainer');
@@ -659,6 +1096,10 @@
         <div><div class="tx-desc">${e.description||'—'}</div>
         <div class="tx-meta"><span class="tx-category">${e.category||''}</span><span class="tx-method">${e.method||'cash'}</span></div></div>
         <div class="tx-right"><div class="tx-amount">${fmtKSH(e.amount)}</div>${e.mpesa_fee>0?`<div class="tx-fee">+ ${fmtKSH(e.mpesa_fee)} fee</div>`:''}</div>
+        <div class="tx-actions">
+          <button class="tx-action-btn" onclick="editExpense('${e.id}')">edit</button>
+          <button class="tx-action-btn del" onclick="deleteExpense('${e.id}')">del</button>
+        </div>
       </div>`).join('');
   }
 
@@ -667,9 +1108,116 @@
     else if(type==='quick'){renderQuickCats();document.getElementById('quickModal').classList.add('open');}
     else if(type==='income'){setLocalNow('inc_date');document.getElementById('incomeModal').classList.add('open');}
   };
-  window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+  window.closeModal=function(id){
+    document.getElementById(id).classList.remove('open');
+    if(id==='expenseModal') document.getElementById('expenseModal')._editId=null;
+    if(id==='savingsGoalModal') document.getElementById('savingsGoalModal')._editId=null;
+    if(id==='depositModal') document.getElementById('depositModal')._goalId=null;
+    if(id==='debtModal') document.getElementById('debtModal')._editId=null;
+  };
   window.openBudgetModal=function(){
     updateMonthLabel();renderBudgetGrid();document.getElementById('budgetModal').classList.add('open');
+  };
+
+  window.openSavingsGoalModal=function(goalId){
+    const modal=document.getElementById('savingsGoalModal');
+    const deleteBtn=document.getElementById('savingsGoalDeleteBtn');
+    if(goalId){
+      const g=allSavingsGoals.find(x=>x.id===goalId);
+      if(!g) return;
+      modal._editId=goalId;
+      document.getElementById('savingsGoalModalTitle').textContent='EDIT SAVINGS GOAL';
+      document.getElementById('goal_title').value=g.title||'';
+      document.getElementById('goal_target').value=g.target_amount||'';
+      document.getElementById('goal_date').value=g.target_date||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      document.getElementById('savingsGoalModalTitle').textContent='NEW SAVINGS GOAL';
+      document.getElementById('goal_title').value='';
+      document.getElementById('goal_target').value='';
+      document.getElementById('goal_date').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveSavingsGoal=async function(){
+    const title=document.getElementById('goal_title').value.trim();
+    const target=Number(document.getElementById('goal_target').value);
+    const targetDate=document.getElementById('goal_date').value||null;
+    if(!title||!target){showToast('Enter a title and target amount','error');return;}
+    const editId=document.getElementById('savingsGoalModal')._editId;
+    let error;
+    if(editId){
+      ({error}=await supabase.from('savings_goals').update({title,target_amount:target,target_date:targetDate}).eq('id',editId).eq('user_id',userId));
+    } else {
+      ({error}=await supabase.from('savings_goals').insert({title,target_amount:target,target_date:targetDate,current_amount:0,user_id:userId}));
+    }
+    if(error){showToast('Failed to save goal','error');return;}
+    showToast('Savings goal saved','success');
+    closeModal('savingsGoalModal');
+    await loadSavingsGoals(); renderSavings();
+  };
+
+  window.deleteSavingsGoal=async function(){
+    const goalId=document.getElementById('savingsGoalModal')._editId;
+    if(!goalId) return;
+    if(!confirm('Delete this savings goal? This also removes all its logged deposits.')) return;
+    await supabase.from('savings_deposits').delete().eq('savings_goal_id',goalId).eq('user_id',userId);
+    const {error}=await supabase.from('savings_goals').delete().eq('id',goalId).eq('user_id',userId);
+    if(error){showToast('Failed to delete goal','error');return;}
+    delete depositsByGoal[goalId];
+    showToast('Savings goal deleted','success');
+    closeModal('savingsGoalModal');
+    await loadSavingsGoals(); renderSavings();
+  };
+
+  window.openDepositModal=function(goalId){
+    const modal=document.getElementById('depositModal');
+    modal._goalId=goalId;
+    document.getElementById('dep_amount').value='';
+    document.getElementById('dep_note').value='';
+    document.getElementById('dep_date').value=todayDate();
+    modal.classList.add('open');
+  };
+
+  window.saveDeposit=async function(){
+    const goalId=document.getElementById('depositModal')._goalId;
+    const amount=Number(document.getElementById('dep_amount').value);
+    const note=document.getElementById('dep_note').value.trim();
+    const dateVal=document.getElementById('dep_date').value;
+    if(!goalId||!amount||!dateVal){showToast('Enter an amount and date','error');return;}
+    const goal=allSavingsGoals.find(g=>g.id===goalId);
+    if(!goal) return;
+    const {error:depErr}=await supabase.from('savings_deposits').insert({
+      savings_goal_id:goalId,amount,note:note||null,deposit_date:dateVal,user_id:userId
+    });
+    if(depErr){showToast('Failed to log deposit','error');return;}
+    const newTotal=(Number(goal.current_amount)||0)+amount;
+    await supabase.from('savings_goals').update({current_amount:newTotal}).eq('id',goalId).eq('user_id',userId);
+    showToast('Deposit logged','success');
+    closeModal('depositModal');
+    await loadSavingsGoals();
+    await loadDepositsForGoal(goalId);
+    renderSavings();
+  };
+
+  window.deleteDeposit=async function(depositId,goalId){
+    if(!confirm('Delete this deposit?')) return;
+    const deposit=(depositsByGoal[goalId]||[]).find(d=>d.id===depositId);
+    if(!deposit) return;
+    const {error}=await supabase.from('savings_deposits').delete().eq('id',depositId).eq('user_id',userId);
+    if(error){showToast('Failed to delete deposit','error');return;}
+    const goal=allSavingsGoals.find(g=>g.id===goalId);
+    if(goal){
+      const newTotal=Math.max((Number(goal.current_amount)||0)-Number(deposit.amount),0);
+      await supabase.from('savings_goals').update({current_amount:newTotal}).eq('id',goalId).eq('user_id',userId);
+    }
+    showToast('Deposit deleted','success');
+    await loadSavingsGoals();
+    await loadDepositsForGoal(goalId);
+    renderSavings();
   };
 
   function renderBudgetGrid() {
@@ -688,8 +1236,8 @@
 
   window.saveBudget=async function(){
     const inputs=document.querySelectorAll('.budget-cat-input');
-    const upserts=[]; inputs.forEach(i=>upserts.push({month_year:currentMonthYear,category:i.dataset.cat,budgeted_amount:Number(i.value)||0}));
-    const {error}=await supabase.from('category_budgets').upsert(upserts,{onConflict:'month_year,category'});
+    const upserts=[]; inputs.forEach(i=>upserts.push({user_id:userId,month_year:currentMonthYear,category:i.dataset.cat,budgeted_amount:Number(i.value)||0}));
+    const {error}=await supabase.from('category_budgets').upsert(upserts,{onConflict:'user_id,month_year,category'});
     if(error){showToast('Failed to save budget','error');return;}
     await loadCatBudgets(); render(); closeModal('budgetModal'); showToast('Budget saved','success');
   };
@@ -736,13 +1284,18 @@
     const fee=Number(document.getElementById('exp_fee')?.value)||0;
     if(!desc||!amount||!dateVal){showToast('Fill in description, amount and date','error');return;}
     const expDate=new Date(dateVal);
-    const {error}=await supabase.from('expenses').insert({
-      description:desc,amount,currency:'KES',amount_ksh:amount,
-      category,method,mpesa_fee:fee,week_number:getWeekNum(expDate),
-      expense_date:expDate.toISOString()
-    });
+    const editId=document.getElementById('expenseModal')._editId;
+    const payload={description:desc,amount,currency:'KES',amount_ksh:amount,category,method,mpesa_fee:fee,note:note||null,week_number:getWeekNum(expDate),expense_date:expDate.toISOString()};
+    let error;
+    if(editId){
+      ({error}=await supabase.from('expenses').update(payload).eq('id',editId).eq('user_id',userId));
+      if(!error) showToast('Expense updated','success');
+    } else {
+      ({error}=await supabase.from('expenses').insert({...payload,user_id:userId}));
+      if(!error) showToast('Expense recorded','success');
+    }
     if(error){showToast('Failed to save','error');return;}
-    showToast('Expense recorded','success');
+    document.getElementById('expenseModal')._editId=null;
     closeModal('expenseModal');
     ['exp_desc','exp_amount','exp_note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('feeField').style.display='none';
@@ -759,7 +1312,8 @@
     const {error}=await supabase.from('expenses').insert({
       description:desc,amount,currency:'KES',amount_ksh:amount,
       category:selectedQuickCat,method,mpesa_fee:fee,
-      week_number:getWeekNum(now),expense_date:now.toISOString()
+      week_number:getWeekNum(now),expense_date:now.toISOString(),
+      user_id:userId
     });
     if(error){showToast('Failed to save','error');return;}
     showToast('Logged','success');
@@ -779,7 +1333,8 @@
     if(!amount||!dateVal){showToast('Enter amount and date','error');return;}
     const {error}=await supabase.from('income_logs').insert({
       source,label:label||null,amount,method,mpesa_fee:0,
-      note:note||null,received_at:new Date(dateVal).toISOString()
+      note:note||null,received_at:new Date(dateVal).toISOString(),
+      user_id:userId
     });
     if(error){showToast('Failed to save','error');return;}
     showToast('Income recorded','success');
@@ -812,6 +1367,72 @@
     render();
   };
 
+  // Edit/delete expense
+  let editingExpenseId = null;
+
+  window.openEditExpense=function(id){
+    const e=allExpenses.find(x=>x.id===id);
+    if(!e) return;
+    editingExpenseId=id;
+    document.getElementById('edit_desc').value=e.description||'';
+    document.getElementById('edit_amount').value=e.amount||0;
+    document.getElementById('edit_method').value=e.method||'cash';
+    document.getElementById('edit_category').value=e.category||'Miscellaneous';
+    document.getElementById('edit_fee').value=e.mpesa_fee||0;
+    document.getElementById('edit_note').value=e.note||'';
+    const dt=new Date(e.expense_date);
+    const off=dt.getTimezoneOffset()*60000;
+    document.getElementById('edit_date').value=new Date(dt-off).toISOString().slice(0,16);
+    const isMpesa=e.method&&e.method.includes('mpesa');
+    document.getElementById('editFeeField').style.display=isMpesa?'block':'none';
+    document.getElementById('editExpenseModal').classList.add('open');
+  };
+
+  window.calcEditFee=function(){
+    const amt=Number(document.getElementById('edit_amount').value)||0;
+    const method=document.getElementById('edit_method').value;
+    const field=document.getElementById('editFeeField');
+    const note=document.getElementById('editFeeNote');
+    if(method==='mpesa_send'||method==='mpesa_withdraw'){
+      const fee=getMpesaFee(amt,method);
+      document.getElementById('edit_fee').value=fee;
+      note.textContent=fee>0?`Safaricom charges KSH ${fee}`:'Free — below KSH 100';
+      field.style.display='block';
+    } else { field.style.display='none'; }
+  };
+
+  window.updateExpense=async function(){
+    const desc=document.getElementById('edit_desc').value.trim();
+    const amount=Number(document.getElementById('edit_amount').value);
+    const method=document.getElementById('edit_method').value;
+    const category=document.getElementById('edit_category').value;
+    const dateVal=document.getElementById('edit_date').value;
+    const note=document.getElementById('edit_note').value.trim();
+    const fee=Number(document.getElementById('edit_fee').value)||0;
+    if(!desc||!amount||!dateVal){showToast('Fill in description, amount and date','error');return;}
+    const expDate=new Date(dateVal);
+    const {error}=await supabase.from('expenses').update({
+      description:desc,amount,category,method,mpesa_fee:fee,
+      note:note||null,expense_date:expDate.toISOString(),
+      week_number:getWeekNum(expDate)
+    }).eq('id',editingExpenseId).eq('user_id',userId);
+    if(error){showToast('Failed to update','error');return;}
+    showToast('Expense updated','success');
+    closeModal('editExpenseModal');
+    await loadExpenses(); render();
+  };
+
+  window.deleteExpenseFromEditModal=async function(){
+    if(!editingExpenseId) return;
+    if(!confirm('Delete this expense?')) return;
+    const {error}=await supabase.from('expenses').delete().eq('id',editingExpenseId).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Expense deleted','success');
+    closeModal('editExpenseModal');
+    editingExpenseId=null;
+    await loadExpenses(); render();
+  };
+
   window.setFilter=function(f,btn){
     activeFilter=f;
     document.querySelectorAll('.log-filter-btn').forEach(b=>b.classList.remove('active'));
@@ -823,6 +1444,42 @@
   document.querySelectorAll('.ledger-modal-overlay').forEach(o=>{
     o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('open');});
   });
+
+  window.deleteExpense=async function(id){
+    if(!confirm('Delete this expense?')) return;
+    const {error}=await supabase.from('expenses').delete().eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Deleted','success');
+    await loadExpenses(); render();
+  };
+
+  window.deleteIncome=async function(id){
+    if(!confirm('Delete this income entry?')) return;
+    const {error}=await supabase.from('income_logs').delete().eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Deleted','success');
+    await loadIncome(); render();
+  };
+
+  window.editExpense=function(id){
+    const e=allExpenses.find(x=>x.id===id);
+    if(!e) return;
+    document.getElementById('exp_desc').value=e.description||'';
+    document.getElementById('exp_amount').value=e.amount||'';
+    document.getElementById('exp_method').value=e.method||'cash';
+    document.getElementById('exp_category').value=e.category||'Food & Drinks';
+    const d=new Date(e.expense_date);
+    const off=d.getTimezoneOffset()*60000;
+    document.getElementById('exp_date').value=new Date(d-off).toISOString().slice(0,16);
+    document.getElementById('exp_note').value=e.note||'';
+    if(e.mpesa_fee>0){
+      document.getElementById('exp_fee').value=e.mpesa_fee;
+      document.getElementById('feeField').style.display='block';
+    }
+    // Store editing id on the modal
+    document.getElementById('expenseModal')._editId=id;
+    document.getElementById('expenseModal').classList.add('open');
+  };
 
   init();
 </script>

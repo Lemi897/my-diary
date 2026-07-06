@@ -414,9 +414,7 @@
         if (data.user) {
           await supabase.from('profiles').upsert({
             id: data.user.id,
-            name: name || email.split('@')[0],
-            email: email,
-            created_at: new Date().toISOString()
+            name: name || email.split('@')[0]
           });
         }
 

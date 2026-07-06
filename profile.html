@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="">
+<html lang="en" data-theme="" data-page="profile">
 <head>
   <!-- ============================================================
     profile.html - Profile and Settings Page
@@ -690,6 +690,23 @@
       }
     ];
 
+    // Populated from Supabase in loadUnlockedThemes(); source of truth for
+    // which themes are unlocked (syncs across devices, unlike localStorage).
+    let unlockedThemeKeys = [];
+
+    async function loadUnlockedThemes() {
+      const { data, error } = await supabase
+        .from('unlocked_themes')
+        .select('theme_name')
+        .eq('user_id', userId);
+      if (!error && data) {
+        unlockedThemeKeys = data.map(r => r.theme_name);
+        // Keep localStorage as a fast local cache (used for instant theme
+        // paint on page load, before this async call resolves).
+        localStorage.setItem('unlocked_themes', JSON.stringify(unlockedThemeKeys));
+      }
+    }
+
     // ----------------------------------------------------------
     // ALL BADGES DEFINITION
     // Badges are earned based on streaks, entries, goals, etc.
@@ -788,7 +805,7 @@
     // Shows all themes, locked ones are dimmed
     // ----------------------------------------------------------
     function renderThemes(currentStreak) {
-      const unlockedThemes = JSON.parse(localStorage.getItem('unlocked_themes') || '[]');
+      const unlockedThemes = unlockedThemeKeys;
       const activeTheme = localStorage.getItem('active_theme') || '';
       const grid = document.getElementById('themesGrid');
 
@@ -983,7 +1000,7 @@
       const { data: { session: _s } } = await supabase.auth.getSession();
       userId = _s?.user?.id;
       if (!userId) { window.location.replace('login.html'); return; }
-      await Promise.all([loadProfile(), loadStats(), loadStreak()]);
+      await Promise.all([loadProfile(), loadStats(), loadStreak(), loadUnlockedThemes()]);
       renderThemes();
     }
 
