@@ -78,6 +78,28 @@
       font-size: 0.7rem;
     }
 
+    .avatar-color-picker {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .avatar-color-picker.hidden {
+      display: none;
+    }
+    .avatar-color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .avatar-color-swatch:hover {
+      transform: scale(1.15);
+      border-color: #fff;
+    }
+
     .profile-info {
       flex: 1;
     }
@@ -406,9 +428,12 @@
 
       <!-- Profile card -->
       <div class="profile-card">
-        <div class="avatar" id="avatarCircle">
-          M
-          <div class="avatar-edit-hint"><i class="ri-pencil-line"></i></div>
+        <div>
+          <div class="avatar" id="avatarCircle" onclick="toggleAvatarColorPicker()">
+            M
+            <div class="avatar-edit-hint"><i class="ri-palette-line"></i></div>
+          </div>
+          <div class="avatar-color-picker hidden" id="avatarColorPicker"></div>
         </div>
         <div class="profile-info">
           <div class="profile-name" id="profileName">Maestro</div>
@@ -604,6 +629,33 @@
 
 
     // ----------------------------------------------------------
+    // AVATAR COLOR PICKER
+    // Replaces the old fake "click to change photo" hint — this is
+    // honest about what it actually does: pick a background color,
+    // synced to Supabase so it's consistent across devices.
+    // Real photo upload would need Supabase Storage — bigger lift,
+    // deferred for now.
+    // ----------------------------------------------------------
+    const AVATAR_COLORS = ['#e94560','#4cc9f0','#00d4aa','#f0c040','#a78bfa','#fb7185','#34d399','#fb923c'];
+
+    document.getElementById('avatarColorPicker').innerHTML = AVATAR_COLORS.map(c =>
+      `<div class="avatar-color-swatch" style="background:${c};" onclick="setAvatarColor('${c}')"></div>`
+    ).join('');
+
+    window.toggleAvatarColorPicker = function() {
+      document.getElementById('avatarColorPicker').classList.toggle('hidden');
+    };
+
+    window.setAvatarColor = async function(color) {
+      document.getElementById('avatarCircle').style.background = color;
+      document.getElementById('avatarColorPicker').classList.add('hidden');
+      if (!isOnline()) { showToast('Connect to the internet to save your avatar color.', 'warning'); return; }
+      const { error } = await supabase.from('profiles').update({ avatar_color: color }).eq('id', userId);
+      if (error) { showToast('Failed to save avatar color.', 'error'); return; }
+      showToast('Avatar color updated!', 'success');
+    };
+
+    // ----------------------------------------------------------
     // SANITIZE — prevent XSS in rendered HTML
     // ----------------------------------------------------------
     function sanitize(str) {
@@ -744,6 +796,11 @@
         // Update avatar initials
         const initials = (data.name || 'M').charAt(0).toUpperCase();
         document.getElementById('avatarCircle').childNodes[0].textContent = initials;
+
+        // Apply saved avatar color, if one was chosen
+        if (data.avatar_color) {
+          document.getElementById('avatarCircle').style.background = data.avatar_color;
+        }
       }
     }
 
@@ -906,6 +963,7 @@
     // Upserts profile data to Supabase profiles table
     // ----------------------------------------------------------
     document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to save your profile.', 'warning'); return; }
       const name = document.getElementById('editName').value.trim();
       const bio  = document.getElementById('editBio').value.trim();
 
@@ -949,6 +1007,7 @@
     // Downloads all journal entries as a plain text file
     // ----------------------------------------------------------
     document.getElementById('exportJournalBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to export your journal.', 'warning'); return; }
       const { data, error } = await supabase
         .from('journal_entries')
         .select('title, content, mood, created_at')

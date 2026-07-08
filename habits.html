@@ -1153,6 +1153,10 @@
     // permission is already granted (asked centrally from index.html).
     // ----------------------------------------------------------
     function maybeShowStreakAtRiskAlert() {
+      // Respect the "Streak Notifications" toggle on profile.html —
+      // its description ("alert me when close to breaking my streak")
+      // refers to exactly this feature, but it was never connected.
+      if (localStorage.getItem('streak_notif_toggle') === 'false') return;
       if (!('Notification' in window) || Notification.permission !== 'granted') return;
       if (new Date().getHours() < 18) return; // only nudge in the evening
 

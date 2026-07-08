@@ -76,6 +76,9 @@ function showNotification(msg) {
 // Re-schedules itself every 24h
 // ----------------------------------------------------------
 export function scheduleDailyNotifications() {
+  // Respect the "Evening Reminder" toggle on profile.html — previously
+  // this setting was purely decorative and had no effect here.
+  if (localStorage.getItem('reminder_toggle') === 'false') return;
   if (Notification.permission !== 'granted') return;
 
   const now = new Date();
@@ -117,6 +120,7 @@ export function scheduleDailyNotifications() {
 // Called from index.html on login
 // ----------------------------------------------------------
 export async function initNotifications() {
+  if (localStorage.getItem('reminder_toggle') === 'false') return false;
   const granted = await requestNotificationPermission();
   if (!granted) return false;
 
