@@ -217,6 +217,15 @@
   </style>
 </head>
 <body>
+<div id="appLoader" class="app-loader">
+  <div class="loader-icon" aria-hidden="true"></div>
+  <div class="loader-title">My<span>Diary</span></div>
+  <div class="loader-subtitle">Your personal life tracker</div>
+  <div class="loader-bar-track">
+    <div id="loaderBar" class="loader-bar-fill"></div>
+  </div>
+  <div id="loaderStatus" class="loader-status">Connecting...</div>
+</div>
 <div class="app-container">
   <aside class="sidebar">
     <div class="sidebar-logo">My<span>Diary</span></div>
@@ -632,6 +641,23 @@
   import { getVerseFromLibrary } from './js/scripture.js';
 
   // ----------------------------------------------------------
+  // LOADER HELPERS
+  // ----------------------------------------------------------
+  function loaderProgress(pct, status) {
+    const bar = document.getElementById('loaderBar');
+    const txt = document.getElementById('loaderStatus');
+    if (bar) bar.style.width = pct + '%';
+    if (txt && status) txt.textContent = status;
+  }
+  function hideLoader() {
+    const loader = document.getElementById('appLoader');
+    if (!loader) return;
+    loader.style.opacity = '0';
+    loader.style.visibility = 'hidden';
+    setTimeout(() => loader.remove(), 650);
+  }
+
+  // ----------------------------------------------------------
   // AUTH CHECK — runs first, before anything else.
   // Redirects to login if there's no active session, and sets
   // userId (module-level) so every query/write below can use it.
@@ -641,6 +667,7 @@
   {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
+      hideLoader();
       window.location.replace('login.html');
     } else {
       userId = session.user.id;
@@ -719,12 +746,15 @@
   }
 
   async function init() {
+    loaderProgress(20, 'Loading finance...');
     loadVerse();
     updateOnline();
     onConnectivityChange(updateOnline);
     updateMonthLabel();
     await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets(),loadSavingsGoals(),loadDebts()]);
     render();
+    loaderProgress(100, 'Ready!');
+    setTimeout(hideLoader, 300);
   }
 
   function loadVerse() {
