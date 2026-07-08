@@ -544,6 +544,7 @@
       isOnline,
       onConnectivityChange,
       replayOfflineQueue,
+      queueOfflineAction,
       showToast,
       truncate
     } from './js/utils.js';
@@ -804,18 +805,18 @@
 
             <!-- Goal description -->
             ${goal.description ? `
-              <div class="goal-desc">${truncate(goal.description, 100)}</div>
+              <div class="goal-desc">${sanitize(truncate(goal.description, 100))}</div>
             ` : ''}
 
             <!-- Progress bar -->
             <div class="goal-progress-row">
               <span style="font-size:0.82rem;font-weight:600;">Progress</span>
-              <span style="font-size:0.82rem;font-weight:700;color:var(--accent-1);">
+              <span style="font-size:0.82rem;font-weight:700;color:var(--accent-1);" id="goalProgressText_${goal.id}">
                 ${goal.progress}%
               </span>
             </div>
             <div class="progress-bar-wrapper mb-sm">
-              <div class="progress-bar-fill" style="width:${goal.progress}%"></div>
+              <div class="progress-bar-fill" id="goalProgressFill_${goal.id}" style="width:${goal.progress}%"></div>
             </div>
 
             <!-- Target date -->
@@ -827,11 +828,17 @@
             ` : ''}
 
             <!-- Progress slider to update quickly -->
-            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
-              <input type="range" style="flex:1;accent-color:var(--accent-1);"
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap;">
+              <input type="range" style="flex:1;min-width:80px;accent-color:var(--accent-1);"
                 min="0" max="100" value="${goal.progress}"
                 oninput="updateGoalProgress('${goal.id}', this.value)"
               />
+              ${goal.status !== 'completed' ? `
+                <button class="btn btn-sm btn-ghost"
+                  onclick="toggleGoalPause('${goal.id}', '${goal.status}')">
+                  ${goal.status === 'paused' ? 'Resume' : 'Pause'}
+                </button>
+              ` : ''}
               <button class="btn btn-sm ${goal.status === 'completed' ? 'btn-secondary' : 'btn-primary'}"
                 onclick="toggleGoalComplete('${goal.id}', '${goal.status}')">
                 ${goal.status === 'completed' ? 'Reopen' : 'Complete'}
@@ -893,15 +900,25 @@
       const goal = allGoals.find(g => g.id === goalId);
       if (goal) goal.progress = val;
 
-      // Debounce the Supabase update by 600ms
+      // Live-update the visible label and fill bar immediately — these
+      // previously had no ids, so they stayed stuck at the old value
+      // until an unrelated action forced a full re-render.
+      const textEl = document.getElementById(`goalProgressText_${goalId}`);
+      const fillEl = document.getElementById(`goalProgressFill_${goalId}`);
+      if (textEl) textEl.textContent = `${val}%`;
+      if (fillEl) fillEl.style.width = `${val}%`;
+
+      // Debounce the actual write by 600ms
       clearTimeout(progressTimers[goalId]);
       progressTimers[goalId] = setTimeout(async () => {
-        const { error } = await supabase
-          .from('goals')
-          .update({ progress: val })
-          .eq('id', goalId);
-        if (error) showToast('Failed to update progress.', 'error');
-        else renderCharts();
+        if (isOnline()) {
+          const { error } = await supabase.from('goals').update({ progress: val }).eq('id', goalId);
+          if (error) showToast('Failed to update progress.', 'error');
+          else renderCharts();
+        } else {
+          queueOfflineAction('goals', 'update', { id: goalId, progress: val });
+          renderCharts();
+        }
       }, 600);
     };
 
@@ -909,6 +926,7 @@
     // TOGGLE GOAL COMPLETE / REOPEN
     // ----------------------------------------------------------
     window.toggleGoalComplete = async function(goalId, currentStatus) {
+      if (!isOnline()) { showToast('Connect to the internet to update this goal.', 'warning'); return; }
       const newStatus = currentStatus === 'completed' ? 'active' : 'completed';
       const newProgress = newStatus === 'completed' ? 100 : undefined;
 
@@ -926,6 +944,23 @@
     };
 
     // ----------------------------------------------------------
+    // TOGGLE GOAL PAUSE / RESUME
+    // ----------------------------------------------------------
+    window.toggleGoalPause = async function(goalId, currentStatus) {
+      if (!isOnline()) { showToast('Connect to the internet to update this goal.', 'warning'); return; }
+      const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
+
+      const { error } = await supabase
+        .from('goals')
+        .update({ status: newStatus })
+        .eq('id', goalId);
+
+      if (error) { showToast('Failed to update goal.', 'error'); return; }
+      showToast(newStatus === 'paused' ? 'Goal paused.' : 'Goal resumed.', 'info');
+      loadGoals();
+    };
+
+    // ----------------------------------------------------------
     // SCRIPTURE VERSE LOADER
     // ----------------------------------------------------------
     function loadPageVerse() {
@@ -938,13 +973,19 @@
     // TOGGLE MILESTONE DONE
     // ----------------------------------------------------------
     window.toggleMilestone = async function(milestoneId, currentDone) {
-      const { error } = await supabase
-        .from('milestones')
-        .update({ done: !currentDone })
-        .eq('id', milestoneId);
+      const newDone = !currentDone;
 
-      if (error) { showToast('Failed to update milestone.', 'error'); return; }
-      loadGoals();
+      if (isOnline()) {
+        const { error } = await supabase.from('milestones').update({ done: newDone }).eq('id', milestoneId);
+        if (error) { showToast('Failed to update milestone.', 'error'); return; }
+        loadGoals();
+      } else {
+        queueOfflineAction('milestones', 'update', { id: milestoneId, done: newDone });
+        const m = allMilestones.find(x => x.id === milestoneId);
+        if (m) m.done = newDone;
+        renderGoals();
+        showToast('Saved offline — will sync when back online.', 'info');
+      }
     };
 
     // ----------------------------------------------------------
@@ -962,6 +1003,7 @@
     // SAVE MILESTONE
     // ----------------------------------------------------------
     window.saveMilestone = async function(goalId) {
+      if (!isOnline()) { showToast('Connect to the internet to add a milestone.', 'warning'); return; }
       const input = document.getElementById(`milestoneText_${goalId}`);
       const title = input.value.trim();
       if (!title) return;
@@ -981,6 +1023,7 @@
     // DELETE MILESTONE
     // ----------------------------------------------------------
     window.deleteMilestone = async function(milestoneId) {
+      if (!isOnline()) { showToast('Connect to the internet to delete a milestone.', 'warning'); return; }
       const { error } = await supabase
         .from('milestones').delete().eq('id', milestoneId).eq('user_id', userId);
       if (error) { showToast('Failed to delete milestone.', 'error'); return; }
@@ -991,7 +1034,11 @@
     // DELETE GOAL
     // ----------------------------------------------------------
     window.deleteGoal = async function(goalId) {
+      if (!isOnline()) { showToast('Connect to the internet to delete a goal.', 'warning'); return; }
       if (!confirm('Delete this goal and all its milestones?')) return;
+      // Delete milestones explicitly first — works regardless of whether
+      // the foreign key cascades, so this can never fail partway through.
+      await supabase.from('milestones').delete().eq('goal_id', goalId).eq('user_id', userId);
       const { error } = await supabase.from('goals').delete().eq('id', goalId).eq('user_id', userId);
       if (error) { showToast('Failed to delete goal.', 'error'); return; }
       showToast('Goal deleted.', 'info');
@@ -1045,6 +1092,7 @@
     // SAVE GOAL
     // ----------------------------------------------------------
     document.getElementById('saveGoalBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to add or edit goals.', 'warning'); return; }
       const title      = document.getElementById('goalTitle').value.trim();
       const desc       = document.getElementById('goalDesc').value.trim();
       const category   = document.getElementById('goalCategory').value;
