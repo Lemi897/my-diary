@@ -877,7 +877,24 @@
     // NEW ENTRY BUTTON
     // Clears the editor for a fresh entry
     // ----------------------------------------------------------
-    document.getElementById('newEntryBtn').addEventListener('click', clearEditor);
+    function hasUnsavedDraft() {
+      // Only guards brand-new, never-saved drafts — reopening an existing
+      // saved entry and clicking New Entry is always safe, since that
+      // entry's real data is already sitting safely in the database.
+      if (editingEntryId) return false;
+      const title = document.getElementById('entryTitle').value.trim();
+      const content = quill.root.innerHTML;
+      const hasContent = content && content !== '<p><br></p>';
+      const health = document.getElementById('healthNotes').value.trim();
+      return !!(title || hasContent || health || currentTags.length > 0);
+    }
+
+    document.getElementById('newEntryBtn').addEventListener('click', () => {
+      if (hasUnsavedDraft() && !confirm('Discard this unsaved entry?')) return;
+      clearEditor();
+      showToast('📝 Ready for a new entry — write something below, then hit Save Entry.', 'info');
+      document.querySelector('.editor-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     document.getElementById('clearEditorBtn').addEventListener('click', clearEditor);
 
     function clearEditor() {
