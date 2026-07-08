@@ -9,6 +9,9 @@
    New themes can be added here without touching other files.
    ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+
 
 /* ------------------------------------------------------------
    TOKYO NIGHT
@@ -241,6 +244,153 @@
 
 
 /* ============================================================
+   TOMB OF THE MASK
+   Neon-arcade theme. Not gated behind a streak milestone —
+   available immediately in the theme picker, since it was a
+   deliberate choice rather than a reward to earn.
+   ============================================================ */
+[data-theme="tomb-of-the-mask"] {
+  --bg-primary:    #05050a;
+  --bg-secondary:  #05050a;
+  --bg-card:       #14141f;
+  --accent-1:      #00f0ff;
+  --accent-2:      #ff2e88;
+  --accent-3:      #baff29;
+  --accent-dim:    rgba(0,240,255,0.12);
+  --text-primary:  #e8e8f5;
+  --text-secondary:#9a9ac0;
+  --text-muted:    #5a5a7a;
+  --border:        #2a2a3d;
+  --success:       #baff29;
+  --warning:       #ffd23f;
+  --danger:        #ff3b3b;
+  --info:          #00f0ff;
+}
+
+[data-theme="tomb-of-the-mask"] .card {
+  box-shadow: 0 0 16px rgba(0,240,255,0.06), inset 0 0 24px rgba(0,240,255,0.02);
+}
+[data-theme="tomb-of-the-mask"] .page-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.05rem;
+  text-shadow: 0 0 10px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .btn-primary {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+
+/* index.html : The Lobby */
+[data-theme="tomb-of-the-mask"] .streak-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,210,63,0.4);
+  box-shadow: 0 0 24px rgba(255,210,63,0.15);
+}
+[data-theme="tomb-of-the-mask"] .streak-number {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 2rem;
+  color: #ffd23f;
+  text-shadow: 0 0 16px rgba(255,210,63,0.7);
+}
+[data-theme="tomb-of-the-mask"] .stat-card {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .stat-value {
+  font-family: var(--font-mono);
+  color: var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .theme-unlock-banner {
+  background: var(--bg-card);
+  border: 1px solid rgba(186,255,41,0.5);
+  box-shadow: 0 0 20px rgba(186,255,41,0.2);
+}
+[data-theme="tomb-of-the-mask"] .theme-unlock-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.68rem;
+  color: #baff29;
+}
+
+/* habits.html : The Daily Maze */
+[data-theme="tomb-of-the-mask"] .habit-card {
+  box-shadow: 0 0 12px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .week-dot {
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+}
+[data-theme="tomb-of-the-mask"] .week-dot.done {
+  background: var(--accent-1);
+  box-shadow: 0 0 8px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .archived-card {
+  background: repeating-linear-gradient(135deg, var(--bg-card) 0 10px, #0d0d16 10px 20px);
+}
+
+/* tasks.html : The Objective Board */
+[data-theme="tomb-of-the-mask"] .priority-urgent {
+  background: rgba(255,59,59,0.15); color: #ff3b3b; box-shadow: 0 0 8px rgba(255,59,59,0.3);
+}
+[data-theme="tomb-of-the-mask"] .priority-high {
+  background: rgba(255,210,63,0.15); color: #ffd23f;
+}
+[data-theme="tomb-of-the-mask"] .priority-medium {
+  background: rgba(0,240,255,0.15); color: #00f0ff;
+}
+[data-theme="tomb-of-the-mask"] .priority-low {
+  background: rgba(154,154,192,0.15); color: #9a9ac0;
+}
+[data-theme="tomb-of-the-mask"] .due-overdue {
+  color: #ff3b3b;
+}
+[data-theme="tomb-of-the-mask"] .task-card:has(.due-overdue) {
+  background-image: repeating-linear-gradient(135deg, #ff3b3b 0 8px, transparent 8px 16px);
+  background-size: 100% 4px;
+  background-repeat: no-repeat;
+  background-position: top;
+  box-shadow: 0 0 14px rgba(255,59,59,0.25);
+}
+
+/* goals.html : The Climb */
+[data-theme="tomb-of-the-mask"] .progress-bar-fill {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+  box-shadow: 0 0 8px var(--accent-3);
+}
+[data-theme="tomb-of-the-mask"] .milestone-check.done {
+  background: #ffd23f; box-shadow: 0 0 8px #ffd23f; border-radius: 4px;
+}
+[data-theme="tomb-of-the-mask"] .status-completed {
+  background: rgba(186,255,41,0.15); color: #baff29;
+}
+[data-theme="tomb-of-the-mask"] .status-paused {
+  background: rgba(154,154,192,0.15); color: #9a9ac0;
+}
+
+/* journal.html : The Scroll — kept quiet on purpose */
+[data-theme="tomb-of-the-mask"] .mood-slider {
+  accent-color: var(--accent-3);
+}
+[data-theme="tomb-of-the-mask"] .entry-item.active {
+  border-left: 3px solid var(--accent-1);
+  box-shadow: 0 0 10px var(--accent-dim);
+}
+
+/* profile.html : Character Select */
+[data-theme="tomb-of-the-mask"] .badge-card.earned {
+  border-color: rgba(255,210,63,0.5);
+  box-shadow: 0 0 12px rgba(255,210,63,0.2);
+}
+[data-theme="tomb-of-the-mask"] .badge-card.locked {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+[data-theme="tomb-of-the-mask"] .theme-card.active-theme {
+  box-shadow: 0 0 16px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .avatar-color-swatch:hover {
+  box-shadow: 0 0 12px currentColor;
+}
+
+
+/* ============================================================
    THEME METADATA
    Used by js/themes.js to display theme names and unlock info.
    This is a reference comment only, not functional CSS.
@@ -256,4 +406,5 @@
    - 90 days  => sakura
    - 120 days => forest
    - 150 days => cyberpunk (ultimate)
+   - always   => tomb-of-the-mask (deliberate pick, not a reward)
    ============================================================ */

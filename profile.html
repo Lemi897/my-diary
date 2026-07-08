@@ -739,6 +739,10 @@
       {
         key: 'cyberpunk', name: 'Cyberpunk', milestone: 150,
         colors: ['#0d0d0d', '#1a0a2e', '#ffff00']
+      },
+      {
+        key: 'tomb-of-the-mask', name: 'Tomb of the Mask', milestone: 0,
+        colors: ['#05050a', '#14141f', '#00f0ff']
       }
     ];
 
@@ -886,7 +890,7 @@
             <div class="theme-name" style="color:${theme.colors[2]};">${theme.name}</div>
             <div class="theme-unlock-info">
               ${isUnlocked
-                ? (theme.milestone === 0 ? 'Default' : `Unlocked at ${theme.milestone} days`)
+                ? (theme.key === '' ? 'Default' : theme.milestone === 0 ? 'Always unlocked' : `Unlocked at ${theme.milestone} days`)
                 : `🔒 ${theme.milestone} day streak`}
             </div>
           </div>
