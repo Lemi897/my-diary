@@ -231,7 +231,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
-    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize } from './js/utils.js';
+    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize, showToast } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
     import { initNotifications } from './js/notifications.js';
 
@@ -252,6 +252,17 @@
     let userId = null;
 
     { const { data: { session } } = await supabase.auth.getSession(); if (!session) window.location.replace('login.html'); }
+
+    function themeColor(varName, fallback) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      return val || fallback;
+    }
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return `rgba(233,69,96,${alpha})`;
+      const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
 
     function setGreeting() {
       const hour = new Date().getHours();
@@ -333,16 +344,23 @@
       if (data.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No pending tasks</p></div>`; return; }
       const now = new Date();
       const overdueCount = data.filter(t => t.due_date && new Date(t.due_date) < now).length;
+      const danger = themeColor('--danger', '#ef4444');
+      const priorityColors = {
+        urgent: themeColor('--danger', '#ef4444'),
+        high: '#fb923c',
+        medium: themeColor('--warning', '#f59e0b'),
+        low: themeColor('--success', '#10b981')
+      };
       const banner = overdueCount > 0
-        ? `<div style="background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.3);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.82rem;font-weight:600;color:#ef233c;display:flex;align-items:center;gap:0.5rem;"><i class="ri-alarm-warning-line"></i>${overdueCount} overdue task${overdueCount>1?'s':''} — take action!</div>` : '';
+        ? `<div style="background:color-mix(in srgb, ${danger} 12%, transparent);border:1px solid color-mix(in srgb, ${danger} 30%, transparent);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.82rem;font-weight:600;color:${danger};display:flex;align-items:center;gap:0.5rem;"><i class="ri-alarm-warning-line"></i>${overdueCount} overdue task${overdueCount>1?'s':''} — take action!</div>` : '';
       list.innerHTML = banner + data.map(task => {
         const isOverdue = task.due_date && new Date(task.due_date) < now;
-        const priorityColor = {urgent:'#ef233c',high:'#fb923c',medium:'#ffd166',low:'#00d4aa'}[task.priority] || '#a0a0b0';
-        return `<div class="task-preview-item" style="${isOverdue?'border-left:3px solid #ef233c;padding-left:0.5rem;':''}">
+        const priorityColor = priorityColors[task.priority] || themeColor('--text-muted', '#a0a0b0');
+        return `<div class="task-preview-item" style="${isOverdue?`border-left:3px solid ${danger};padding-left:0.5rem;`:''}">
           <div class="task-check" style="border-color:${priorityColor};"></div>
           <div style="flex:1;">
-            <div class="task-preview-title" style="${isOverdue?'color:#ef233c;':''}">${isOverdue?'<i class="ri-alarm-warning-line"></i> ':''}${sanitize(truncate(task.title,38))}</div>
-            ${task.due_date?`<div class="task-preview-due" style="${isOverdue?'color:#ef233c;font-weight:600;':''}">${isOverdue?'⚠️ ':''}${sanitize(formatDateShort(task.due_date))}</div>`:''}
+            <div class="task-preview-title" style="${isOverdue?`color:${danger};`:''}">${isOverdue?'<i class="ri-alarm-warning-line"></i> ':''}${sanitize(truncate(task.title,38))}</div>
+            ${task.due_date?`<div class="task-preview-due" style="${isOverdue?`color:${danger};font-weight:600;`:''}">${isOverdue?'⚠️ ':''}${sanitize(formatDateShort(task.due_date))}</div>`:''}
           </div>
           <span class="badge priority-${sanitize(task.priority||'low')}" style="font-size:0.7rem;">${sanitize(task.priority||'')}</span>
         </div>`;
@@ -416,16 +434,20 @@
       const labels = data.map(e => { const d = new Date(e.created_at); return `${d.getDate()}/${d.getMonth()+1}`; });
       const scores = data.map(e => e.mood_score);
       const moodEmojis = ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
+      const accent1 = themeColor('--accent-1', '#e94560');
+      const accent3 = themeColor('--accent-3', '#f0c040');
+      const textMuted = themeColor('--text-muted', '#a0a0b0');
+      const gridColor = themeColor('--border', '#2a2a3e');
       if (moodChartInstance) moodChartInstance.destroy();
       moodChartInstance = new Chart(canvas.getContext('2d'), {
         type: 'line',
-        data: { labels, datasets: [{ label: 'Mood', data: scores, borderColor: '#e94560', backgroundColor: 'rgba(233,69,96,0.1)', borderWidth: 2, pointBackgroundColor: '#f0c040', pointRadius: 4, tension: 0.4, fill: true }] },
+        data: { labels, datasets: [{ label: 'Mood', data: scores, borderColor: accent1, backgroundColor: hexToRgba(accent1, 0.1), borderWidth: 2, pointBackgroundColor: accent3, pointRadius: 4, tension: 0.4, fill: true }] },
         options: {
           responsive: true,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${moodEmojis[ctx.raw]||''} ${ctx.raw}/10` } } },
           scales: {
-            y: { min:1, max:10, ticks: { color:'#a0a0b0', stepSize:3, callback: v => moodEmojis[v]||v }, grid: { color:'#2a2a3e' } },
-            x: { ticks: { color:'#a0a0b0' }, grid: { display:false } }
+            y: { min:1, max:10, ticks: { color: textMuted, stepSize:3, callback: v => moodEmojis[v]||v }, grid: { color: gridColor } },
+            x: { ticks: { color: textMuted }, grid: { display:false } }
           }
         }
       });
@@ -449,6 +471,10 @@
     }
 
     async function updateStreakOnLogin() {
+      if (!isOnline()) {
+        showToast('Offline — today\'s streak will update once you\'re back online.', 'warning');
+        return;
+      }
       const today = todayDate();
       const { data, error } = await supabase.from('streaks').select('*').eq('user_id', userId).limit(1).maybeSingle();
       if (error) return;
@@ -460,7 +486,8 @@
       const newStreak = continued ? data.current_streak + 1 : 1;
       const newLongest = Math.max(newStreak, data.longest_streak || 0);
       const newXP = (data.total_xp || 0) + 10;
-      await supabase.from('streaks').update({ current_streak: newStreak, longest_streak: newLongest, total_xp: newXP, last_active_date: today }).eq('id', data.id);
+      const { error: updateError } = await supabase.from('streaks').update({ current_streak: newStreak, longest_streak: newLongest, total_xp: newXP, last_active_date: today }).eq('id', data.id);
+      if (updateError) showToast('Failed to update streak — try reloading.', 'error');
     }
 
     async function init() {

@@ -531,6 +531,15 @@ p  { font-size: 0.95rem;color: var(--text-secondary); }
 .badge-info    { background: rgba(6,182,212,0.12);   color: var(--info); }
 .badge-accent  { background: var(--accent-dim);       color: var(--accent-1); }
 
+/* Priority badges — used on tasks.html and the dashboard's task preview.
+   Previously only defined locally inside tasks.html, so any other page
+   referencing these classes (like index.html's dashboard) rendered them
+   with zero color coding. */
+.priority-low      { background: rgba(16,185,129,0.15);  color: var(--success); }
+.priority-medium   { background: rgba(245,158,11,0.15);  color: var(--warning); }
+.priority-high     { background: rgba(249,115,22,0.15);  color: #fb923c; }
+.priority-urgent   { background: rgba(239,68,68,0.15);   color: var(--danger); }
+
 
 /* ------------------------------------------------------------
    MODAL
