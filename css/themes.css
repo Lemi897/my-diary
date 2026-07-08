@@ -23,6 +23,7 @@
   --bg-secondary:  #16161e;
   --bg-card:       #1f2335;
   --accent-1:      #7aa2f7;
+  --accent-dim:    rgba(122,162,247,0.12);
   --accent-2:      #bb9af7;
   --accent-3:      #2ac3de;
   --text-primary:  #c0caf5;
@@ -59,6 +60,7 @@
   --bg-secondary:  #21222c;
   --bg-card:       #2d2f3f;
   --accent-1:      #ff79c6;
+  --accent-dim:    rgba(255,121,198,0.12);
   --accent-2:      #bd93f9;
   --accent-3:      #50fa7b;
   --text-primary:  #f8f8f2;
@@ -82,6 +84,7 @@
   --bg-secondary:  #181825;
   --bg-card:       #1e1e2e;
   --accent-1:      #cba6f7;
+  --accent-dim:    rgba(203,166,247,0.12);
   --accent-2:      #89b4fa;
   --accent-3:      #a6e3a1;
   --text-primary:  #cdd6f4;
@@ -105,6 +108,7 @@
   --bg-secondary:  #3b4252;
   --bg-card:       #434c5e;
   --accent-1:      #88c0d0;
+  --accent-dim:    rgba(136,192,208,0.12);
   --accent-2:      #81a1c1;
   --accent-3:      #a3be8c;
   --text-primary:  #eceff4;
@@ -128,6 +132,7 @@
   --bg-secondary:  #1d2021;
   --bg-card:       #3c3836;
   --accent-1:      #fe8019;
+  --accent-dim:    rgba(254,128,25,0.12);
   --accent-2:      #fabd2f;
   --accent-3:      #b8bb26;
   --text-primary:  #ebdbb2;
@@ -151,6 +156,7 @@
   --bg-secondary:  #2d1200;
   --bg-card:       #3d1c00;
   --accent-1:      #ff6b35;
+  --accent-dim:    rgba(255,107,53,0.12);
   --accent-2:      #f7931e;
   --accent-3:      #ffcc02;
   --text-primary:  #fff5e6;
@@ -174,6 +180,7 @@
   --bg-secondary:  #0a192f;
   --bg-card:       #112240;
   --accent-1:      #64ffda;
+  --accent-dim:    rgba(100,255,218,0.12);
   --accent-2:      #0096ff;
   --accent-3:      #7928ca;
   --text-primary:  #ccd6f6;
@@ -197,6 +204,7 @@
   --bg-secondary:  #2d1020;
   --bg-card:       #3d1530;
   --accent-1:      #ff85a1;
+  --accent-dim:    rgba(255,133,161,0.12);
   --accent-2:      #ffb3c6;
   --accent-3:      #ffc8dd;
   --text-primary:  #fff0f5;
@@ -220,6 +228,7 @@
   --bg-secondary:  #0f2a0f;
   --bg-card:       #143314;
   --accent-1:      #52b788;
+  --accent-dim:    rgba(82,183,136,0.12);
   --accent-2:      #74c69d;
   --accent-3:      #b7e4c7;
   --text-primary:  #d8f3dc;
@@ -243,6 +252,7 @@
   --bg-secondary:  #1a0a2e;
   --bg-card:       #16002e;
   --accent-1:      #ffff00;
+  --accent-dim:    rgba(255,255,0,0.12);
   --accent-2:      #ff006e;
   --accent-3:      #8338ec;
   --text-primary:  #ffffff;
