@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="" data-page="linguistic">
+<head>
+  <!-- ============================================================
+    linguistic.html - Linguistic Page
+    Shows: vocabulary list with dictionary lookup (definitions,
+    examples, audio pronunciation), and a book tracker with
+    research lookup (cover, genre, page count) via Open Library.
+    Data stored in: vocabulary and books tables in Supabase.
+    Dictionary lookups use the free dictionaryapi.dev API.
+    Book research uses the free Open Library API.
+    Both are external API calls — require an internet connection.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linguistic | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <style>
+    .type-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .type-tab {
+      background: none; border: none; padding: 0.65rem 1rem; font-size: 0.85rem; font-weight: 600;
+      color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent;
+      font-family: inherit; transition: var(--transition);
+    }
+    .type-tab.active { color: var(--accent-1); border-bottom-color: var(--accent-1); }
+    .type-tab:hover { color: var(--text-primary); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .lookup-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
+    .lookup-row { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .lookup-row .form-input { flex: 1; min-width: 140px; }
+
+    .dict-result { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .dict-word-row { display: flex; align-items: center; gap: 0.6rem; }
+    .dict-word { font-size: 1.3rem; font-weight: 700; }
+    .dict-phonetic { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; }
+    .dict-audio-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; color: var(--accent-1); cursor: pointer; }
+    .dict-pos { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-1); margin: 0.75rem 0 0.35rem; }
+    .dict-def { font-size: 0.88rem; margin-bottom: 0.3rem; }
+    .dict-example { font-size: 0.82rem; color: var(--text-secondary); font-style: italic; margin-bottom: 0.3rem; }
+    .dict-not-found { color: var(--text-muted); font-size: 0.85rem; }
+
+    .book-result { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; gap: 1rem; }
+    .book-cover { width: 70px; height: 100px; object-fit: cover; border-radius: var(--radius-sm); background: var(--bg-secondary); flex-shrink: 0; }
+    .book-cover-placeholder { width: 70px; height: 100px; border-radius: var(--radius-sm); background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.5rem; flex-shrink: 0; }
+
+    .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .word-card, .book-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; }
+    .word-card-title { font-size: 1.05rem; font-weight: 700; }
+    .word-card-meaning { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .word-card-example { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-top: 0.4rem; }
+    .word-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; }
+    .difficulty-stars { color: var(--warning); font-size: 0.8rem; }
+
+    .book-card-row { display: flex; gap: 0.9rem; }
+    .book-card-info { flex: 1; min-width: 0; }
+    .book-card-title { font-size: 1rem; font-weight: 700; }
+    .book-card-author { font-size: 0.82rem; color: var(--text-secondary); }
+    .book-status-badge { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.5rem; border-radius: 20px; display: inline-block; margin-top: 0.4rem; }
+    .book-status-badge.want_to_read { background: rgba(160,160,176,0.15); color: var(--text-muted); }
+    .book-status-badge.reading { background: var(--accent-dim); color: var(--accent-1); }
+    .book-status-badge.read { background: rgba(16,185,129,0.15); color: var(--success); }
+    .item-actions { display: flex; gap: 0.4rem; }
+
+    .status-filter-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .status-filter-btn { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
+    .status-filter-btn.active { background: var(--accent-dim); border-color: var(--accent-1); color: var(--accent-1); }
+  </style>
+</head>
+<body>
+<!-- auth handled inside main module script -->
+<div id="authGate">
+  <div id="appLoader" class="app-loader">
+    <div class="loader-icon" aria-hidden="true"></div>
+    <div class="loader-title">My<span>Diary</span></div>
+    <div class="loader-subtitle">Your personal life tracker</div>
+    <div class="loader-bar-track">
+      <div id="loaderBar" class="loader-bar-fill"></div>
+    </div>
+    <div id="loaderStatus" class="loader-status">Connecting...</div>
+  </div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="linguistic.html" class="nav-link active">
+          <i class="ri-book-open-line nav-icon"></i> Linguistic
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Linguistic</div>
+          <div class="page-subtitle">Track words learned and books read</div>
+        </div>
+      </div>
+
+      <div class="type-tabs">
+        <button class="type-tab active" data-panel="vocab" onclick="switchPanel('vocab', this)">Vocabulary</button>
+        <button class="type-tab" data-panel="books" onclick="switchPanel('books', this)">Books</button>
+      </div>
+
+      <!-- VOCABULARY PANEL -->
+      <div class="panel active" id="panel-vocab">
+        <div class="lookup-card">
+          <div class="card-title" style="margin-bottom:0.75rem;">Look up a word</div>
+          <div class="lookup-row">
+            <input type="text" class="form-input" id="wordSearchInput" placeholder="Type a word..."
+              onkeydown="if(event.key==='Enter') searchWord()" />
+            <button class="btn btn-primary" onclick="searchWord()">Search</button>
+          </div>
+          <div id="dictResultContainer"></div>
+        </div>
+
+        <div class="flex-between mb-md">
+          <div class="card-title" style="margin:0;">My words</div>
+          <button class="btn btn-secondary btn-sm" onclick="openWordModal()"><i class="ri-add-line"></i> Add manually</button>
+        </div>
+        <div class="item-grid" id="vocabGrid">
+          <div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📚</div><p>No words saved yet.</p></div>
+        </div>
+      </div>
+
+      <!-- BOOKS PANEL -->
+      <div class="panel" id="panel-books">
+        <div class="lookup-card">
+          <div class="card-title" style="margin-bottom:0.75rem;">Research a book</div>
+          <div class="lookup-row">
+            <input type="text" class="form-input" id="bookSearchTitle" placeholder="Book title..." />
+            <input type="text" class="form-input" id="bookSearchAuthor" placeholder="Author (optional)..." />
+            <button class="btn btn-primary" onclick="researchBook()">Research</button>
+          </div>
+          <div id="bookResultContainer"></div>
+        </div>
+
+        <div class="flex-between mb-md">
+          <div class="card-title" style="margin:0;">My books</div>
+          <button class="btn btn-secondary btn-sm" onclick="openBookModal()"><i class="ri-add-line"></i> Add manually</button>
+        </div>
+        <div class="status-filter-row">
+          <button class="status-filter-btn active" data-status="all" onclick="setBookFilter('all', this)">All</button>
+          <button class="status-filter-btn" data-status="want_to_read" onclick="setBookFilter('want_to_read', this)">Want to read</button>
+          <button class="status-filter-btn" data-status="reading" onclick="setBookFilter('reading', this)">Reading</button>
+          <button class="status-filter-btn" data-status="read" onclick="setBookFilter('read', this)">Read</button>
+        </div>
+        <div class="item-grid" id="booksGrid">
+          <div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📖</div><p>No books yet.</p></div>
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link"><i class="ri-home-5-line nav-icon"></i><span>Home</span></a>
+        <a href="habits.html" class="bottom-nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+        <a href="tasks.html" class="bottom-nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+        <a href="journal.html" class="bottom-nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+        <a href="linguistic.html" class="bottom-nav-link active"><i class="ri-book-open-line nav-icon"></i><span>Linguistic</span></a>
+        <a href="goals.html" class="bottom-nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+        <a href="finance.html" class="bottom-nav-link"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+        <a href="profile.html" class="bottom-nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- WORD MODAL -->
+  <div class="modal-overlay" id="wordModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="wordModalTitle">Add Word</div>
+        <button class="modal-close" id="wordModalClose">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Word</label>
+        <input type="text" class="form-input" id="wordInput" placeholder="e.g. ephemeral" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Meaning</label>
+        <textarea class="form-textarea" id="meaningInput" rows="2" placeholder="What does it mean?"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Example (optional)</label>
+        <textarea class="form-textarea" id="exampleInput" rows="2" placeholder="Use it in a sentence"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Difficulty</label>
+        <select class="form-select" id="difficultyInput">
+          <option value="1">★ Easy</option>
+          <option value="2">★★ Medium</option>
+          <option value="3">★★★ Hard</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full mt-md" id="saveWordBtn">Save Word</button>
+    </div>
+  </div>
+
+  <!-- BOOK MODAL -->
+  <div class="modal-overlay" id="bookModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="bookModalTitle">Add Book</div>
+        <button class="modal-close" id="bookModalClose">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" class="form-input" id="bookTitleInput" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Author</label>
+        <input type="text" class="form-input" id="bookAuthorInput" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="bookStatusInput">
+          <option value="want_to_read">Want to read</option>
+          <option value="reading">Reading</option>
+          <option value="read">Read</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Genre (optional)</label>
+        <input type="text" class="form-input" id="bookGenreInput" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-textarea" id="bookNotesInput" rows="2"></textarea>
+      </div>
+      <input type="hidden" id="bookCoverInput" />
+      <input type="hidden" id="bookPagesInput" />
+      <button class="btn btn-primary btn-full mt-md" id="saveBookBtn">Save Book</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase, getCurrentUser } from './js/supabase.js';
+
+    // ----------------------------------------------------------
+    // AUTH CHECK — runs first, before anything else
+    // ----------------------------------------------------------
+    {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('login.html');
+      } else {
+        document.getElementById('authGate').style.display = '';
+      }
+    }
+    import {
+      isOnline,
+      onConnectivityChange,
+      showToast
+    } from './js/utils.js';
+
+    // ----------------------------------------------------------
+    // LOADER HELPERS
+    // ----------------------------------------------------------
+    function loaderProgress(pct, status) {
+      const bar = document.getElementById('loaderBar');
+      const txt = document.getElementById('loaderStatus');
+      if (bar) bar.style.width = pct + '%';
+      if (txt && status) txt.textContent = status;
+    }
+    function hideLoader() {
+      const loader = document.getElementById('appLoader');
+      if (!loader) return;
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+      setTimeout(() => loader.remove(), 650);
+    }
+
+    let userId = null;
+
+    // ----------------------------------------------------------
+    // SANITIZE — prevent XSS in rendered HTML
+    // ----------------------------------------------------------
+    function sanitize(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange((online) => updateOnlineBadge(online));
+
+    // ----------------------------------------------------------
+    // TAB SWITCHING
+    // ----------------------------------------------------------
+    window.switchPanel = function(name, btn) {
+      document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel-${name}`).classList.add('active');
+    };
+
+    // ----------------------------------------------------------
+    // STATE
+    // ----------------------------------------------------------
+    let allWords = [];
+    let allBooks = [];
+    let editingWordId = null;
+    let editingBookId = null;
+    let bookFilter = 'all';
+
+    // ----------------------------------------------------------
+    // DICTIONARY LOOKUP (dictionaryapi.dev — free, no key)
+    // ----------------------------------------------------------
+    let lastLookupResult = null;
+
+    window.searchWord = async function() {
+      const word = document.getElementById('wordSearchInput').value.trim();
+      if (!word) return;
+      if (!isOnline()) { showToast('Connect to the internet to look up a word.', 'warning'); return; }
+
+      const container = document.getElementById('dictResultContainer');
+      container.innerHTML = '<div class="dict-result">Looking up...</div>';
+
+      try {
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!res.ok) {
+          lastLookupResult = null;
+          container.innerHTML = `<div class="dict-result dict-not-found">No definition found for "${sanitize(word)}". You can still add it manually below.</div>`;
+          return;
+        }
+        const data = await res.json();
+        const entry = data[0];
+        const audio = (entry.phonetics || []).find(p => p.audio)?.audio || null;
+
+        lastLookupResult = {
+          word: entry.word,
+          phonetic: entry.phonetic || (entry.phonetics || []).find(p => p.text)?.text || '',
+          audio,
+          meaning: (entry.meanings || []).map(m =>
+            `${m.partOfSpeech}: ${m.definitions[0]?.definition || ''}`
+          ).join(' | '),
+          example: (entry.meanings || []).flatMap(m => m.definitions).find(d => d.example)?.example || ''
+        };
+
+        container.innerHTML = `
+          <div class="dict-result">
+            <div class="dict-word-row">
+              <span class="dict-word">${sanitize(entry.word)}</span>
+              ${lastLookupResult.phonetic ? `<span class="dict-phonetic">${sanitize(lastLookupResult.phonetic)}</span>` : ''}
+              ${audio ? `<button class="dict-audio-btn" onclick="playAudio('${audio}')" aria-label="Play pronunciation"><i class="ri-volume-up-line"></i></button>` : `<button class="dict-audio-btn" onclick="speakWord('${sanitize(entry.word)}')" aria-label="Speak word"><i class="ri-volume-up-line"></i></button>`}
+            </div>
+            ${(entry.meanings || []).slice(0, 3).map(m => `
+              <div class="dict-pos">${sanitize(m.partOfSpeech)}</div>
+              ${m.definitions.slice(0, 2).map(d => `
+                <div class="dict-def">${sanitize(d.definition)}</div>
+                ${d.example ? `<div class="dict-example">"${sanitize(d.example)}"</div>` : ''}
+              `).join('')}
+            `).join('')}
+            <button class="btn btn-primary btn-sm mt-sm" onclick="saveLookupToVocab()">
+              <i class="ri-add-line"></i> Save to my words
+            </button>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = '<div class="dict-result dict-not-found">Lookup failed. Try again.</div>';
+      }
+    };
+
+    window.playAudio = function(url) {
+      new Audio(url.startsWith('http') ? url : `https:${url}`).play().catch(() => {});
+    };
+
+    window.speakWord = function(word) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(word));
+    };
+
+    window.saveLookupToVocab = function() {
+      if (!lastLookupResult) return;
+      openWordModal();
+      document.getElementById('wordInput').value = lastLookupResult.word;
+      document.getElementById('meaningInput').value = lastLookupResult.meaning;
+      document.getElementById('exampleInput').value = lastLookupResult.example;
+    };
+
+    // ----------------------------------------------------------
+    // BOOK RESEARCH (Open Library — free, no key)
+    // ----------------------------------------------------------
+    let lastBookResult = null;
+
+    window.researchBook = async function() {
+      const title = document.getElementById('bookSearchTitle').value.trim();
+      const author = document.getElementById('bookSearchAuthor').value.trim();
+      if (!title) { showToast('Enter a book title.', 'warning'); return; }
+      if (!isOnline()) { showToast('Connect to the internet to research a book.', 'warning'); return; }
+
+      const container = document.getElementById('bookResultContainer');
+      container.innerHTML = '<div class="book-result">Researching...</div>';
+
+      try {
+        const query = new URLSearchParams({ title, ...(author ? { author } : {}) });
+        const res = await fetch(`https://openlibrary.org/search.json?${query}&limit=1`);
+        const data = await res.json();
+        const doc = data.docs && data.docs[0];
+
+        if (!doc) {
+          lastBookResult = null;
+          container.innerHTML = `<div class="book-result">No match found for "${sanitize(title)}". You can still add it manually below.</div>`;
+          return;
+        }
+
+        const cover = doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null;
+        lastBookResult = {
+          title: doc.title || title,
+          author: (doc.author_name || [author]).filter(Boolean)[0] || author,
+          genre: (doc.subject || []).slice(0, 3).join(', '),
+          pageCount: doc.number_of_pages_median || null,
+          cover
+        };
+
+        container.innerHTML = `
+          <div class="book-result">
+            ${cover ? `<img class="book-cover" src="${cover}" alt="" />` : `<div class="book-cover-placeholder"><i class="ri-book-line"></i></div>`}
+            <div>
+              <div style="font-weight:700;">${sanitize(lastBookResult.title)}</div>
+              <div style="color:var(--text-secondary);font-size:0.85rem;">${sanitize(lastBookResult.author || 'Unknown author')}</div>
+              ${lastBookResult.genre ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem;">${sanitize(lastBookResult.genre)}</div>` : ''}
+              ${lastBookResult.pageCount ? `<div style="font-size:0.78rem;color:var(--text-muted);">${lastBookResult.pageCount} pages</div>` : ''}
+              <button class="btn btn-primary btn-sm mt-sm" onclick="saveResearchToBooks()">
+                <i class="ri-add-line"></i> Add to my books
+              </button>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = '<div class="book-result">Research failed. Try again.</div>';
+      }
+    };
+
+    window.saveResearchToBooks = function() {
+      if (!lastBookResult) return;
+      openBookModal();
+      document.getElementById('bookTitleInput').value = lastBookResult.title;
+      document.getElementById('bookAuthorInput').value = lastBookResult.author || '';
+      document.getElementById('bookGenreInput').value = lastBookResult.genre || '';
+      document.getElementById('bookCoverInput').value = lastBookResult.cover || '';
+      document.getElementById('bookPagesInput').value = lastBookResult.pageCount || '';
+    };
+
+    // ----------------------------------------------------------
+    // LOAD / RENDER VOCABULARY
+    // ----------------------------------------------------------
+    async function loadWords() {
+      const { data, error } = await supabase.from('vocabulary').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) { showToast('Failed to load words.', 'error'); return; }
+      allWords = data || [];
+      renderWords();
+    }
+
+    function renderWords() {
+      const grid = document.getElementById('vocabGrid');
+      if (allWords.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📚</div><p>No words saved yet.</p></div>';
+        return;
+      }
+      grid.innerHTML = allWords.map(w => `
+        <div class="word-card">
+          <div class="word-card-title">${sanitize(w.word)}</div>
+          <div class="word-card-meaning">${sanitize(w.meaning)}</div>
+          ${w.example ? `<div class="word-card-example">"${sanitize(w.example)}"</div>` : ''}
+          <div class="word-card-footer">
+            <span class="difficulty-stars">${'★'.repeat(w.difficulty || 1)}</span>
+            <div class="item-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openWordModal('${w.id}')"><i class="ri-edit-line"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteWord('${w.id}')"><i class="ri-delete-bin-line"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.openWordModal = function(wordId) {
+      editingWordId = wordId || null;
+      const w = wordId ? allWords.find(x => x.id === wordId) : null;
+      document.getElementById('wordModalTitle').textContent = w ? 'Edit Word' : 'Add Word';
+      document.getElementById('wordInput').value = w?.word || '';
+      document.getElementById('meaningInput').value = w?.meaning || '';
+      document.getElementById('exampleInput').value = w?.example || '';
+      document.getElementById('difficultyInput').value = w?.difficulty || 1;
+      document.getElementById('wordModal').classList.add('open');
+    };
+    document.getElementById('wordModalClose').addEventListener('click', () => document.getElementById('wordModal').classList.remove('open'));
+    document.getElementById('wordModal').addEventListener('click', (e) => { if (e.target.id === 'wordModal') e.target.classList.remove('open'); });
+
+    document.getElementById('saveWordBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to save a word.', 'warning'); return; }
+      const word = document.getElementById('wordInput').value.trim();
+      const meaning = document.getElementById('meaningInput').value.trim();
+      const example = document.getElementById('exampleInput').value.trim() || null;
+      const difficulty = parseInt(document.getElementById('difficultyInput').value) || 1;
+      if (!word || !meaning) { showToast('Enter both a word and its meaning.', 'warning'); return; }
+
+      const payload = { word, meaning, example, difficulty };
+      let error;
+      if (editingWordId) {
+        ({ error } = await supabase.from('vocabulary').update(payload).eq('id', editingWordId).eq('user_id', userId));
+      } else {
+        ({ error } = await supabase.from('vocabulary').insert({ ...payload, user_id: userId, source: lastLookupResult?.word === word ? 'dictionary_api' : 'manual' }));
+      }
+      if (error) { showToast('Failed to save word.', 'error'); return; }
+      showToast('Word saved! 📚', 'success');
+      document.getElementById('wordModal').classList.remove('open');
+      loadWords();
+    });
+
+    window.deleteWord = async function(id) {
+      if (!isOnline()) { showToast('Connect to the internet to delete a word.', 'warning'); return; }
+      if (!confirm('Delete this word?')) return;
+      const { error } = await supabase.from('vocabulary').delete().eq('id', id).eq('user_id', userId);
+      if (error) { showToast('Failed to delete word.', 'error'); return; }
+      loadWords();
+    };
+
+    // ----------------------------------------------------------
+    // LOAD / RENDER BOOKS
+    // ----------------------------------------------------------
+    async function loadBooks() {
+      const { data, error } = await supabase.from('books').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) { showToast('Failed to load books.', 'error'); return; }
+      allBooks = data || [];
+      renderBooks();
+    }
+
+    window.setBookFilter = function(status, btn) {
+      bookFilter = status;
+      document.querySelectorAll('.status-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderBooks();
+    };
+
+    function renderBooks() {
+      const grid = document.getElementById('booksGrid');
+      const filtered = bookFilter === 'all' ? allBooks : allBooks.filter(b => b.status === bookFilter);
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📖</div><p>No books here yet.</p></div>';
+        return;
+      }
+      grid.innerHTML = filtered.map(b => `
+        <div class="book-card">
+          <div class="book-card-row">
+            ${b.cover_url ? `<img class="book-cover" src="${b.cover_url}" alt="" />` : `<div class="book-cover-placeholder"><i class="ri-book-line"></i></div>`}
+            <div class="book-card-info">
+              <div class="book-card-title">${sanitize(b.title)}</div>
+              <div class="book-card-author">${sanitize(b.author || 'Unknown author')}</div>
+              <span class="book-status-badge ${b.status}">${b.status.replace(/_/g, ' ')}</span>
+            </div>
+          </div>
+          ${b.notes ? `<div class="word-card-example" style="margin-top:0.6rem;">${sanitize(b.notes)}</div>` : ''}
+          <div class="word-card-footer">
+            <span></span>
+            <div class="item-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openBookModal('${b.id}')"><i class="ri-edit-line"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteBook('${b.id}')"><i class="ri-delete-bin-line"></i></button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.openBookModal = function(bookId) {
+      editingBookId = bookId || null;
+      const b = bookId ? allBooks.find(x => x.id === bookId) : null;
+      document.getElementById('bookModalTitle').textContent = b ? 'Edit Book' : 'Add Book';
+      document.getElementById('bookTitleInput').value = b?.title || '';
+      document.getElementById('bookAuthorInput').value = b?.author || '';
+      document.getElementById('bookStatusInput').value = b?.status || 'want_to_read';
+      document.getElementById('bookGenreInput').value = b?.genre || '';
+      document.getElementById('bookNotesInput').value = b?.notes || '';
+      document.getElementById('bookCoverInput').value = b?.cover_url || '';
+      document.getElementById('bookPagesInput').value = b?.page_count || '';
+      document.getElementById('bookModal').classList.add('open');
+    };
+    document.getElementById('bookModalClose').addEventListener('click', () => document.getElementById('bookModal').classList.remove('open'));
+    document.getElementById('bookModal').addEventListener('click', (e) => { if (e.target.id === 'bookModal') e.target.classList.remove('open'); });
+
+    document.getElementById('saveBookBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to save a book.', 'warning'); return; }
+      const title = document.getElementById('bookTitleInput').value.trim();
+      const author = document.getElementById('bookAuthorInput').value.trim() || null;
+      const status = document.getElementById('bookStatusInput').value;
+      const genre = document.getElementById('bookGenreInput').value.trim() || null;
+      const notes = document.getElementById('bookNotesInput').value.trim() || null;
+      const cover_url = document.getElementById('bookCoverInput').value || null;
+      const page_count = parseInt(document.getElementById('bookPagesInput').value) || null;
+      if (!title) { showToast('Enter a book title.', 'warning'); return; }
+
+      const payload = { title, author, status, genre, notes, cover_url, page_count };
+      if (status === 'read') payload.date_finished = new Date().toISOString().split('T')[0];
+
+      let error;
+      if (editingBookId) {
+        ({ error } = await supabase.from('books').update(payload).eq('id', editingBookId).eq('user_id', userId));
+      } else {
+        ({ error } = await supabase.from('books').insert({ ...payload, user_id: userId }));
+      }
+      if (error) { showToast('Failed to save book.', 'error'); return; }
+      showToast('Book saved! 📖', 'success');
+      document.getElementById('bookModal').classList.remove('open');
+      loadBooks();
+    });
+
+    window.deleteBook = async function(id) {
+      if (!isOnline()) { showToast('Connect to the internet to delete a book.', 'warning'); return; }
+      if (!confirm('Delete this book?')) return;
+      const { error } = await supabase.from('books').delete().eq('id', id).eq('user_id', userId);
+      if (error) { showToast('Failed to delete book.', 'error'); return; }
+      loadBooks();
+    };
+
+    // ----------------------------------------------------------
+    // SIGN OUT
+    // ----------------------------------------------------------
+    window.signOut = async function() {
+      await supabase.auth.signOut();
+      window.location.replace('login.html');
+    };
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    async function init() {
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      userId = _s?.user?.id;
+      if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
+      loaderProgress(20, 'Loading linguistic...');
+      await Promise.all([loadWords(), loadBooks()]);
+      loaderProgress(100, 'Ready!');
+      setTimeout(hideLoader, 300);
+    }
+    init();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</div><!-- /authGate -->
+</body>
+</html>

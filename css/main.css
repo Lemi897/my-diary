@@ -111,6 +111,14 @@
   --accent-dim: rgba(13,148,136,0.1);
 }
 
+/* Linguistic — Indigo + gold (wisdom / knowledge) */
+[data-page="linguistic"] {
+  --accent-1:   #6366f1;
+  --accent-2:   #a5b4fc;
+  --accent-3:   #fbbf24;
+  --accent-dim: rgba(99,102,241,0.1);
+}
+
 
 /* ------------------------------------------------------------
    RESET AND BASE
