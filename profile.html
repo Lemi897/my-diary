@@ -21,6 +21,7 @@
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="stylesheet" href="css/themes.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <!-- Blocking theme loader: runs before first paint to prevent flash -->
   <script>
     (function(){
@@ -502,6 +503,18 @@
         </div>
       </div>
 
+      <!-- Character Stats -->
+      <div class="card mb-lg">
+        <div class="card-title">Character Stats</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          A holistic snapshot pulled from everything you track — habits, tasks, journal, goals, and Linguistic.
+        </p>
+        <canvas id="statsRadarChart" height="220"></canvas>
+        <div id="statsEmptyHint" style="display:none;text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:0.75rem;">
+          Your stats grow as you use the app — add a word, finish a goal, write an entry, and check back.
+        </div>
+      </div>
+
       <!-- Themes section -->
       <div class="card mb-lg">
         <div class="card-title">Themes</div>
@@ -698,6 +711,117 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    // ----------------------------------------------------------
+    // CHARACTER STATS
+    // A holistic snapshot pulled from across the whole app, not
+    // just this page. Scores are 0-100 on a square-root curve —
+    // meaningful early progress, diminishing returns after that,
+    // same shape as a typical RPG stat growth curve.
+    //
+    // Every multiplier/factor below is a tunable constant, same
+    // as the Linguistic XP formula — nothing here is fixed. This
+    // is a first-pass mapping and deliberately easy to retune
+    // once there's real usage to sanity-check it against.
+    // ----------------------------------------------------------
+    function themeColor(varName, fallback) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      return val || fallback;
+    }
+
+    function statScore(raw, factor) {
+      return Math.max(0, Math.min(100, Math.round(Math.sqrt(raw) * factor)));
+    }
+
+    let statsChartInstance = null;
+
+    async function loadCharacterStats() {
+      const [
+        vocabRes, booksReadRes,
+        goalsCompletedRes, tasksDoneRes,
+        journalRes, creativeGoalsRes,
+        spiritualHabitsRes, spiritualGoalsRes,
+        streakRes
+      ] = await Promise.all([
+        supabase.from('vocabulary').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('books').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'read'),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('done', true).is('parent_id', null),
+        supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed').eq('category', 'Creative'),
+        supabase.from('habits').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('category', 'Spiritual').gt('streak', 0),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed').eq('category', 'Spiritual'),
+        supabase.from('streaks').select('longest_streak').eq('user_id', userId).limit(1).maybeSingle()
+      ]);
+
+      const vocabCount = vocabRes.count || 0;
+      const booksRead = booksReadRes.count || 0;
+      const goalsCompleted = goalsCompletedRes.count || 0;
+      const tasksDone = tasksDoneRes.count || 0;
+      const journalEntries = journalRes.count || 0;
+      const creativeGoals = creativeGoalsRes.count || 0;
+      const spiritualHabits = spiritualHabitsRes.count || 0;
+      const spiritualGoals = spiritualGoalsRes.count || 0;
+      const bestStreak = streakRes.data?.longest_streak || 0;
+
+      const scores = {
+        Linguistic:   statScore(vocabCount + booksRead * 3, 13),
+        Intelligence: statScore(goalsCompleted * 4 + tasksDone, 10),
+        Creativity:   statScore(journalEntries + creativeGoals * 3, 14),
+        Spiritual:    statScore(spiritualHabits * 3 + spiritualGoals * 4, 22),
+        Discipline:   statScore(bestStreak, 13)
+      };
+
+      renderStatsChart(scores);
+    }
+
+    function renderStatsChart(scores) {
+      const canvas = document.getElementById('statsRadarChart');
+      const hint = document.getElementById('statsEmptyHint');
+      const values = Object.values(scores);
+      const allZero = values.every(v => v === 0);
+      hint.style.display = allZero ? 'block' : 'none';
+
+      const accent1 = themeColor('--accent-1', '#7c3aed');
+      const textMuted = themeColor('--text-muted', '#a0a0b0');
+      const gridColor = themeColor('--border', '#2a2a3e');
+
+      if (statsChartInstance) statsChartInstance.destroy();
+      statsChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: Object.keys(scores),
+          datasets: [{
+            label: 'Stats',
+            data: values,
+            borderColor: accent1,
+            backgroundColor: hexToRgba(accent1, 0.15),
+            pointBackgroundColor: accent1,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              min: 0, max: 100,
+              ticks: { display: false, stepSize: 25 },
+              grid: { color: gridColor },
+              angleLines: { color: gridColor },
+              pointLabels: { color: textMuted, font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return `rgba(124,58,237,${alpha})`;
+      const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
     }
 
     // ----------------------------------------------------------
@@ -1096,7 +1220,7 @@
       userId = _s?.user?.id;
       if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
       loaderProgress(20, 'Loading profile...');
-      await Promise.all([loadProfile(), loadStats(), loadStreak(), loadUnlockedThemes()]);
+      await Promise.all([loadProfile(), loadStats(), loadStreak(), loadUnlockedThemes(), loadCharacterStats()]);
       renderThemes();
       loaderProgress(100, 'Ready!');
       setTimeout(hideLoader, 300);
