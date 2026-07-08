@@ -2,7 +2,7 @@
 // service-worker.js - PWA Offline Support + Push Notifications
 // ============================================================
 
-const CACHE_NAME = 'my-diary-v100';
+const CACHE_NAME = 'my-diary-v101';
 
 const STATIC_ASSETS = [
   '/',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   '/habits.html',
   '/tasks.html',
   '/journal.html',
+  '/linguistic.html',
   '/goals.html',
   '/finance.html',
   '/profile.html',
@@ -86,17 +87,23 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Network-first for everything else (your own pages, CSS, JS).
+  // Previously cache-first, which is why updates never showed up on
+  // an already-installed PWA no matter how many times you deployed —
+  // the cache was checked before the network, forever. Now it always
+  // tries the real network first, and only falls back to the cache
+  // when there's genuinely no connection.
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+    fetch(event.request).then(response => {
+      if (!response || response.status !== 200 || response.type !== 'basic') {
         return response;
-      }).catch(() => {
+      }
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      return response;
+    }).catch(() => {
+      return caches.match(event.request).then(cached => {
+        if (cached) return cached;
         if (event.request.destination === 'document') {
           return caches.match('/index.html');
         }
