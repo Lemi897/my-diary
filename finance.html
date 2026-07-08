@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="">
+<html lang="en" data-theme="" data-page="finance">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,14 +13,18 @@
   <link rel="stylesheet" href="css/themes.css" />
   <script>(function(){ var t=localStorage.getItem('active_theme')||''; document.documentElement.setAttribute('data-theme',t); })();</script>
   <style>
-    /* Ledger-specific variables scoped to main content only */
+    /* Ledger-specific variables scoped to main content only.
+       Previously hardcoded hex values, completely blind to the
+       active theme — the one page in the whole app the theme
+       switcher did nothing to. Now derived from the shared theme
+       variables, so it reskins along with everything else. */
     .ledger-root {
-      --lg:#0c0c0c; --ls:#111111; --lr:#141414; --lh:#181818;
-      --lb:#222222; --lb2:#2a2a2a; --lo:#c8943a;
-      --lo-dim:rgba(200,148,58,0.15);
-      --lg2:#4a9e6e; --lr2:#9e4a4a; --la:#9e7a3a;
-      --lt:#e8e8e8; --lm:#555555; --lsu:#888888;
-      --mono:'JetBrains Mono',monospace;
+      --lg: var(--bg-primary); --ls: var(--bg-card); --lr: var(--bg-secondary); --lh: var(--accent-dim);
+      --lb: var(--border); --lb2: color-mix(in srgb, var(--border) 60%, var(--text-primary) 40%); --lo: var(--accent-1);
+      --lo-dim: var(--accent-dim);
+      --lg2: var(--success); --lr2: var(--danger); --la: var(--warning);
+      --lt: var(--text-primary); --lm: var(--text-muted); --lsu: var(--text-secondary);
+      --mono: var(--font-mono);
     }
     .ledger-root { background: var(--lg); }
     .wallet-card{background:var(--ls);border:1px solid var(--lb);padding:1.75rem 1.5rem 1.5rem;margin-bottom:1px;position:relative;}

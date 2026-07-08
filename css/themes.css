@@ -458,6 +458,30 @@
 }
 
 
+/* finance.html : The Vault */
+[data-theme="tomb-of-the-mask"] .wallet-card {
+  box-shadow: 0 0 24px rgba(255,210,63,0.15);
+  border-color: rgba(255,210,63,0.4);
+}
+[data-theme="tomb-of-the-mask"] .wallet-amount {
+  text-shadow: 0 0 16px rgba(255,210,63,0.5);
+}
+[data-theme="tomb-of-the-mask"] .month-progress-fill.over,
+[data-theme="tomb-of-the-mask"] .cat-bar-fill.over {
+  background-image: repeating-linear-gradient(135deg, var(--danger) 0 6px, transparent 6px 12px);
+  box-shadow: 0 0 10px rgba(255,59,59,0.4);
+}
+[data-theme="tomb-of-the-mask"] .savings-goal-card {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .savings-progress-fill {
+  box-shadow: 0 0 8px var(--success);
+}
+[data-theme="tomb-of-the-mask"] .debt-row.paid {
+  opacity: 0.4;
+}
+
+
 /* ============================================================
    THEME METADATA
    Used by js/themes.js to display theme names and unlock info.
