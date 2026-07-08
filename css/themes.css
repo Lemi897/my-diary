@@ -270,6 +270,16 @@
 [data-theme="tomb-of-the-mask"] .sidebar-logo span {
   text-shadow: 0 0 10px var(--accent-1);
 }
+[data-theme="tomb-of-the-mask"] .nav-link {
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+[data-theme="tomb-of-the-mask"] .nav-link.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--accent-1));
+}
+[data-theme="tomb-of-the-mask"] .bottom-nav-link.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--accent-1));
+}
 [data-theme="tomb-of-the-mask"] .nav-link.active {
   box-shadow: inset 0 0 14px rgba(0,240,255,0.08);
   text-shadow: 0 0 8px var(--accent-1);
