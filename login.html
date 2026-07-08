@@ -5,7 +5,8 @@
     login.html - Authentication Page
     Handles: Sign up with email+password, Sign in, password reset.
     Uses Supabase Auth. On success redirects to index.html.
-    No sidebar/bottom-nav — this page is outside the app shell.
+    No sidebar/bottom-nav — this page is outside the app shell,
+    but it now shares the same theme system as every other page.
   ============================================================ -->
 
   <meta charset="UTF-8" />
@@ -16,32 +17,25 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 
   <style>
     /* --------------------------------------------------------
-       Auth page — standalone, no app shell
+       Auth page — standalone layout, but colors come from the
+       shared theme system (css/main.css + css/themes.css) so
+       this page reskins along with the rest of the app.
     -------------------------------------------------------- */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg-primary:    #0f0f0f;
-      --bg-secondary:  #1a1a2e;
-      --bg-card:       #16213e;
-      --accent-1:      #e94560;
-      --accent-3:      #533483;
-      --text-primary:  #ffffff;
-      --text-secondary:#a0a0b0;
-      --text-muted:    #606070;
-      --border:        #2a2a3e;
-      --danger:        #ef233c;
-      --success:       #00d4aa;
-      --radius:        12px;
-      --radius-sm:     8px;
-      --font-main:     'Plus Jakarta Sans', sans-serif;
-      --transition:    all 0.25s ease;
-    }
 
     html, body {
       min-height: 100vh;
@@ -58,7 +52,7 @@
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
-      background: radial-gradient(ellipse at top, #1a1a2e 0%, #0f0f0f 70%);
+      background: radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 70%);
     }
 
     /* Auth card */
@@ -218,16 +212,16 @@
 
     .auth-message.error {
       display: block;
-      background-color: rgba(239,35,60,0.15);
+      background-color: color-mix(in srgb, var(--danger) 15%, transparent);
       color: var(--danger);
-      border: 1px solid rgba(239,35,60,0.3);
+      border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
     }
 
     .auth-message.success {
       display: block;
-      background-color: rgba(0,212,170,0.12);
+      background-color: color-mix(in srgb, var(--success) 12%, transparent);
       color: var(--success);
-      border: 1px solid rgba(0,212,170,0.3);
+      border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
     }
 
     /* Forgot password link */
