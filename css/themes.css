@@ -897,6 +897,21 @@
   background-color: transparent;
 }
 
+/* .main-content has its own opaque background AND no explicit
+   z-index in the shared stylesheet (position: static by default),
+   which — per normal CSS stacking rules — paints BEFORE a fixed
+   z-index:0 layer, not after. Without this fix, the ambient
+   background silently covers all real dashboard content instead
+   of sitting behind it. Individual .card/.streak-card elements
+   keep their own opaque backgrounds untouched, so text stays
+   readable — only the outer wrapper needs to let particles
+   show through the gaps around them. */
+[data-theme="neo-tokyo"] .main-content {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
 /* Ambient background — inert/hidden for every other theme */
 .neo-tokyo-bg {
   display: none;
