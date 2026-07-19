@@ -84,6 +84,21 @@
   </style>
 </head>
 <body>
+  <!-- Neo-Tokyo ambient background — inert on every other theme,
+       only rendered/animated when data-theme="neo-tokyo" is active.
+       Particle count and skyline visibility scale with tier. -->
+  <div class="neo-tokyo-bg" aria-hidden="true">
+    <div class="neo-skyline"></div>
+    <div class="neo-particle" style="left:8%; animation-delay:0s;"></div>
+    <div class="neo-particle" style="left:22%; animation-delay:1.8s;"></div>
+    <div class="neo-particle" style="left:38%; animation-delay:3.2s;"></div>
+    <div class="neo-particle" style="left:54%; animation-delay:0.9s;"></div>
+    <div class="neo-particle" style="left:67%; animation-delay:2.6s;"></div>
+    <div class="neo-particle" style="left:79%; animation-delay:4.1s;"></div>
+    <div class="neo-particle" style="left:88%; animation-delay:1.3s;"></div>
+    <div class="neo-particle" style="left:95%; animation-delay:3.7s;"></div>
+  </div>
+
   <div id="appLoader" class="app-loader">
     <div class="loader-icon" aria-hidden="true"></div>
     <div class="loader-title">My<span>Diary</span></div>
@@ -231,7 +246,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
-    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize, showToast } from './js/utils.js';
+    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize, showToast, applyThemeTier } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
     import { initNotifications } from './js/notifications.js';
 
@@ -494,6 +509,7 @@
       const { data: { session: _s } } = await supabase.auth.getSession();
       userId = _s?.user?.id;
       if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
+      await applyThemeTier(supabase, userId);
       loaderProgress(10, 'Loading...');
       setGreeting();
       loadDailyQuote();

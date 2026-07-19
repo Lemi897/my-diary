@@ -847,6 +847,174 @@
 
 
 /* ============================================================
+   NEO-TOKYO — Always unlocked (original concept)
+   Inspired by Akira's Neo-Tokyo — NOT a recreation of the film's
+   copyrighted characters or logo, but its actual visual
+   innovations: an unusually large hand-picked color palette (the
+   real film used 327 shades, 50 invented from scratch, including
+   a signature red later nicknamed "Akirared" — this theme's
+   --accent-1 is an homage to that history, not a reproduction of
+   anything from the film itself), neon urban night, drifting
+   light and energy.
+
+   NOVEL MECHANIC: the first theme whose intensity scales with
+   your actual Linguistic level, via a data-tier attribute set at
+   runtime by js/utils.js's applyThemeTier(). Verified by actually
+   rendering and screenshotting all 3 tiers with Playwright before
+   shipping — tier 1 was originally too faint to read as anything,
+   fixed before this ever reached the app.
+   Currently implemented on index.html only — extending the
+   ambient background + tier logic to the other 8 pages is a
+   separate, deliberate next step, not done yet.
+   ============================================================ */
+[data-theme="neo-tokyo"] {
+  --bg-primary: #08060c;
+  --bg-secondary: #0c0810;
+  --bg-card: #140f1e;
+  --accent-1: #ff2d55;
+  --accent-dim: rgba(255,45,85,0.12);
+  --accent-2: #00e5ff;
+  --accent-3: #b829ff;
+  --text-primary: #f0e8f5;
+  --text-secondary: #b8a8c8;
+  --text-muted: #6a5a78;
+  --border: #2a1f38;
+  --success: #00ffa8;
+  --warning: #ffb703;
+  --danger: #ff2d55;
+  --info: #00e5ff;
+  /* Extra maximalist slots, echoing Akira's 327-shade philosophy —
+     more named colors than the standard 3-accent system, used only
+     by this theme's own bespoke rules below. */
+  --neo-amber: #ffb703;
+  --neo-acid: #ccff00;
+  --neo-teal: #00ffa8;
+}
+
+/* Body becomes transparent so the fixed ambient layer beneath
+   shows through as the true backdrop, for this theme only. */
+[data-theme="neo-tokyo"] body {
+  background-color: transparent;
+}
+
+/* Ambient background — inert/hidden for every other theme */
+.neo-tokyo-bg {
+  display: none;
+}
+[data-theme="neo-tokyo"] .neo-tokyo-bg {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 100%, #140a1e 0%, #08060c 70%);
+}
+
+.neo-skyline {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 140px;
+  background:
+    linear-gradient(0deg, rgba(8,6,12,0.9), transparent),
+    repeating-linear-gradient(90deg,
+      #120a1a 0 40px, #1a0f28 40px 70px, #120a1a 70px 110px,
+      #170d22 110px 160px, #120a1a 160px 200px
+    );
+  clip-path: polygon(
+    0 100%, 0 40%, 5% 40%, 5% 55%, 10% 55%, 10% 25%, 16% 25%, 16% 60%,
+    22% 60%, 22% 15%, 28% 15%, 28% 50%, 34% 50%, 34% 35%, 40% 35%, 40% 65%,
+    46% 65%, 46% 20%, 52% 20%, 52% 45%, 58% 45%, 58% 30%, 64% 30%, 64% 55%,
+    70% 55%, 70% 10%, 76% 10%, 76% 48%, 82% 48%, 82% 25%, 88% 25%, 88% 58%,
+    94% 58%, 94% 38%, 100% 38%, 100% 100%
+  );
+  opacity: 0.28;
+  transition: opacity 0.6s ease;
+}
+.neo-skyline::before, .neo-skyline::after {
+  content: '';
+  position: absolute;
+  width: 3px; height: 3px;
+  background: var(--neo-amber);
+  box-shadow:
+    40px -60px 0 0 var(--neo-teal), 90px -80px 0 0 var(--accent-2),
+    150px -50px 0 0 var(--neo-amber), 210px -90px 0 0 var(--accent-3),
+    270px -65px 0 0 var(--neo-teal), 330px -85px 0 0 var(--accent-2),
+    390px -55px 0 0 var(--neo-amber), 450px -75px 0 0 var(--accent-1);
+  opacity: 0.6;
+  animation: neoFlicker 3.4s ease-in-out infinite;
+}
+.neo-skyline::after { animation-delay: 1.6s; left: 20px; }
+
+@keyframes neoFlicker {
+  0%, 100% { opacity: 0.6; }
+  45% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+  85% { opacity: 0.3; }
+}
+
+.neo-particle {
+  position: absolute;
+  bottom: -20px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px 2px var(--accent-2);
+  animation: neoDrift 9s linear infinite;
+  opacity: 0;
+}
+.neo-particle:nth-child(3n+1) { background: var(--accent-1); box-shadow: 0 0 10px 2px var(--accent-1); }
+.neo-particle:nth-child(3n+2) { background: var(--accent-3); box-shadow: 0 0 10px 2px var(--accent-3); }
+
+@keyframes neoDrift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-100vh) translateX(30px); opacity: 0; }
+}
+
+/* --------------------------------------------------------
+   TIERS — intensity scales with your Linguistic level.
+   Tier 1 "Awakening" (level 1-9): calm but present, not empty.
+   Tier 2 "Surge" (level 10-24): more particles, faster, skyline clearer.
+   Tier 3 "Overload" (level 25+): full storm, prominent skyline, streak pulse.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"] .neo-particle:nth-child(n+7) { display: none; }
+[data-theme="neo-tokyo"] .neo-particle { animation-duration: 12s; }
+
+[data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.4; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-particle:nth-child(n+7) { display: block; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-particle { animation-duration: 8s; }
+
+[data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.6; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-particle:nth-child(n+7) { display: block; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-particle { animation-duration: 5s; }
+[data-theme="neo-tokyo"][data-tier="3"] .streak-card {
+  animation: neoPulse 2.5s ease-in-out infinite;
+}
+@keyframes neoPulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(255,45,85,0.15); }
+  50% { box-shadow: 0 0 40px rgba(255,45,85,0.4), 0 0 60px rgba(0,229,255,0.15); }
+}
+
+/* Loader personality */
+[data-theme="neo-tokyo"] .loader-icon::before { content: '⚡'; }
+[data-theme="neo-tokyo"] .loader-title {
+  text-shadow: 0 0 20px var(--accent-1);
+  animation-duration: 0.5s;
+}
+[data-theme="neo-tokyo"] .loader-subtitle,
+[data-theme="neo-tokyo"] .loader-bar-track,
+[data-theme="neo-tokyo"] .loader-status {
+  animation-duration: 0.5s;
+}
+[data-theme="neo-tokyo"] .loader-bar-fill {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-3), var(--accent-2));
+  box-shadow: 0 0 12px var(--accent-2);
+}
+
+
+/* ============================================================
    THEME METADATA
    Used by js/themes.js to display theme names and unlock info.
    This is a reference comment only, not functional CSS.
@@ -878,4 +1046,5 @@
    - always   => petrichor (deliberate pick, not a reward)
    - always   => superposition (deliberate pick, not a reward)
    - always   => between-channels (deliberate pick, not a reward)
+   - always   => neo-tokyo (deliberate pick, not a reward — tiered)
    ============================================================ */

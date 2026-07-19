@@ -178,3 +178,26 @@ export function sanitize(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+// ------------------------------------------------------------
+// THEME TIER — only relevant for themes whose intensity scales
+// with progress (currently just Neo-Tokyo). Reads the user's
+// Linguistic level and applies a data-tier attribute to <html>.
+// Levels 1-9 = tier 1 ("Awakening"), 10-24 = tier 2 ("Surge"),
+// 25+ = tier 3 ("Overload"). No-ops entirely for every other
+// theme — cheap to call from any page's init() unconditionally.
+// ------------------------------------------------------------
+export async function applyThemeTier(supabase, userId) {
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme !== 'neo-tokyo') return;
+
+  const { data } = await supabase
+    .from('linguistic_progress')
+    .select('current_level')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const level = data?.current_level || 1;
+  const tier = level >= 25 ? 3 : level >= 10 ? 2 : 1;
+  document.documentElement.setAttribute('data-tier', String(tier));
+}
