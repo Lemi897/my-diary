@@ -929,43 +929,72 @@
 .neo-skyline {
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 140px;
-  background:
-    linear-gradient(0deg, rgba(8,6,12,0.9), transparent),
-    repeating-linear-gradient(90deg,
-      #120a1a 0 40px, #1a0f28 40px 70px, #120a1a 70px 110px,
-      #170d22 110px 160px, #120a1a 160px 200px
-    );
-  clip-path: polygon(
-    0 100%, 0 40%, 5% 40%, 5% 55%, 10% 55%, 10% 25%, 16% 25%, 16% 60%,
-    22% 60%, 22% 15%, 28% 15%, 28% 50%, 34% 50%, 34% 35%, 40% 35%, 40% 65%,
-    46% 65%, 46% 20%, 52% 20%, 52% 45%, 58% 45%, 58% 30%, 64% 30%, 64% 55%,
-    70% 55%, 70% 10%, 76% 10%, 76% 48%, 82% 48%, 82% 25%, 88% 25%, 88% 58%,
-    94% 58%, 94% 38%, 100% 38%, 100% 100%
-  );
+  height: 220px;
+  overflow: hidden;
   opacity: 0.28;
   transition: opacity 0.6s ease;
 }
-.neo-skyline::before, .neo-skyline::after {
-  content: '';
-  position: absolute;
-  width: 3px; height: 3px;
-  background: var(--neo-amber);
-  box-shadow:
-    40px -60px 0 0 var(--neo-teal), 90px -80px 0 0 var(--accent-2),
-    150px -50px 0 0 var(--neo-amber), 210px -90px 0 0 var(--accent-3),
-    270px -65px 0 0 var(--neo-teal), 330px -85px 0 0 var(--accent-2),
-    390px -55px 0 0 var(--neo-amber), 450px -75px 0 0 var(--accent-1);
-  opacity: 0.6;
-  animation: neoFlicker 3.4s ease-in-out infinite;
-}
-.neo-skyline::after { animation-delay: 1.6s; left: 20px; }
 
-@keyframes neoFlicker {
-  0%, 100% { opacity: 0.6; }
-  45% { opacity: 0.2; }
-  50% { opacity: 0.8; }
-  85% { opacity: 0.3; }
+.neo-stars {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 8% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 18% 45%, #fff, transparent),
+    radial-gradient(1px 1px at 30% 15%, #fff, transparent),
+    radial-gradient(1px 1px at 44% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 10%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 35%, #fff, transparent),
+    radial-gradient(1px 1px at 82% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 94% 42%, #fff, transparent);
+  opacity: 0.5;
+}
+
+/* Background towers — warm amber, echoing the tall glowing
+   skyscrapers in the reference photo's color story (not its
+   composition — this is an original abstract arrangement). */
+.neo-tower-bg {
+  position: absolute; bottom: 0;
+  background: repeating-linear-gradient(0deg, #3a1f0a 0 6px, #1a0d05 6px 12px);
+  box-shadow: 0 0 40px rgba(255,140,20,0.15);
+}
+.neo-tower-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,160,40,0.35) 0 3px, transparent 3px 10px),
+    repeating-linear-gradient(0deg, rgba(255,160,40,0.35) 0 3px, transparent 3px 14px);
+  mix-blend-mode: screen;
+}
+
+/* Foreground buildings — cool blue-teal, matching the reference's
+   cooler foreground skyline, again as original abstract shapes. */
+.neo-tower-fg {
+  position: absolute; bottom: 0;
+  background: repeating-linear-gradient(0deg, #0a1a2a 0 6px, #030d16 6px 12px);
+  box-shadow: 0 0 30px rgba(0,180,255,0.12);
+}
+.neo-tower-fg::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 9px),
+    repeating-linear-gradient(0deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 13px);
+  mix-blend-mode: screen;
+}
+
+/* Sparse light beams — a generic "searchlight over a night city"
+   convention (used across countless works, not unique IP), kept
+   deliberately sparse rather than recreating any specific dense
+   composition. Hidden at tier 1, appear from tier 2 onward. */
+.neo-beam {
+  position: absolute; bottom: 60px;
+  width: 3px;
+  background: linear-gradient(0deg, rgba(200,230,255,0.5), transparent);
+  transform-origin: bottom center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+@keyframes neoBeamDrift {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
 }
 
 .neo-particle {
@@ -998,10 +1027,12 @@
 [data-theme="neo-tokyo"] .neo-particle { animation-duration: 12s; }
 
 [data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.4; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-beam { opacity: 1; animation: neoBeamDrift 4s ease-in-out infinite; }
 [data-theme="neo-tokyo"][data-tier="2"] .neo-particle:nth-child(n+7) { display: block; }
 [data-theme="neo-tokyo"][data-tier="2"] .neo-particle { animation-duration: 8s; }
 
 [data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.6; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-beam { opacity: 1; animation: neoBeamDrift 2.5s ease-in-out infinite; }
 [data-theme="neo-tokyo"][data-tier="3"] .neo-particle:nth-child(n+7) { display: block; }
 [data-theme="neo-tokyo"][data-tier="3"] .neo-particle { animation-duration: 5s; }
 [data-theme="neo-tokyo"][data-tier="3"] .streak-card {
