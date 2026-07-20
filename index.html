@@ -81,6 +81,7 @@
     }
     .theme-unlock-banner.visible { display: flex; }
     .theme-unlock-text { font-size: 0.9rem; font-weight: 600; color: #fff; }
+    .theme-unlock-icon { font-size: 1.5rem; }
   </style>
 </head>
 <body>
@@ -130,7 +131,7 @@
 
     <main class="main-content">
       <div class="theme-unlock-banner" id="themeUnlockBanner">
-        <span style="font-size:1.5rem;">🎨</span>
+        <span class="emoji-swap theme-unlock-icon"><i class="ri-palette-line neo-icon"></i>🎨</span>
         <div>
           <div class="theme-unlock-text" id="themeUnlockText">New theme unlocked!</div>
           <div style="font-size:0.8rem;color:rgba(255,255,255,0.75);">Go to Profile to apply it.</div>
@@ -139,7 +140,7 @@
 
       <section class="greeting-section">
         <div class="greeting-time" id="greetingTime">Good morning</div>
-        <div class="greeting-name">Hey, <span id="userName">Maestro</span> 👋</div>
+        <div class="greeting-name">Hey, <span id="userName">Maestro</span> <span class="emoji-swap">👋</span></div>
       </section>
 
       <div class="card streak-card mb-lg flex-between">
@@ -157,12 +158,12 @@
 
       <div class="stats-row">
         <div class="stat-card">
-          <div class="stat-icon">✅</div>
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-checkbox-circle-line neo-icon"></i>✅</span></div>
           <div class="stat-value" id="habitsDoneToday">0</div>
           <div class="stat-label">Habits done today</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📋</div>
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div>
           <div class="stat-value" id="pendingTasksCount">0</div>
           <div class="stat-label">Pending tasks</div>
         </div>
@@ -172,7 +173,7 @@
           <div class="stat-label">Today's mood</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">💸</div>
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-wallet-3-line neo-icon"></i>💸</span></div>
           <div class="stat-value" id="spentToday">KSH 0</div>
           <div class="stat-label">Spent today</div>
         </div>
@@ -185,7 +186,7 @@
             <a href="tasks.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="pendingTasksList">
-            <div class="empty-state"><div class="empty-icon">📋</div><p>No pending tasks</p></div>
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div><p>No pending tasks</p></div>
           </div>
         </div>
 
@@ -195,7 +196,7 @@
             <a href="journal.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="latestJournalEntry">
-            <div class="empty-state"><div class="empty-icon">📖</div><p>No journal entries yet</p></div>
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-book-open-line neo-icon"></i>📖</span></div><p>No journal entries yet</p></div>
           </div>
         </div>
 
@@ -205,7 +206,7 @@
             <a href="goals.html" class="btn btn-ghost btn-sm">View all</a>
           </div>
           <div id="activeGoalsList">
-            <div class="empty-state"><div class="empty-icon">🎯</div><p>No active goals</p></div>
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-focus-3-line neo-icon"></i>🎯</span></div><p>No active goals</p></div>
           </div>
         </div>
 
@@ -219,7 +220,7 @@
         </div>
 
         <div class="card quote-card">
-          <div class="scripture-label">📖 Verse of the Day</div>
+          <div class="scripture-label"><span class="emoji-swap"><i class="ri-book-open-line neo-icon"></i>📖</span> Verse of the Day</div>
           <div class="quote-text" id="dailyQuote">Loading scripture...</div>
           <div class="quote-author" id="quoteAuthor"></div>
           <div class="scripture-theme-tag" id="scriptureThemeTag"></div>
@@ -279,12 +280,17 @@
       return `rgba(${r},${g},${b},${alpha})`;
     }
 
+    function isNeoTokyoActive() {
+      return document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+    }
+
     function setGreeting() {
       const hour = new Date().getHours();
       const el = document.getElementById('greetingTime');
-      if (hour < 12) el.textContent = 'Good morning ☀️';
-      else if (hour < 17) el.textContent = 'Good afternoon 🌤️';
-      else el.textContent = 'Good evening 🌙';
+      const neo = isNeoTokyoActive();
+      if (hour < 12) el.textContent = neo ? 'Good morning' : 'Good morning ☀️';
+      else if (hour < 17) el.textContent = neo ? 'Good afternoon' : 'Good afternoon 🌤️';
+      else el.textContent = neo ? 'Good evening' : 'Good evening 🌙';
     }
 
     function updateOnlineBadge(online) {
@@ -299,7 +305,7 @@
       updateOnlineBadge(online);
       if (online) {
         const result = await replayOfflineQueue();
-        if (result && result.replayed > 0) showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
+        if (result && result.replayed > 0) showToast(`${isNeoTokyoActive() ? '' : '✅ '}${result.replayed} offline action(s) synced.`, 'success');
       }
     });
 
@@ -333,7 +339,7 @@
           );
           const unlocked = JSON.parse(localStorage.getItem('unlocked_themes') || '[]');
           if (!unlocked.includes(justUnlocked.key)) { unlocked.push(justUnlocked.key); localStorage.setItem('unlocked_themes', JSON.stringify(unlocked)); }
-          document.getElementById('themeUnlockText').textContent = `🎨 You unlocked the "${justUnlocked.name}" theme!`;
+          document.getElementById('themeUnlockText').textContent = `${isNeoTokyoActive() ? '' : '🎨 '}You unlocked the "${justUnlocked.name}" theme!`;
           document.getElementById('themeUnlockBanner').classList.add('visible');
           localStorage.setItem(`theme_shown_${justUnlocked.key}`, 'true');
         }
@@ -356,7 +362,7 @@
       if (previewRes.error) return;
       document.getElementById('pendingTasksCount').textContent = totalCount;
       const list = document.getElementById('pendingTasksList');
-      if (data.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>No pending tasks</p></div>`; return; }
+      if (data.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div><p>No pending tasks</p></div>`; return; }
       const now = new Date();
       const overdueCount = data.filter(t => t.due_date && new Date(t.due_date) < now).length;
       const danger = themeColor('--danger', '#ef4444');
@@ -387,7 +393,15 @@
       const { data, error } = await supabase.from('journal_entries').select('mood, mood_score').eq('user_id', userId).gte('created_at', `${today}T00:00:00`).lte('created_at', `${today}T23:59:59`).order('created_at', { ascending: false }).limit(1).single();
       if (error || !data) return;
       const moodMap = {1:'😭',2:'😔',3:'😟',4:'😕',5:'😐',6:'🙂',7:'😊',8:'😄',9:'🤩',10:'🥳'};
-      document.getElementById('todayMoodEmoji').textContent = moodMap[data.mood_score] || '😐';
+      const moodEl = document.getElementById('todayMoodEmoji');
+      const isNeoTokyo = document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+      if (isNeoTokyo) {
+        moodEl.textContent = '';
+        moodEl.className = `mood-display mood-core-${data.mood_score || 5}`;
+      } else {
+        moodEl.className = 'mood-display';
+        moodEl.textContent = moodMap[data.mood_score] || '😐';
+      }
       document.getElementById('todayMoodLabel').textContent = data.mood || 'No label';
     }
 
@@ -448,7 +462,10 @@
       canvas.style.display = 'block'; empty.style.display = 'none';
       const labels = data.map(e => { const d = new Date(e.created_at); return `${d.getDate()}/${d.getMonth()+1}`; });
       const scores = data.map(e => e.mood_score);
-      const moodEmojis = ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
+      const isNeoTokyo = document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+      const moodEmojis = isNeoTokyo
+        ? ['','1','2','3','4','5','6','7','8','9','10']
+        : ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
       const accent1 = themeColor('--accent-1', '#e94560');
       const accent3 = themeColor('--accent-3', '#f0c040');
       const textMuted = themeColor('--text-muted', '#a0a0b0');
@@ -473,7 +490,7 @@
         const verse = getVerseFromLibrary('daily');
         document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
         document.getElementById('quoteAuthor').textContent = verse.ref;
-        if (verse.apply) document.getElementById('scriptureThemeTag').textContent = `💡 ${verse.apply}`;
+        if (verse.apply) document.getElementById('scriptureThemeTag').textContent = `${isNeoTokyoActive() ? '' : '💡 '}${verse.apply}`;
       } catch(e) {
         document.getElementById('dailyQuote').textContent = '"This is the day the LORD has made; let us rejoice and be glad in it."';
         document.getElementById('quoteAuthor').textContent = 'Psalm 118:24';

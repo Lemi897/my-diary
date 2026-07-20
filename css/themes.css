@@ -1012,8 +1012,98 @@
   50% { box-shadow: 0 0 40px rgba(255,45,85,0.4), 0 0 60px rgba(0,229,255,0.15); }
 }
 
-/* Loader personality */
-[data-theme="neo-tokyo"] .loader-icon::before { content: '⚡'; }
+/* --------------------------------------------------------
+   NEO-TOKYO ICON SYSTEM — no emoji anywhere in this theme.
+   Static emoji spans get hidden and replaced with either a
+   RemixIcon glyph (already loaded on every page) or, for the
+   streak flame and mood display specifically, real custom
+   animated/color-graded elements — those two didn't have a
+   1:1 icon equivalent worth using.
+-------------------------------------------------------- */
+
+/* Generic emoji-hide + RemixIcon-swap pattern.
+   Usage: wrap the emoji in <span class="emoji-swap"><i class="ri-x-line neo-icon"></i>🔥</span> */
+[data-theme="neo-tokyo"] .emoji-swap {
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+}
+[data-theme="neo-tokyo"] .emoji-swap .neo-icon {
+  font-size: 1.3rem;
+  color: var(--accent-2);
+  text-shadow: 0 0 8px var(--accent-2);
+}
+
+/* Streak flame — replaced with an animated "power core" instead
+   of a RemixIcon, since a static line-icon can't capture the same
+   sense of active, accumulating energy a flame implies. */
+[data-theme="neo-tokyo"] .streak-flame {
+  font-size: 0;
+  width: 56px; height: 56px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+[data-theme="neo-tokyo"] .streak-flame::before {
+  content: '';
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--accent-1);
+  box-shadow: 0 0 16px var(--accent-1), inset 0 0 12px rgba(255,45,85,0.4);
+  animation: neoCorePulse 2s ease-in-out infinite;
+}
+[data-theme="neo-tokyo"] .streak-flame::after {
+  content: '';
+  position: absolute;
+  width: 60%; height: 60%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-1), transparent 70%);
+  animation: neoCoreGlow 2s ease-in-out infinite;
+}
+@keyframes neoCorePulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes neoCoreGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Mood display — replaced with a color-graded glowing orb instead
+   of a face emoji. Color (not an expression) carries the mood:
+   hazard-red at the low end, through amber, to cyan/lime at the
+   high end — fits the theme's whole color-as-signal language. */
+[data-theme="neo-tokyo"] .mood-display,
+[data-theme="neo-tokyo"] #todayMoodEmoji {
+  font-size: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 12px currentColor;
+}
+[data-theme="neo-tokyo"] .mood-core-1  { background: #ff2d55; color: #ff2d55; }
+[data-theme="neo-tokyo"] .mood-core-2  { background: #ff4d3d; color: #ff4d3d; }
+[data-theme="neo-tokyo"] .mood-core-3  { background: #ff7a30; color: #ff7a30; }
+[data-theme="neo-tokyo"] .mood-core-4  { background: #ffb703; color: #ffb703; }
+[data-theme="neo-tokyo"] .mood-core-5  { background: #ffd166; color: #ffd166; }
+[data-theme="neo-tokyo"] .mood-core-6  { background: #ccff00; color: #ccff00; }
+[data-theme="neo-tokyo"] .mood-core-7  { background: #00ffa8; color: #00ffa8; }
+[data-theme="neo-tokyo"] .mood-core-8  { background: #00e5ff; color: #00e5ff; }
+[data-theme="neo-tokyo"] .mood-core-9  { background: #00b8ff; color: #00b8ff; }
+[data-theme="neo-tokyo"] .mood-core-10 { background: #b829ff; color: #b829ff; }
+[data-theme="neo-tokyo"] .loader-icon {
+  width: 40px; height: 40px;
+  position: relative;
+  margin: 0 auto 0.75rem;
+}
+[data-theme="neo-tokyo"] .loader-icon::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent-1);
+  box-shadow: 0 0 14px var(--accent-1);
+  animation: neoCorePulse 0.9s ease-in-out infinite;
+}
 [data-theme="neo-tokyo"] .loader-title {
   text-shadow: 0 0 20px var(--accent-1);
   animation-duration: 0.5s;
