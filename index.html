@@ -89,6 +89,9 @@
        only rendered/animated when data-theme="neo-tokyo" is active.
        Particle count and skyline visibility scale with tier. -->
   <div class="neo-tokyo-bg" aria-hidden="true">
+    <div class="neo-sky-orb"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:0s;"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:6s;"></div>
     <div class="neo-skyline">
       <div class="neo-stars"></div>
       <div class="neo-tower-bg" style="left:38%; width:8%; height:88%;"></div>
@@ -298,6 +301,17 @@
 
     function isNeoTokyoActive() {
       return document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+    }
+
+    function applyDaytime() {
+      if (!isNeoTokyoActive()) return;
+      const hour = new Date().getHours();
+      let daytime;
+      if (hour >= 5 && hour < 7) daytime = 'dawn';
+      else if (hour >= 7 && hour < 17) daytime = 'day';
+      else if (hour >= 17 && hour < 19) daytime = 'dusk';
+      else daytime = 'night';
+      document.documentElement.setAttribute('data-daytime', daytime);
     }
 
     function setGreeting() {
@@ -543,6 +557,7 @@
       userId = _s?.user?.id;
       if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
       await applyThemeTier(supabase, userId);
+      applyDaytime();
       loaderProgress(10, 'Loading...');
       setGreeting();
       loadDailyQuote();

@@ -1122,6 +1122,110 @@
 [data-theme="neo-tokyo"] .mood-core-8  { background: #00e5ff; color: #00e5ff; }
 [data-theme="neo-tokyo"] .mood-core-9  { background: #00b8ff; color: #00b8ff; }
 [data-theme="neo-tokyo"] .mood-core-10 { background: #b829ff; color: #b829ff; }
+/* --------------------------------------------------------
+   DAY/NIGHT — tied to actual device time, set via a
+   data-daytime attribute by applyThemeTier() in index.html.
+   Neo-Tokyo's identity stays a night-city aesthetic even in
+   "day" mode (this isn't a bright-blue-sky theme) — what shifts
+   is the sky gradient hue and how many windows are lit.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"][data-daytime="night"] .neo-tokyo-bg {
+  background: radial-gradient(ellipse at 50% 100%, #140a1e 0%, #08060c 70%);
+}
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1a0a1e 0%, #4a1f1a 55%, #2a1015 78%, #08060c 100%);
+}
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1a1024 0%, #3a2035 45%, #4a2a2a 72%, #08060c 100%);
+}
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1c2333 0%, #2a3548 62%, #08060c 100%);
+}
+
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tower-fg::after {
+  opacity: 0.25;
+}
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tower-fg::after,
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tower-fg::after {
+  opacity: 0.55;
+}
+
+/* Sun/moon — warm for dawn/day/dusk, pale cool for night */
+.neo-sky-orb {
+  position: absolute;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  top: 20px; right: 60px;
+}
+[data-theme="neo-tokyo"][data-daytime="night"] .neo-sky-orb {
+  background: radial-gradient(circle, #e8e4f0, transparent 70%);
+  box-shadow: 0 0 30px rgba(232,228,240,0.4);
+}
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-sky-orb,
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-sky-orb {
+  background: radial-gradient(circle, #ff8a3d, transparent 70%);
+  box-shadow: 0 0 40px rgba(255,138,61,0.5);
+}
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-sky-orb {
+  background: radial-gradient(circle, #ffd27a, transparent 70%);
+  box-shadow: 0 0 26px rgba(255,210,122,0.3);
+}
+
+/* --------------------------------------------------------
+   BOLDER BASE PRESENCE — this was reading as "a subtle card
+   decoration," not "you are inside Neo-Tokyo." Turned up.
+-------------------------------------------------------- */
+.neo-skyline { height: 280px; opacity: 0.5 !important; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.65 !important; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.85 !important; }
+.neo-particle { width: 5px; height: 5px; box-shadow: 0 0 14px 3px currentColor; }
+
+/* --------------------------------------------------------
+   FROSTED CARDS — see the city through the UI, not around it.
+   Cards keep enough opacity/blur that text stays fully
+   readable; this isn't full transparency, that would make
+   your own data hard to read, which defeats the point.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"] .card,
+[data-theme="neo-tokyo"] .streak-card {
+  background: rgba(20,15,30,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(255,45,85,0.25);
+}
+
+/* --------------------------------------------------------
+   FLYING BIRDS — a distant, minimal two-stroke silhouette,
+   a universal convention with no ties to any specific IP.
+   Cross the sky occasionally, staggered, looping.
+-------------------------------------------------------- */
+.neo-bird {
+  position: absolute;
+  width: 16px; height: 8px;
+  top: 15%;
+  opacity: 0;
+  animation: neoBirdFly 14s linear infinite;
+}
+.neo-bird::before, .neo-bird::after {
+  content: '';
+  position: absolute;
+  width: 9px; height: 9px;
+  border-top: 2px solid rgba(232,228,240,0.6);
+  border-radius: 50%;
+}
+.neo-bird::before { left: 0; transform: rotate(25deg); }
+.neo-bird::after  { right: 0; transform: rotate(-25deg); }
+@keyframes neoBirdFly {
+  0%   { transform: translateX(-5%) translateY(0); opacity: 0; }
+  8%   { opacity: 0.7; }
+  50%  { transform: translateX(50%) translateY(-14px); }
+  92%  { opacity: 0.5; }
+  100% { transform: translateX(110%) translateY(-4px); opacity: 0; }
+}
+
 [data-theme="neo-tokyo"] .loader-icon {
   width: 40px; height: 40px;
   position: relative;
