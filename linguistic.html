@@ -136,6 +136,14 @@
   </style>
 </head>
 <body>
+  <!-- PIN LOCK — device-level, separate from Supabase auth -->
+  <div class="pin-lock-overlay" id="pinLockOverlay">
+    <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+    <div class="pin-lock-title">Enter PIN</div>
+    <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+    <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+  </div>
+
 <!-- auth handled inside main module script -->
 <div id="authGate">
   <div id="appLoader" class="app-loader">
@@ -349,6 +357,7 @@
 
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
+    import { initPinLock, wirePinLockUI } from './js/pinlock.js';
 
     // ----------------------------------------------------------
     // AUTH CHECK — runs first, before anything else
@@ -359,6 +368,8 @@
         window.location.replace('login.html');
       } else {
         document.getElementById('authGate').style.display = '';
+        initPinLock();
+        wirePinLockUI();
       }
     }
     import {

@@ -373,6 +373,14 @@
 </head>
 
 <body>
+  <!-- PIN LOCK — device-level, separate from Supabase auth -->
+  <div class="pin-lock-overlay" id="pinLockOverlay">
+    <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+    <div class="pin-lock-title">Enter PIN</div>
+    <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+    <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+  </div>
+
   <!-- auth handled inside main module script -->
   <div id="authGate">
   <div id="appLoader" class="app-loader">
@@ -558,6 +566,14 @@
 
         <div class="settings-row">
           <div>
+            <div class="settings-label">Device PIN Lock</div>
+            <div class="settings-desc" id="pinStatusDesc">Add a PIN to lock this device when the app is reopened</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="pinSettingsBtn">Set PIN</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
             <div class="settings-label">Reset Active Theme</div>
             <div class="settings-desc">Go back to the default dark theme</div>
           </div>
@@ -623,6 +639,27 @@
 
   </div>
 
+  <!-- PIN SETUP MODAL -->
+  <div class="modal-overlay" id="pinSetupModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="pinSetupTitle">Set a PIN</div>
+        <button class="modal-close" id="pinSetupClose">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New 4-digit PIN</label>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-input" id="newPinInput" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm PIN</label>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-input" id="confirmPinInput" autocomplete="off" />
+      </div>
+      <div id="pinSetupError" style="color:var(--danger);font-size:0.85rem;display:none;margin-bottom:0.5rem;">PINs don't match, or aren't 4 digits.</div>
+      <button class="btn btn-primary btn-full mt-md" id="savePinBtn">Save PIN</button>
+      <button class="btn btn-ghost btn-full mt-sm" id="removePinBtn" style="display:none;color:var(--danger);">Remove PIN</button>
+    </div>
+  </div>
+
   <!-- ============================================================
     PROFILE PAGE JAVASCRIPT
     Handles: load profile, edit and save profile, streak display,
@@ -631,6 +668,7 @@
   ============================================================ -->
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
+    import { initPinLock, wirePinLockUI, isPinSet, setPin, removePin } from './js/pinlock.js';
 
     // ----------------------------------------------------------
     // AUTH CHECK — runs first, before anything else
@@ -643,6 +681,8 @@
         window.location.replace('login.html');
       } else {
         document.getElementById('authGate').style.display = '';
+        initPinLock();
+        wirePinLockUI();
       }
     }
 
@@ -1224,6 +1264,61 @@
       document.documentElement.setAttribute('data-theme', '');
       showToast('Theme reset to default.', 'info');
       renderThemes();
+    });
+
+    // ----------------------------------------------------------
+    // PIN LOCK SETTINGS
+    // ----------------------------------------------------------
+    function renderPinSettingsButton() {
+      const btn = document.getElementById('pinSettingsBtn');
+      const desc = document.getElementById('pinStatusDesc');
+      const removeBtn = document.getElementById('removePinBtn');
+      if (isPinSet()) {
+        btn.textContent = 'Change PIN';
+        desc.textContent = 'This device is locked when the app is reopened after being idle';
+        removeBtn.style.display = 'block';
+      } else {
+        btn.textContent = 'Set PIN';
+        desc.textContent = 'Add a PIN to lock this device when the app is reopened';
+        removeBtn.style.display = 'none';
+      }
+    }
+    renderPinSettingsButton();
+
+    document.getElementById('pinSettingsBtn').addEventListener('click', () => {
+      document.getElementById('newPinInput').value = '';
+      document.getElementById('confirmPinInput').value = '';
+      document.getElementById('pinSetupError').style.display = 'none';
+      document.getElementById('pinSetupTitle').textContent = isPinSet() ? 'Change PIN' : 'Set a PIN';
+      document.getElementById('pinSetupModal').classList.add('open');
+    });
+    document.getElementById('pinSetupClose').addEventListener('click', () => {
+      document.getElementById('pinSetupModal').classList.remove('open');
+    });
+    document.getElementById('pinSetupModal').addEventListener('click', (e) => {
+      if (e.target.id === 'pinSetupModal') e.target.classList.remove('open');
+    });
+
+    document.getElementById('savePinBtn').addEventListener('click', async () => {
+      const pin = document.getElementById('newPinInput').value;
+      const confirmPin = document.getElementById('confirmPinInput').value;
+      const error = document.getElementById('pinSetupError');
+      if (!/^\d{4}$/.test(pin) || pin !== confirmPin) {
+        error.style.display = 'block';
+        return;
+      }
+      await setPin(pin);
+      document.getElementById('pinSetupModal').classList.remove('open');
+      renderPinSettingsButton();
+      showToast('PIN set for this device.', 'success');
+    });
+
+    document.getElementById('removePinBtn').addEventListener('click', () => {
+      if (!confirm('Remove the device PIN? Anyone with this device unlocked will be able to open the app freely.')) return;
+      removePin();
+      document.getElementById('pinSetupModal').classList.remove('open');
+      renderPinSettingsButton();
+      showToast('PIN removed.', 'info');
     });
 
     // ----------------------------------------------------------
