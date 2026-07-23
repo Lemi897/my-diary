@@ -85,6 +85,14 @@
   </style>
 </head>
 <body>
+  <!-- PIN LOCK — device-level, separate from Supabase auth -->
+  <div class="pin-lock-overlay" id="pinLockOverlay">
+    <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+    <div class="pin-lock-title">Enter PIN</div>
+    <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+    <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+  </div>
+
   <!-- Neo-Tokyo ambient background — inert on every other theme,
        only rendered/animated when data-theme="neo-tokyo" is active.
        Particle count and skyline visibility scale with tier. -->
@@ -266,6 +274,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script type="module">
     import { supabase, getCurrentUser } from './js/supabase.js';
+    import { initPinLock, wirePinLockUI } from './js/pinlock.js';
     import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize, showToast, applyThemeTier } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
     import { initNotifications } from './js/notifications.js';
@@ -287,6 +296,8 @@
     let userId = null;
 
     { const { data: { session } } = await supabase.auth.getSession(); if (!session) window.location.replace('login.html'); }
+    initPinLock();
+    wirePinLockUI();
 
     function themeColor(varName, fallback) {
       const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();

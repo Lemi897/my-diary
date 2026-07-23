@@ -774,3 +774,26 @@ p  { font-size: 0.95rem;color: var(--text-secondary); }
   animation: loaderPop 0.7s ease 0.35s forwards; opacity: 0;
 }
 @keyframes loaderPop { to { opacity: 1; transform: scale(1); } }
+
+/* ------------------------------------------------------------
+   PIN LOCK OVERLAY
+   Device-level lock, separate from Supabase auth. Shown by
+   js/pinlock.js whenever a PIN is set. Sits above everything,
+   including the app loader and any modal (z-index 20000).
+   ------------------------------------------------------------ */
+.pin-lock-overlay {
+  position: fixed; inset: 0; z-index: 20000;
+  background: var(--bg-primary);
+  display: none; align-items: center; justify-content: center; flex-direction: column;
+}
+.pin-lock-overlay.visible { display: flex; }
+.pin-lock-icon { font-size: 2.5rem; color: var(--accent-1); margin-bottom: 1rem; }
+.pin-lock-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-primary); }
+.pin-lock-input {
+  width: 160px; text-align: center; font-size: 1.8rem; letter-spacing: 1rem;
+  padding: 0.75rem; border-radius: 10px; border: 2px solid var(--border);
+  background: var(--bg-card); color: var(--text-primary); outline: none;
+  font-family: var(--font-mono);
+}
+.pin-lock-input:focus { border-color: var(--accent-1); }
+.pin-lock-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; }
