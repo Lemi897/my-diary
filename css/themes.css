@@ -949,35 +949,36 @@
   opacity: 0.5;
 }
 
-/* Background towers — warm amber, echoing the tall glowing
-   skyscrapers in the reference photo's color story (not its
-   composition — this is an original abstract arrangement). */
+/* Background towers — warm amber, with a genuinely randomized
+   window-lit facade (an embedded SVG pattern, generated once with
+   pseudo-random lit/unlit/dim windows) instead of a uniform grid,
+   which read as identical graph-paper boxes. */
 .neo-tower-bg {
-  position: absolute; bottom: 70px;
-  background: repeating-linear-gradient(0deg, #3a1f0a 0 6px, #1a0d05 6px 12px);
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #2a1608 0 2px, #1a0d05 2px 14px);
   box-shadow: 0 0 40px rgba(255,140,20,0.15);
+  color: #ffb347;
 }
 .neo-tower-bg::after {
   content: ''; position: absolute; inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(255,160,40,0.35) 0 3px, transparent 3px 10px),
-    repeating-linear-gradient(0deg, rgba(255,160,40,0.35) 0 3px, transparent 3px 14px);
-  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #ffcc66;
 }
 
-/* Foreground buildings — cool blue-teal, matching the reference's
-   cooler foreground skyline, again as original abstract shapes. */
+/* Foreground buildings — cool blue-teal, same randomized-window
+   technique, different palette. */
 .neo-tower-fg {
-  position: absolute; bottom: 70px;
-  background: repeating-linear-gradient(0deg, #0a1a2a 0 6px, #030d16 6px 12px);
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #0a1520 0 2px, #030d16 2px 14px);
   box-shadow: 0 0 30px rgba(0,180,255,0.12);
+  color: #00e5ff;
 }
 .neo-tower-fg::after {
   content: ''; position: absolute; inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 9px),
-    repeating-linear-gradient(0deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 13px);
-  mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #4dd8ff;
 }
 
 /* Rooftop variety — flat, a blinking antenna, or a tiered stepped
@@ -1000,18 +1001,32 @@
   background: inherit; box-shadow: inherit;
 }
 
-/* Water + reflection — an ocean at the base of the skyline that
-   mirrors the towers above it, with a slow shimmer suggesting
-   gentle movement. */
+/* Street lights — small glowing lamp points along the base,
+   the detail that was missing between "buildings" and "a city." */
+.neo-street-light {
+  position: absolute; bottom: 128px; width: 2px; height: 10px;
+  background: rgba(255,210,130,0.8);
+}
+.neo-street-light::before {
+  content: '';
+  position: absolute; top: -3px; left: -3px; width: 8px; height: 8px;
+  border-radius: 50%; background: rgba(255,210,130,0.9);
+  box-shadow: 0 0 10px 3px rgba(255,180,80,0.6);
+}
+
+/* Water — a genuine semicircular pool (an ellipse clip, curved
+   like a bowl/bay viewed head-on) rather than a flat rectangular
+   strip, containing the reflection within its own curved edge. */
 .neo-water {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+  position: absolute; bottom: 0; left: 8%; right: 8%; height: 130px;
   background: linear-gradient(180deg, #0a1420 0%, #030810 100%);
+  clip-path: ellipse(50% 100% at 50% 100%);
   overflow: hidden;
 }
 .neo-water::before {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 20%, rgba(0,229,255,0.08) 50%, transparent 80%);
+  background: linear-gradient(100deg, transparent 20%, rgba(0,229,255,0.1) 50%, transparent 80%);
   animation: neoWaterShimmer 5s ease-in-out infinite;
 }
 @keyframes neoWaterShimmer {
@@ -1019,12 +1034,12 @@
   50% { transform: translateX(20%); }
 }
 .neo-reflection {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+  position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
   transform: scaleY(-1);
-  opacity: 0.35;
-  filter: blur(1.5px);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.6), transparent 85%);
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.6), transparent 85%);
+  opacity: 0.4;
+  filter: blur(1px);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), transparent 80%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.7), transparent 80%);
 }
 .neo-reflection .neo-tower-bg,
 .neo-reflection .neo-tower-fg {
@@ -1036,7 +1051,7 @@
    deliberately sparse rather than recreating any specific dense
    composition. Hidden at tier 1, appear from tier 2 onward. */
 .neo-beam {
-  position: absolute; bottom: 60px;
+  position: absolute; bottom: 130px;
   width: 3px;
   background: linear-gradient(0deg, rgba(200,230,255,0.5), transparent);
   transform-origin: bottom center;
@@ -1274,23 +1289,28 @@
    BOLDER BASE PRESENCE — this was reading as "a subtle card
    decoration," not "you are inside Neo-Tokyo." Turned up.
 -------------------------------------------------------- */
-.neo-skyline { height: 280px; opacity: 0.5 !important; }
+.neo-skyline { height: 420px; opacity: 0.5 !important; }
 [data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.65 !important; }
 [data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.85 !important; }
 .neo-particle { width: 5px; height: 5px; box-shadow: 0 0 14px 3px currentColor; }
 
 /* --------------------------------------------------------
    FROSTED CARDS — see the city through the UI, not around it.
-   Cards keep enough opacity/blur that text stays fully
-   readable; this isn't full transparency, that would make
-   your own data hard to read, which defeats the point.
+   First pass at 0.55 opacity still read as "solid card," not
+   see-through. Dropped hard, with text-shadow picking up the
+   legibility work opacity used to do.
 -------------------------------------------------------- */
 [data-theme="neo-tokyo"] .card,
 [data-theme="neo-tokyo"] .streak-card {
-  background: rgba(20,15,30,0.55);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-color: rgba(255,45,85,0.25);
+  background: rgba(10,8,16,0.26);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: rgba(255,45,85,0.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+}
+[data-theme="neo-tokyo"] .card *,
+[data-theme="neo-tokyo"] .streak-card * {
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
 }
 
 /* --------------------------------------------------------
