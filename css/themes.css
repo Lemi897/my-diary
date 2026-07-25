@@ -1076,34 +1076,44 @@
    rather than a sparse row of identical silhouettes. */
 .neo-tree-pine {
   position: absolute; bottom: 0;
-  width: 0; height: 0;
-  border-left: 22px solid transparent;
-  border-right: 22px solid transparent;
-  border-bottom: 90px solid #0a1810;
+  width: 46px; height: 90px;
+  background: linear-gradient(115deg, #17301f 0%, #0e2015 45%, #0a1810 70%, #050d07 100%);
+  clip-path: polygon(50% 0%, 4% 100%, 96% 100%);
 }
 .neo-tree-pine::before {
   content: '';
-  position: absolute; top: 22px; left: -16px;
-  width: 0; height: 0;
-  border-left: 16px solid transparent;
-  border-right: 16px solid transparent;
-  border-bottom: 48px solid #0a1810;
+  position: absolute; bottom: -8px; left: -8px;
+  width: 62px; height: 14px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent 70%);
 }
-.neo-tree-pine.small { transform: scale(0.65); transform-origin: bottom center; filter: brightness(0.8); }
-.neo-tree-pine.large { transform: scale(1.25); transform-origin: bottom center; }
+.neo-tree-pine::after {
+  content: '';
+  position: absolute; top: 18px; left: 6px;
+  width: 34px; height: 60px;
+  background: linear-gradient(115deg, #1a341f 0%, #102415 45%, #0a1810 70%, #050d07 100%);
+  clip-path: polygon(50% 0%, 4% 100%, 96% 100%);
+}
+.neo-tree-pine.small { transform: scale(0.6); transform-origin: bottom center; filter: brightness(0.75); }
+.neo-tree-pine.large { transform: scale(1.3); transform-origin: bottom center; }
 .neo-tree-round {
   position: absolute; bottom: 0;
   width: 56px; height: 56px;
   border-radius: 50%;
-  background: #0c1a12;
+  background: radial-gradient(circle at 32% 30%, #1c3620 0%, #0f2216 40%, #0c1a12 70%, #061006 100%);
 }
 .neo-tree-round::after {
   content: '';
   position: absolute; bottom: -16px; left: 50%; width: 5px; height: 32px;
   background: #0a1810; transform: translateX(-50%);
 }
-.neo-tree-round.small { transform: scale(0.6); transform-origin: bottom center; filter: brightness(0.8); }
-.neo-tree-round.large { transform: scale(1.3); transform-origin: bottom center; }
+.neo-tree-round::before {
+  content: '';
+  position: absolute; bottom: -20px; left: 4px;
+  width: 48px; height: 12px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent 70%);
+}
+.neo-tree-round.small { transform: scale(0.55); transform-origin: bottom center; filter: brightness(0.75); }
+.neo-tree-round.large { transform: scale(1.35); transform-origin: bottom center; }
 .neo-tree-light {
   position: absolute; width: 4px; height: 4px; border-radius: 50%;
   background: #ffd27a; box-shadow: 0 0 10px 4px rgba(255,210,122,0.85);
@@ -1123,26 +1133,59 @@
   opacity: 0.7;
 }
 
-/* Flyover — a second road that recedes into the distance behind
-   the main skyline, narrowing and fading toward one end to read
-   as vanishing away rather than just another flat strip. Muted,
-   duller background buildings cluster around it, deliberately
-   less saturated than the main towers (atmospheric perspective —
-   distant things read hazier, not just smaller). */
-.neo-flyover {
-  position: absolute; bottom: 200px; left: 42%; width: 24%; height: 6px;
-  background: linear-gradient(90deg, rgba(30,30,38,0.9) 0%, rgba(30,30,38,0.5) 55%, rgba(30,30,38,0.05) 100%);
-  transform: perspective(160px) rotateX(20deg) skewY(-2deg);
-  transform-origin: left center;
+/* Flyover — a genuinely curved ramp (an SVG path, not a flat
+   skewed div) that descends and merges into the main highway's
+   right edge, like a real interchange. Muted, duller background
+   buildings cluster around it — deliberately less saturated than
+   the main towers (atmospheric perspective: distant things read
+   hazier, not just smaller). */
+.neo-flyover-svg {
+  position: absolute; inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.neo-flyover-road {
+  fill: none; stroke: rgba(30,30,38,0.85); stroke-width: 16; stroke-linecap: round;
 }
 .neo-flyover-line {
-  position: absolute; top: 50%; left: 4%; right: 35%; height: 1px;
-  background: repeating-linear-gradient(90deg, rgba(255,210,122,0.5) 0 7px, transparent 7px 16px);
+  fill: none; stroke: rgba(255,210,122,0.5); stroke-width: 1.5;
+  stroke-dasharray: 9 11;
 }
 .neo-bg-building {
   position: absolute; bottom: 190px;
   background: repeating-linear-gradient(90deg, #14141c 0 2px, #0a0a10 2px 10px);
   opacity: 0.5;
+}
+
+/* Ramp car — actually follows the curved path via offset-path,
+   genuinely driving the merge rather than faking it with a
+   straight-line div. */
+.neo-ramp-car {
+  position: absolute;
+  width: 12px; height: 5px; background: #1a1a1e; border-radius: 2px;
+  offset-path: path("M 640,170 C 680,210 690,300 680,388");
+  offset-rotate: auto;
+  opacity: 0;
+}
+.neo-ramp-car::before {
+  content: ''; position: absolute; top: 1px; right: -1px;
+  width: 2.5px; height: 2.5px; border-radius: 50%;
+  background: #fff8e0; box-shadow: 0 0 5px 2px rgba(255,248,224,0.85);
+}
+.neo-ramp-car::after {
+  content: ''; position: absolute; top: 1px; left: -1px;
+  width: 2.5px; height: 2.5px; border-radius: 50%;
+  background: #ff3344; box-shadow: 0 0 5px 2px rgba(255,51,68,0.75);
+}
+@keyframes neoRampDrive {
+  0%   { offset-distance: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+[data-theme="neo-tokyo"][data-tier="2"] .neo-ramp-car,
+[data-theme="neo-tokyo"][data-tier="3"] .neo-ramp-car {
+  animation: neoRampDrive 4.5s linear infinite;
 }
 
 /* Real cars — a body, a white headlight (front), a red taillight
