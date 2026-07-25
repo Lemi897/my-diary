@@ -38,7 +38,7 @@
 [data-theme="tokyo-night"] .loader-icon::before { content: '🌃'; }
 [data-theme="tokyo-night"] .loader-title {
   text-shadow: 0 0 24px rgba(122,162,247,0.45);
-  animation-duration: 1.1s;
+  animation-duration: 1.1s, 4s;
 }
 [data-theme="tokyo-night"] .loader-subtitle,
 [data-theme="tokyo-night"] .loader-bar-track,
@@ -75,7 +75,7 @@
 [data-theme="dracula"] .loader-icon::before { content: '🦇'; }
 [data-theme="dracula"] .loader-title {
   text-shadow: 0 0 22px rgba(255,121,198,0.5);
-  animation-duration: 1.0s;
+  animation-duration: 1.0s, 4s;
 }
 [data-theme="dracula"] .loader-subtitle,
 [data-theme="dracula"] .loader-bar-track,
@@ -112,7 +112,7 @@
 [data-theme="catppuccin"] .loader-icon::before { content: '🐱'; }
 [data-theme="catppuccin"] .loader-title {
   text-shadow: 0 0 20px rgba(203,166,247,0.5);
-  animation-duration: 0.6s;
+  animation-duration: 0.6s, 4s;
 }
 [data-theme="catppuccin"] .loader-subtitle,
 [data-theme="catppuccin"] .loader-bar-track,
@@ -149,7 +149,7 @@
 [data-theme="nord"] .loader-icon::before { content: '❄️'; }
 [data-theme="nord"] .loader-title {
   text-shadow: 0 0 20px rgba(136,192,208,0.5);
-  animation-duration: 1.15s;
+  animation-duration: 1.15s, 4s;
 }
 [data-theme="nord"] .loader-subtitle,
 [data-theme="nord"] .loader-bar-track,
@@ -186,7 +186,7 @@
 [data-theme="gruvbox"] .loader-icon::before { content: '☕'; }
 [data-theme="gruvbox"] .loader-title {
   text-shadow: 0 0 18px rgba(254,128,25,0.5);
-  animation-duration: 0.85s;
+  animation-duration: 0.85s, 4s;
 }
 [data-theme="gruvbox"] .loader-subtitle,
 [data-theme="gruvbox"] .loader-bar-track,
@@ -223,7 +223,7 @@
 [data-theme="sunset"] .loader-icon::before { content: '🌅'; }
 [data-theme="sunset"] .loader-title {
   text-shadow: 0 0 20px rgba(255,107,53,0.5);
-  animation-duration: 1.05s;
+  animation-duration: 1.05s, 4s;
 }
 [data-theme="sunset"] .loader-subtitle,
 [data-theme="sunset"] .loader-bar-track,
@@ -260,7 +260,7 @@
 [data-theme="ocean-deep"] .loader-icon::before { content: '🌊'; }
 [data-theme="ocean-deep"] .loader-title {
   text-shadow: 0 0 20px rgba(100,255,218,0.5);
-  animation-duration: 0.95s;
+  animation-duration: 0.95s, 4s;
 }
 [data-theme="ocean-deep"] .loader-subtitle,
 [data-theme="ocean-deep"] .loader-bar-track,
@@ -297,7 +297,7 @@
 [data-theme="sakura"] .loader-icon::before { content: '🌸'; }
 [data-theme="sakura"] .loader-title {
   text-shadow: 0 0 20px rgba(255,133,161,0.5);
-  animation-duration: 0.9s;
+  animation-duration: 0.9s, 4s;
 }
 [data-theme="sakura"] .loader-subtitle,
 [data-theme="sakura"] .loader-bar-track,
@@ -334,7 +334,7 @@
 [data-theme="forest"] .loader-icon::before { content: '🌲'; }
 [data-theme="forest"] .loader-title {
   text-shadow: 0 0 18px rgba(82,183,136,0.5);
-  animation-duration: 0.8s;
+  animation-duration: 0.8s, 4s;
 }
 [data-theme="forest"] .loader-subtitle,
 [data-theme="forest"] .loader-bar-track,
@@ -372,7 +372,7 @@
 [data-theme="cyberpunk"] .loader-title {
   font-family: var(--font-mono);
   text-shadow: 0 0 22px rgba(255,255,0,0.7);
-  animation-duration: 0.35s;
+  animation-duration: 0.35s, 4s;
 }
 [data-theme="cyberpunk"] .loader-subtitle {
   font-family: var(--font-mono);
@@ -428,7 +428,7 @@
   font-family: 'Press Start 2P', monospace;
   font-size: 1.5rem;
   text-shadow: 0 0 16px var(--accent-1);
-  animation-duration: 0.4s;
+  animation-duration: 0.4s, 4s;
 }
 [data-theme="tomb-of-the-mask"] .loader-title span {
   color: var(--accent-2);
@@ -953,7 +953,7 @@
    skyscrapers in the reference photo's color story (not its
    composition — this is an original abstract arrangement). */
 .neo-tower-bg {
-  position: absolute; bottom: 0;
+  position: absolute; bottom: 70px;
   background: repeating-linear-gradient(0deg, #3a1f0a 0 6px, #1a0d05 6px 12px);
   box-shadow: 0 0 40px rgba(255,140,20,0.15);
 }
@@ -968,7 +968,7 @@
 /* Foreground buildings — cool blue-teal, matching the reference's
    cooler foreground skyline, again as original abstract shapes. */
 .neo-tower-fg {
-  position: absolute; bottom: 0;
+  position: absolute; bottom: 70px;
   background: repeating-linear-gradient(0deg, #0a1a2a 0 6px, #030d16 6px 12px);
   box-shadow: 0 0 30px rgba(0,180,255,0.12);
 }
@@ -978,6 +978,57 @@
     repeating-linear-gradient(90deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 9px),
     repeating-linear-gradient(0deg, rgba(0,200,255,0.3) 0 3px, transparent 3px 13px);
   mix-blend-mode: screen;
+}
+
+/* Rooftop variety — flat, a blinking antenna, or a tiered stepped
+   top, so the skyline doesn't read as identical boxes. */
+.neo-tower-fg.roof-antenna::before,
+.neo-tower-bg.roof-antenna::before {
+  content: ''; position: absolute; top: -18px; left: 50%; width: 2px; height: 18px;
+  background: rgba(0,200,255,0.6); box-shadow: 0 0 6px rgba(0,200,255,0.6);
+}
+.neo-tower-fg.roof-antenna::after,
+.neo-tower-bg.roof-antenna::after {
+  content: ''; position: absolute; top: -22px; left: calc(50% - 3px); width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent-1); box-shadow: 0 0 8px var(--accent-1);
+  animation: neoAntennaBlink 1.6s ease-in-out infinite;
+}
+@keyframes neoAntennaBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.neo-tower-fg.roof-tiered::before,
+.neo-tower-bg.roof-tiered::before {
+  content: ''; position: absolute; top: -16px; left: 22%; width: 56%; height: 16px;
+  background: inherit; box-shadow: inherit;
+}
+
+/* Water + reflection — an ocean at the base of the skyline that
+   mirrors the towers above it, with a slow shimmer suggesting
+   gentle movement. */
+.neo-water {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+  background: linear-gradient(180deg, #0a1420 0%, #030810 100%);
+  overflow: hidden;
+}
+.neo-water::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(0,229,255,0.08) 50%, transparent 80%);
+  animation: neoWaterShimmer 5s ease-in-out infinite;
+}
+@keyframes neoWaterShimmer {
+  0%, 100% { transform: translateX(-20%); }
+  50% { transform: translateX(20%); }
+}
+.neo-reflection {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+  transform: scaleY(-1);
+  opacity: 0.35;
+  filter: blur(1.5px);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.6), transparent 85%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.6), transparent 85%);
+}
+.neo-reflection .neo-tower-bg,
+.neo-reflection .neo-tower-fg {
+  bottom: 0;
 }
 
 /* Sparse light beams — a generic "searchlight over a night city"
@@ -1175,6 +1226,51 @@
 }
 
 /* --------------------------------------------------------
+   WEATHER — real, live data (see applyWeather() in index.html),
+   not decoration. "calm" is the baseline/default; every other
+   state adds a distinct visual on top of whatever daytime/tier
+   is already active.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"][data-weather="sunny"] .neo-sky-orb {
+  transform: scale(1.3);
+}
+[data-theme="neo-tokyo"][data-weather="sunny"][data-daytime="night"] .neo-sky-orb {
+  box-shadow: 0 0 50px rgba(232,228,240,0.7);
+}
+[data-theme="neo-tokyo"][data-weather="sunny"]:not([data-daytime="night"]) .neo-sky-orb {
+  box-shadow: 0 0 50px rgba(255,210,122,0.7);
+}
+
+.neo-cloud {
+  position: absolute; top: 40px;
+  width: 90px; height: 24px; border-radius: 20px;
+  background: rgba(180,180,200,0.25);
+  opacity: 0;
+}
+[data-theme="neo-tokyo"][data-weather="cloudy"] .neo-cloud {
+  opacity: 1;
+  animation: neoCloudDrift 45s linear infinite;
+}
+@keyframes neoCloudDrift {
+  from { transform: translateX(-120px); }
+  to   { transform: translateX(120vw); }
+}
+
+.neo-rain { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+[data-theme="neo-tokyo"][data-weather="rainy"] .neo-rain { opacity: 1; }
+.neo-rain-drop {
+  position: absolute; top: -20px; width: 1px; height: 20px;
+  background: linear-gradient(180deg, transparent, rgba(180,210,255,0.5));
+  animation: neoRainFall 0.6s linear infinite;
+}
+@keyframes neoRainFall { to { transform: translateY(400px); } }
+
+/* Windy — everything already in motion just moves faster */
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-particle { animation-duration: 5s !important; }
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-bird { animation-duration: 8s !important; }
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-cloud { animation-duration: 18s !important; }
+
+/* --------------------------------------------------------
    BOLDER BASE PRESENCE — this was reading as "a subtle card
    decoration," not "you are inside Neo-Tokyo." Turned up.
 -------------------------------------------------------- */
@@ -1241,7 +1337,7 @@
 }
 [data-theme="neo-tokyo"] .loader-title {
   text-shadow: 0 0 20px var(--accent-1);
-  animation-duration: 0.5s;
+  animation-duration: 0.5s, 4s;
 }
 [data-theme="neo-tokyo"] .loader-subtitle,
 [data-theme="neo-tokyo"] .loader-bar-track,
