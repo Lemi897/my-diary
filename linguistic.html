@@ -83,6 +83,38 @@
     .status-filter-btn { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
     .status-filter-btn.active { background: var(--accent-dim); border-color: var(--accent-1); color: var(--accent-1); }
 
+    /* Book detail view */
+    .book-card { cursor: pointer; transition: var(--transition); }
+    .book-card:hover { border-color: var(--accent-1); }
+    .book-detail-position {
+      background: var(--bg-secondary); border-radius: 8px; padding: 0.75rem 1rem;
+      margin-bottom: 1rem; font-size: 0.9rem;
+    }
+    .session-timer-display {
+      display: none; text-align: center; font-family: var(--font-mono);
+      font-size: 1.8rem; margin: 0.75rem 0; color: var(--accent-1);
+      letter-spacing: 0.05em;
+    }
+    .heatmap-section { margin-top: 1.5rem; }
+    .heatmap-grid {
+      display: grid;
+      grid-template-rows: repeat(7, 1fr);
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      gap: 3px;
+      max-width: 100%;
+    }
+    .heatmap-cell {
+      width: 100%; aspect-ratio: 1; border-radius: 2px;
+      background: var(--border);
+    }
+    .heatmap-cell.level-1 { background: color-mix(in srgb, var(--accent-1) 25%, var(--bg-secondary)); }
+    .heatmap-cell.level-2 { background: color-mix(in srgb, var(--accent-1) 50%, var(--bg-secondary)); }
+    .heatmap-cell.level-3 { background: color-mix(in srgb, var(--accent-1) 75%, var(--bg-secondary)); }
+    .heatmap-cell.level-4 { background: var(--accent-1); }
+    .heatmap-legend { display: flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.5rem; justify-content: flex-end; }
+    .heatmap-legend .heatmap-cell { width: 10px; height: 10px; }
+
     /* Level card — ambient, respects the active theme like everything else */
     .level-card {
       background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
@@ -309,6 +341,60 @@
   </div>
 
   <!-- BOOK MODAL -->
+  <!-- BOOK DETAIL MODAL -->
+  <div class="modal-overlay" id="bookDetailModal">
+    <div class="modal" style="max-width:460px;">
+      <div class="modal-header">
+        <div class="modal-title" id="bookDetailTitle">Book Title</div>
+        <button class="modal-close" id="bookDetailClose">&times;</button>
+      </div>
+      <div id="bookDetailAuthor" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem;"></div>
+
+      <div class="book-detail-position" id="bookDetailPosition"></div>
+
+      <button class="btn btn-primary btn-full" id="sessionToggleBtn">Start reading</button>
+      <div class="session-timer-display" id="sessionTimerDisplay">0:00</div>
+
+      <div class="heatmap-section">
+        <div class="flex-between">
+          <div class="card-title" style="font-size:0.85rem;margin:0;">Reading Activity</div>
+        </div>
+        <div class="heatmap-grid" id="bookHeatmap" style="margin-top:0.6rem;"></div>
+        <div class="heatmap-legend">
+          Less
+          <div class="heatmap-cell"></div>
+          <div class="heatmap-cell level-1"></div>
+          <div class="heatmap-cell level-2"></div>
+          <div class="heatmap-cell level-3"></div>
+          <div class="heatmap-cell level-4"></div>
+          More
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POSITION PROMPT MODAL — shown right after stopping a session -->
+  <div class="modal-overlay" id="positionPromptModal">
+    <div class="modal" style="max-width:380px;">
+      <div class="modal-header">
+        <div class="modal-title">Mark your place</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">How do you want to mark it?</label>
+        <select class="form-select" id="positionTypeSelect">
+          <option value="page">Page number</option>
+          <option value="chapter">Chapter / section</option>
+          <option value="quote">Last sentence read</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="text" class="form-input" id="positionValueInput" placeholder="e.g. 142" />
+      </div>
+      <button class="btn btn-primary btn-full" id="savePositionBtn">Save position</button>
+      <button class="btn btn-ghost btn-full mt-sm" id="skipPositionBtn">Skip for now</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="bookModal">
     <div class="modal">
       <div class="modal-header">
@@ -761,7 +847,7 @@
         return;
       }
       grid.innerHTML = filtered.map(b => `
-        <div class="book-card">
+        <div class="book-card" onclick="openBookDetail('${b.id}')">
           <div class="book-card-row">
             ${b.cover_url ? `<img class="book-cover" src="${b.cover_url}" alt="" />` : `<div class="book-cover-placeholder"><i class="ri-book-line"></i></div>`}
             <div class="book-card-info">
@@ -774,8 +860,8 @@
           <div class="word-card-footer">
             <span></span>
             <div class="item-actions">
-              <button class="btn btn-ghost btn-sm" onclick="openBookModal('${b.id}')"><i class="ri-edit-line"></i></button>
-              <button class="btn btn-ghost btn-sm" onclick="deleteBook('${b.id}')"><i class="ri-delete-bin-line"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); openBookModal('${b.id}')"><i class="ri-edit-line"></i></button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteBook('${b.id}')"><i class="ri-delete-bin-line"></i></button>
             </div>
           </div>
         </div>
@@ -837,6 +923,164 @@
       if (error) { showToast('Failed to delete book.', 'error'); return; }
       loadBooks();
     };
+
+    // ----------------------------------------------------------
+    // BOOK DETAIL VIEW — position tracking, reading sessions,
+    // and a per-book GitHub-style activity heatmap.
+    // ----------------------------------------------------------
+    let currentDetailBookId = null;
+    let activeSessionId = null;
+    let sessionStartTime = null;
+    let sessionTimerInterval = null;
+
+    window.openBookDetail = function(bookId) {
+      const b = allBooks.find(x => x.id === bookId);
+      if (!b) return;
+      currentDetailBookId = bookId;
+
+      document.getElementById('bookDetailTitle').textContent = b.title;
+      document.getElementById('bookDetailAuthor').textContent = b.author || 'Unknown author';
+
+      const posEl = document.getElementById('bookDetailPosition');
+      let posHtml = '';
+      if (b.current_position_value) {
+        const label = b.current_position_type === 'page' ? 'Page'
+          : b.current_position_type === 'chapter' ? 'At'
+          : 'Last read';
+        posHtml += `<strong>${sanitize(label)}:</strong> ${sanitize(b.current_position_value)}`;
+      } else {
+        posHtml += `<span style="color:var(--text-muted);">No position saved yet</span>`;
+      }
+      if (b.last_read_at) {
+        const days = Math.floor((Date.now() - new Date(b.last_read_at).getTime()) / 86400000);
+        const gapText = days === 0 ? 'Read today' : `${days} day${days > 1 ? 's' : ''} since you opened this`;
+        posHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;">${gapText}</div>`;
+      }
+      posEl.innerHTML = posHtml;
+
+      document.getElementById('sessionToggleBtn').textContent = activeSessionId && currentDetailBookId === bookId ? 'Stop reading' : 'Start reading';
+      document.getElementById('sessionTimerDisplay').style.display = (activeSessionId && currentDetailBookId === bookId) ? 'block' : 'none';
+
+      document.getElementById('bookDetailModal').classList.add('open');
+      loadBookHeatmap(bookId);
+    };
+    document.getElementById('bookDetailClose').addEventListener('click', () => document.getElementById('bookDetailModal').classList.remove('open'));
+    document.getElementById('bookDetailModal').addEventListener('click', (e) => { if (e.target.id === 'bookDetailModal') e.target.classList.remove('open'); });
+
+    async function loadBookHeatmap(bookId) {
+      const since = new Date();
+      since.setDate(since.getDate() - 83);
+      since.setHours(0, 0, 0, 0);
+
+      const { data } = await supabase.from('reading_sessions')
+        .select('started_at, duration_seconds')
+        .eq('book_id', bookId)
+        .gte('started_at', since.toISOString());
+
+      const dayTotals = {};
+      (data || []).forEach(s => {
+        const day = s.started_at.split('T')[0];
+        dayTotals[day] = (dayTotals[day] || 0) + (s.duration_seconds || 0);
+      });
+
+      const cells = [];
+      const startDow = since.getDay(); // 0 = Sunday, aligns the grid like GitHub's
+      for (let i = 0; i < startDow; i++) cells.push(null);
+
+      for (let i = 0; i < 84; i++) {
+        const d = new Date(since);
+        d.setDate(d.getDate() + i);
+        const key = d.toISOString().split('T')[0];
+        const seconds = dayTotals[key] || 0;
+        let level = 0;
+        if (seconds > 0) level = 1;
+        if (seconds > 600) level = 2;   // 10+ minutes
+        if (seconds > 1800) level = 3;  // 30+ minutes
+        if (seconds > 3600) level = 4;  // 60+ minutes
+        cells.push({ date: key, level, seconds });
+      }
+
+      const grid = document.getElementById('bookHeatmap');
+      grid.innerHTML = cells.map(c =>
+        c === null
+          ? `<div class="heatmap-cell" style="visibility:hidden;"></div>`
+          : `<div class="heatmap-cell level-${c.level}" title="${c.date}: ${Math.round(c.seconds / 60)} min"></div>`
+      ).join('');
+    }
+
+    document.getElementById('sessionToggleBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to track a reading session.', 'warning'); return; }
+
+      if (!activeSessionId) {
+        const { data, error } = await supabase.from('reading_sessions').insert({
+          book_id: currentDetailBookId, user_id: userId, started_at: new Date().toISOString()
+        }).select().single();
+        if (error) { showToast('Failed to start session.', 'error'); return; }
+
+        activeSessionId = data.id;
+        sessionStartTime = Date.now();
+        document.getElementById('sessionToggleBtn').textContent = 'Stop reading';
+        document.getElementById('sessionTimerDisplay').style.display = 'block';
+        updateSessionTimerDisplay();
+        sessionTimerInterval = setInterval(updateSessionTimerDisplay, 1000);
+      } else {
+        clearInterval(sessionTimerInterval);
+        const durationSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+        const sessionId = activeSessionId;
+        const bookId = currentDetailBookId;
+
+        await supabase.from('reading_sessions').update({
+          ended_at: new Date().toISOString(), duration_seconds: durationSeconds
+        }).eq('id', sessionId);
+        await supabase.from('books').update({ last_read_at: new Date().toISOString() }).eq('id', bookId);
+
+        activeSessionId = null;
+        document.getElementById('sessionToggleBtn').textContent = 'Start reading';
+        document.getElementById('sessionTimerDisplay').style.display = 'none';
+
+        const mins = Math.round(durationSeconds / 60);
+        showToast(`Session logged: ${mins < 1 ? '<1' : mins} min`, 'success');
+
+        const b = allBooks.find(x => x.id === bookId);
+        if (b) b.last_read_at = new Date().toISOString();
+
+        loadBookHeatmap(bookId);
+        openPositionPrompt();
+      }
+    });
+
+    function updateSessionTimerDisplay() {
+      const elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
+      const mins = Math.floor(elapsed / 60);
+      const secs = elapsed % 60;
+      document.getElementById('sessionTimerDisplay').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function openPositionPrompt() {
+      document.getElementById('positionValueInput').value = '';
+      document.getElementById('positionPromptModal').classList.add('open');
+    }
+    document.getElementById('skipPositionBtn').addEventListener('click', () => {
+      document.getElementById('positionPromptModal').classList.remove('open');
+    });
+    document.getElementById('savePositionBtn').addEventListener('click', async () => {
+      const type = document.getElementById('positionTypeSelect').value;
+      const value = document.getElementById('positionValueInput').value.trim();
+      if (!value) { showToast('Enter a value, or tap Skip.', 'warning'); return; }
+      if (!isOnline()) { showToast('Connect to the internet to save your position.', 'warning'); return; }
+
+      const { error } = await supabase.from('books')
+        .update({ current_position_type: type, current_position_value: value })
+        .eq('id', currentDetailBookId);
+      if (error) { showToast('Failed to save position.', 'error'); return; }
+
+      const b = allBooks.find(x => x.id === currentDetailBookId);
+      if (b) { b.current_position_type = type; b.current_position_value = value; }
+
+      document.getElementById('positionPromptModal').classList.remove('open');
+      showToast('Position saved.', 'success');
+      openBookDetail(currentDetailBookId);
+    });
 
     // ----------------------------------------------------------
     // SIGN OUT
