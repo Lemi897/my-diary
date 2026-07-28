@@ -90,10 +90,9 @@
       background: var(--bg-secondary); border-radius: 8px; padding: 0.75rem 1rem;
       margin-bottom: 1rem; font-size: 0.9rem;
     }
-    .session-timer-display {
-      display: none; text-align: center; font-family: var(--font-mono);
-      font-size: 1.8rem; margin: 0.75rem 0; color: var(--accent-1);
-      letter-spacing: 0.05em;
+    .session-status-display {
+      display: none; text-align: center; font-size: 0.85rem;
+      margin: 0.75rem 0; color: var(--text-secondary);
     }
     .heatmap-section { margin-top: 1.5rem; }
     .heatmap-grid {
@@ -353,7 +352,7 @@
       <div class="book-detail-position" id="bookDetailPosition"></div>
 
       <button class="btn btn-primary btn-full" id="sessionToggleBtn">Start reading</button>
-      <div class="session-timer-display" id="sessionTimerDisplay">0:00</div>
+      <div class="session-status-display" id="sessionStatusDisplay">Reading in progress...</div>
 
       <div class="heatmap-section">
         <div class="flex-between">
@@ -931,7 +930,6 @@
     let currentDetailBookId = null;
     let activeSessionId = null;
     let sessionStartTime = null;
-    let sessionTimerInterval = null;
 
     window.openBookDetail = function(bookId) {
       const b = allBooks.find(x => x.id === bookId);
@@ -959,7 +957,7 @@
       posEl.innerHTML = posHtml;
 
       document.getElementById('sessionToggleBtn').textContent = activeSessionId && currentDetailBookId === bookId ? 'Stop reading' : 'Start reading';
-      document.getElementById('sessionTimerDisplay').style.display = (activeSessionId && currentDetailBookId === bookId) ? 'block' : 'none';
+      document.getElementById('sessionStatusDisplay').style.display = (activeSessionId && currentDetailBookId === bookId) ? 'block' : 'none';
 
       document.getElementById('bookDetailModal').classList.add('open');
       loadBookHeatmap(bookId);
@@ -1020,11 +1018,9 @@
         activeSessionId = data.id;
         sessionStartTime = Date.now();
         document.getElementById('sessionToggleBtn').textContent = 'Stop reading';
-        document.getElementById('sessionTimerDisplay').style.display = 'block';
-        updateSessionTimerDisplay();
-        sessionTimerInterval = setInterval(updateSessionTimerDisplay, 1000);
+        document.getElementById('sessionStatusDisplay').style.display = 'block';
+        showToast('Reading session started.', 'success');
       } else {
-        clearInterval(sessionTimerInterval);
         const durationSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
         const sessionId = activeSessionId;
         const bookId = currentDetailBookId;
@@ -1036,7 +1032,7 @@
 
         activeSessionId = null;
         document.getElementById('sessionToggleBtn').textContent = 'Start reading';
-        document.getElementById('sessionTimerDisplay').style.display = 'none';
+        document.getElementById('sessionStatusDisplay').style.display = 'none';
 
         const mins = Math.round(durationSeconds / 60);
         showToast(`Session logged: ${mins < 1 ? '<1' : mins} min`, 'success');
@@ -1048,13 +1044,6 @@
         openPositionPrompt();
       }
     });
-
-    function updateSessionTimerDisplay() {
-      const elapsed = Math.round((Date.now() - sessionStartTime) / 1000);
-      const mins = Math.floor(elapsed / 60);
-      const secs = elapsed % 60;
-      document.getElementById('sessionTimerDisplay').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
-    }
 
     function openPositionPrompt() {
       document.getElementById('positionValueInput').value = '';
