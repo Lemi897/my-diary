@@ -201,3 +201,59 @@ export async function applyThemeTier(supabase, userId) {
   const tier = level >= 25 ? 3 : level >= 10 ? 2 : 1;
   document.documentElement.setAttribute('data-tier', String(tier));
 }
+
+export function isNeoTokyoActive() {
+  return document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+}
+
+export function applyDaytime() {
+  if (!isNeoTokyoActive()) return;
+  const hour = new Date().getHours();
+  let daytime;
+  if (hour >= 5 && hour < 7) daytime = 'dawn';
+  else if (hour >= 7 && hour < 17) daytime = 'day';
+  else if (hour >= 17 && hour < 19) daytime = 'dusk';
+  else daytime = 'night';
+  document.documentElement.setAttribute('data-daytime', daytime);
+}
+
+// ------------------------------------------------------------
+// WEATHER — real, live data from Open-Meteo (free, keyless, same
+// pattern as the exchange-rate fetch in finance.html). Cached 3
+// hours since weather doesn't need checking on every page load.
+// Nairobi coordinates hardcoded — personal, single-location app,
+// not worth a geolocation permission prompt for one weather check.
+// ------------------------------------------------------------
+export async function applyWeather() {
+  if (!isNeoTokyoActive()) return;
+
+  const CACHE_KEY = 'neo_weather_state';
+  const CACHE_TIME_KEY = 'neo_weather_time';
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+
+  const cached = localStorage.getItem(CACHE_KEY);
+  const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+  const isFresh = cachedTime && (Date.now() - parseInt(cachedTime)) < THREE_HOURS;
+
+  let state = cached || 'calm';
+
+  if (!isFresh) {
+    try {
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-1.2864&longitude=36.8172&current_weather=true');
+      const data = await res.json();
+      const cw = data.current_weather;
+      if (cw.windspeed > 25) state = 'windy';
+      else if (cw.weathercode === 0) state = 'sunny';
+      else if (cw.weathercode <= 3) state = 'cloudy';
+      else if (cw.weathercode >= 45) state = 'rainy';
+      else state = 'calm';
+      localStorage.setItem(CACHE_KEY, state);
+      localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+    } catch (err) {
+      // Network failure — fall back to cache (or 'calm' if there's
+      // never been a successful fetch). Never block page load.
+    }
+  }
+
+  document.documentElement.setAttribute('data-weather', state);
+}
