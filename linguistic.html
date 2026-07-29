@@ -90,9 +90,12 @@
       background: var(--bg-secondary); border-radius: 8px; padding: 0.75rem 1rem;
       margin-bottom: 1rem; font-size: 0.9rem;
     }
-    .session-status-display {
-      display: none; text-align: center; font-size: 0.85rem;
-      margin: 0.75rem 0; color: var(--text-secondary);
+    .book-detail-synopsis {
+      font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: 1rem; max-height: 120px; overflow-y: auto;
+    }
+    .book-detail-delta {
+      font-size: 0.82rem; color: var(--accent-1); margin-top: 0.4rem; font-weight: 600;
     }
     .heatmap-section { margin-top: 1.5rem; }
     .heatmap-grid {
@@ -347,12 +350,12 @@
         <div class="modal-title" id="bookDetailTitle">Book Title</div>
         <button class="modal-close" id="bookDetailClose">&times;</button>
       </div>
-      <div id="bookDetailAuthor" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1rem;"></div>
+      <div id="bookDetailAuthor" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:0.75rem;"></div>
+      <div class="book-detail-synopsis" id="bookDetailSynopsis"></div>
 
       <div class="book-detail-position" id="bookDetailPosition"></div>
 
-      <button class="btn btn-primary btn-full" id="sessionToggleBtn">Start reading</button>
-      <div class="session-status-display" id="sessionStatusDisplay">Reading in progress...</div>
+      <button class="btn btn-primary btn-full" id="logEntryBtn">Log my position</button>
 
       <div class="heatmap-section">
         <div class="flex-between">
@@ -372,11 +375,12 @@
     </div>
   </div>
 
-  <!-- POSITION PROMPT MODAL — shown right after stopping a session -->
+  <!-- LOG ENTRY MODAL — the primary action, no session/timer involved -->
   <div class="modal-overlay" id="positionPromptModal">
     <div class="modal" style="max-width:380px;">
       <div class="modal-header">
-        <div class="modal-title">Mark your place</div>
+        <div class="modal-title">Log my position</div>
+        <button class="modal-close" id="positionPromptClose">&times;</button>
       </div>
       <div class="form-group">
         <label class="form-label">How do you want to mark it?</label>
@@ -389,8 +393,7 @@
       <div class="form-group">
         <input type="text" class="form-input" id="positionValueInput" placeholder="e.g. 142" />
       </div>
-      <button class="btn btn-primary btn-full" id="savePositionBtn">Save position</button>
-      <button class="btn btn-ghost btn-full mt-sm" id="skipPositionBtn">Skip for now</button>
+      <button class="btn btn-primary btn-full" id="savePositionBtn">Save entry</button>
     </div>
   </div>
 
@@ -419,6 +422,10 @@
       <div class="form-group">
         <label class="form-label">Genre (optional)</label>
         <input type="text" class="form-input" id="bookGenreInput" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Synopsis (optional)</label>
+        <textarea class="form-textarea" id="bookSynopsisInput" rows="3" placeholder="What's this book about?"></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Notes (optional)</label>
@@ -714,8 +721,25 @@
           author: (doc.author_name || [author]).filter(Boolean)[0] || author,
           genre: (doc.subject || []).slice(0, 3).join(', '),
           pageCount: doc.number_of_pages_median || null,
-          cover
+          cover,
+          synopsis: null
         };
+
+        // Best-effort synopsis fetch — many works don't have one,
+        // so this is a bonus on top of manual entry, not a
+        // dependency. Never blocks or breaks the main result.
+        if (doc.key) {
+          try {
+            const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
+            const workData = await workRes.json();
+            const desc = workData.description;
+            if (desc) {
+              lastBookResult.synopsis = typeof desc === 'string' ? desc : (desc.value || null);
+            }
+          } catch (err) {
+            // Silently skip — synopsis is a bonus, not required.
+          }
+        }
 
         container.innerHTML = `
           <div class="book-result">
@@ -725,6 +749,7 @@
               <div style="color:var(--text-secondary);font-size:0.85rem;">${sanitize(lastBookResult.author || 'Unknown author')}</div>
               ${lastBookResult.genre ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem;">${sanitize(lastBookResult.genre)}</div>` : ''}
               ${lastBookResult.pageCount ? `<div style="font-size:0.78rem;color:var(--text-muted);">${lastBookResult.pageCount} pages</div>` : ''}
+              ${lastBookResult.synopsis ? `<div style="font-size:0.75rem;color:var(--success);margin-top:0.2rem;"><i class="ri-check-line"></i> Synopsis found</div>` : ''}
               <button class="btn btn-primary btn-sm mt-sm" onclick="saveResearchToBooks()">
                 <i class="ri-add-line"></i> Add to my books
               </button>
@@ -744,6 +769,7 @@
       document.getElementById('bookGenreInput').value = lastBookResult.genre || '';
       document.getElementById('bookCoverInput').value = lastBookResult.cover || '';
       document.getElementById('bookPagesInput').value = lastBookResult.pageCount || '';
+      document.getElementById('bookSynopsisInput').value = lastBookResult.synopsis || '';
     };
 
     // ----------------------------------------------------------
@@ -875,6 +901,7 @@
       document.getElementById('bookAuthorInput').value = b?.author || '';
       document.getElementById('bookStatusInput').value = b?.status || 'want_to_read';
       document.getElementById('bookGenreInput').value = b?.genre || '';
+      document.getElementById('bookSynopsisInput').value = b?.synopsis || '';
       document.getElementById('bookNotesInput').value = b?.notes || '';
       document.getElementById('bookCoverInput').value = b?.cover_url || '';
       document.getElementById('bookPagesInput').value = b?.page_count || '';
@@ -889,12 +916,13 @@
       const author = document.getElementById('bookAuthorInput').value.trim() || null;
       const status = document.getElementById('bookStatusInput').value;
       const genre = document.getElementById('bookGenreInput').value.trim() || null;
+      const synopsis = document.getElementById('bookSynopsisInput').value.trim() || null;
       const notes = document.getElementById('bookNotesInput').value.trim() || null;
       const cover_url = document.getElementById('bookCoverInput').value || null;
       const page_count = parseInt(document.getElementById('bookPagesInput').value) || null;
       if (!title) { showToast('Enter a book title.', 'warning'); return; }
 
-      const payload = { title, author, status, genre, notes, cover_url, page_count };
+      const payload = { title, author, status, genre, synopsis, notes, cover_url, page_count };
       if (status === 'read') payload.date_finished = new Date().toISOString().split('T')[0];
 
       const wasRead = editingBookId ? (allBooks.find(b => b.id === editingBookId)?.status === 'read') : false;
@@ -924,12 +952,12 @@
     };
 
     // ----------------------------------------------------------
-    // BOOK DETAIL VIEW — position tracking, reading sessions,
-    // and a per-book GitHub-style activity heatmap.
+    // BOOK DETAIL VIEW — synopsis, position tracking via logged
+    // entries (no timer, no sessions — you read on your own
+    // schedule and log where you are whenever you check in), and
+    // a per-book GitHub-style activity heatmap.
     // ----------------------------------------------------------
     let currentDetailBookId = null;
-    let activeSessionId = null;
-    let sessionStartTime = null;
 
     window.openBookDetail = function(bookId) {
       const b = allBooks.find(x => x.id === bookId);
@@ -939,6 +967,10 @@
       document.getElementById('bookDetailTitle').textContent = b.title;
       document.getElementById('bookDetailAuthor').textContent = b.author || 'Unknown author';
 
+      const synEl = document.getElementById('bookDetailSynopsis');
+      synEl.textContent = b.synopsis || '';
+      synEl.style.display = b.synopsis ? 'block' : 'none';
+
       const posEl = document.getElementById('bookDetailPosition');
       let posHtml = '';
       if (b.current_position_value) {
@@ -947,17 +979,14 @@
           : 'Last read';
         posHtml += `<strong>${sanitize(label)}:</strong> ${sanitize(b.current_position_value)}`;
       } else {
-        posHtml += `<span style="color:var(--text-muted);">No position saved yet</span>`;
+        posHtml += `<span style="color:var(--text-muted);">No position logged yet</span>`;
       }
       if (b.last_read_at) {
         const days = Math.floor((Date.now() - new Date(b.last_read_at).getTime()) / 86400000);
-        const gapText = days === 0 ? 'Read today' : `${days} day${days > 1 ? 's' : ''} since you opened this`;
+        const gapText = days === 0 ? 'Logged today' : `${days} day${days > 1 ? 's' : ''} since your last entry`;
         posHtml += `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;">${gapText}</div>`;
       }
       posEl.innerHTML = posHtml;
-
-      document.getElementById('sessionToggleBtn').textContent = activeSessionId && currentDetailBookId === bookId ? 'Stop reading' : 'Start reading';
-      document.getElementById('sessionStatusDisplay').style.display = (activeSessionId && currentDetailBookId === bookId) ? 'block' : 'none';
 
       document.getElementById('bookDetailModal').classList.add('open');
       loadBookHeatmap(bookId);
@@ -965,21 +994,40 @@
     document.getElementById('bookDetailClose').addEventListener('click', () => document.getElementById('bookDetailModal').classList.remove('open'));
     document.getElementById('bookDetailModal').addEventListener('click', (e) => { if (e.target.id === 'bookDetailModal') e.target.classList.remove('open'); });
 
+    // Heatmap activity is derived from actual logged entries, not
+    // duration — for page-tracked books, intensity is pages
+    // covered that day (summed across however many times you log
+    // in); for chapter/quote-tracked entries there's no clean
+    // number to scale by, so that day just gets a flat "active"
+    // mark instead of an invented magnitude.
     async function loadBookHeatmap(bookId) {
+      const { data } = await supabase.from('reading_log_entries')
+        .select('entry_type, page_number, logged_at')
+        .eq('book_id', bookId)
+        .order('logged_at', { ascending: true });
+
+      const entries = data || [];
+      const dayTotals = {}; // date -> { pages: number, active: boolean }
+
+      for (let i = 0; i < entries.length; i++) {
+        const curr = entries[i];
+        const day = curr.logged_at.split('T')[0];
+        if (!dayTotals[day]) dayTotals[day] = { pages: 0, active: false };
+        dayTotals[day].active = true;
+
+        if (i > 0) {
+          const prev = entries[i - 1];
+          if (curr.entry_type === 'page' && prev.entry_type === 'page' &&
+              curr.page_number != null && prev.page_number != null) {
+            const delta = curr.page_number - prev.page_number;
+            if (delta > 0) dayTotals[day].pages += delta;
+          }
+        }
+      }
+
       const since = new Date();
       since.setDate(since.getDate() - 83);
       since.setHours(0, 0, 0, 0);
-
-      const { data } = await supabase.from('reading_sessions')
-        .select('started_at, duration_seconds')
-        .eq('book_id', bookId)
-        .gte('started_at', since.toISOString());
-
-      const dayTotals = {};
-      (data || []).forEach(s => {
-        const day = s.started_at.split('T')[0];
-        dayTotals[day] = (dayTotals[day] || 0) + (s.duration_seconds || 0);
-      });
 
       const cells = [];
       const startDow = since.getDay(); // 0 = Sunday, aligns the grid like GitHub's
@@ -989,86 +1037,87 @@
         const d = new Date(since);
         d.setDate(d.getDate() + i);
         const key = d.toISOString().split('T')[0];
-        const seconds = dayTotals[key] || 0;
+        const day = dayTotals[key];
         let level = 0;
-        if (seconds > 0) level = 1;
-        if (seconds > 600) level = 2;   // 10+ minutes
-        if (seconds > 1800) level = 3;  // 30+ minutes
-        if (seconds > 3600) level = 4;  // 60+ minutes
-        cells.push({ date: key, level, seconds });
+        let label = '';
+        if (day && day.active) {
+          if (day.pages === 0) { level = 2; label = 'active'; }
+          else if (day.pages <= 15) { level = 1; label = `${day.pages} pages`; }
+          else if (day.pages <= 40) { level = 2; label = `${day.pages} pages`; }
+          else if (day.pages <= 80) { level = 3; label = `${day.pages} pages`; }
+          else { level = 4; label = `${day.pages} pages`; }
+        }
+        cells.push({ date: key, level, label });
       }
 
       const grid = document.getElementById('bookHeatmap');
       grid.innerHTML = cells.map(c =>
         c === null
           ? `<div class="heatmap-cell" style="visibility:hidden;"></div>`
-          : `<div class="heatmap-cell level-${c.level}" title="${c.date}: ${Math.round(c.seconds / 60)} min"></div>`
+          : `<div class="heatmap-cell level-${c.level}" title="${c.date}${c.label ? ': ' + c.label : ''}"></div>`
       ).join('');
     }
 
-    document.getElementById('sessionToggleBtn').addEventListener('click', async () => {
-      if (!isOnline()) { showToast('Connect to the internet to track a reading session.', 'warning'); return; }
-
-      if (!activeSessionId) {
-        const { data, error } = await supabase.from('reading_sessions').insert({
-          book_id: currentDetailBookId, user_id: userId, started_at: new Date().toISOString()
-        }).select().single();
-        if (error) { showToast('Failed to start session.', 'error'); return; }
-
-        activeSessionId = data.id;
-        sessionStartTime = Date.now();
-        document.getElementById('sessionToggleBtn').textContent = 'Stop reading';
-        document.getElementById('sessionStatusDisplay').style.display = 'block';
-        showToast('Reading session started.', 'success');
-      } else {
-        const durationSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
-        const sessionId = activeSessionId;
-        const bookId = currentDetailBookId;
-
-        await supabase.from('reading_sessions').update({
-          ended_at: new Date().toISOString(), duration_seconds: durationSeconds
-        }).eq('id', sessionId);
-        await supabase.from('books').update({ last_read_at: new Date().toISOString() }).eq('id', bookId);
-
-        activeSessionId = null;
-        document.getElementById('sessionToggleBtn').textContent = 'Start reading';
-        document.getElementById('sessionStatusDisplay').style.display = 'none';
-
-        const mins = Math.round(durationSeconds / 60);
-        showToast(`Session logged: ${mins < 1 ? '<1' : mins} min`, 'success');
-
-        const b = allBooks.find(x => x.id === bookId);
-        if (b) b.last_read_at = new Date().toISOString();
-
-        loadBookHeatmap(bookId);
-        openPositionPrompt();
-      }
-    });
-
-    function openPositionPrompt() {
+    document.getElementById('logEntryBtn').addEventListener('click', () => {
       document.getElementById('positionValueInput').value = '';
       document.getElementById('positionPromptModal').classList.add('open');
-    }
-    document.getElementById('skipPositionBtn').addEventListener('click', () => {
+    });
+    document.getElementById('positionPromptClose').addEventListener('click', () => {
       document.getElementById('positionPromptModal').classList.remove('open');
     });
+    document.getElementById('positionPromptModal').addEventListener('click', (e) => { if (e.target.id === 'positionPromptModal') e.target.classList.remove('open'); });
+
     document.getElementById('savePositionBtn').addEventListener('click', async () => {
       const type = document.getElementById('positionTypeSelect').value;
       const value = document.getElementById('positionValueInput').value.trim();
-      if (!value) { showToast('Enter a value, or tap Skip.', 'warning'); return; }
-      if (!isOnline()) { showToast('Connect to the internet to save your position.', 'warning'); return; }
+      if (!value) { showToast('Enter a value.', 'warning'); return; }
+      if (!isOnline()) { showToast('Connect to the internet to log your position.', 'warning'); return; }
 
-      const { error } = await supabase.from('books')
-        .update({ current_position_type: type, current_position_value: value })
-        .eq('id', currentDetailBookId);
-      if (error) { showToast('Failed to save position.', 'error'); return; }
+      const bookId = currentDetailBookId;
+      const pageNumber = type === 'page' ? (parseInt(value, 10) || null) : null;
+      const now = new Date().toISOString();
 
-      const b = allBooks.find(x => x.id === currentDetailBookId);
-      if (b) { b.current_position_type = type; b.current_position_value = value; }
+      // Fetch the most recent entry BEFORE this one, to compute
+      // the delta message ("Page 50 → 82, +32 since 4 days ago").
+      const { data: prevEntries } = await supabase.from('reading_log_entries')
+        .select('entry_type, entry_value, page_number, logged_at')
+        .eq('book_id', bookId)
+        .order('logged_at', { ascending: false })
+        .limit(1);
+      const prev = (prevEntries && prevEntries[0]) || null;
+
+      const { error } = await supabase.from('reading_log_entries').insert({
+        book_id: bookId, user_id: userId,
+        entry_type: type, entry_value: value, page_number: pageNumber,
+        logged_at: now
+      });
+      if (error) { showToast('Failed to log entry.', 'error'); return; }
+
+      await supabase.from('books').update({
+        current_position_type: type, current_position_value: value, last_read_at: now
+      }).eq('id', bookId);
+
+      const b = allBooks.find(x => x.id === bookId);
+      if (b) { b.current_position_type = type; b.current_position_value = value; b.last_read_at = now; }
+
+      // Build the delta message
+      let deltaMsg = 'First entry logged for this book.';
+      if (prev) {
+        const daysSince = Math.max(0, Math.floor((Date.now() - new Date(prev.logged_at).getTime()) / 86400000));
+        const whenText = daysSince === 0 ? 'today' : `${daysSince} day${daysSince > 1 ? 's' : ''} ago`;
+        if (type === 'page' && prev.entry_type === 'page' && pageNumber != null && prev.page_number != null) {
+          const delta = pageNumber - prev.page_number;
+          if (delta > 0) deltaMsg = `Page ${prev.page_number} → ${pageNumber}, +${delta} pages since ${whenText}`;
+          else if (delta === 0) deltaMsg = `Still on page ${pageNumber} (last logged ${whenText})`;
+          else deltaMsg = `Page ${prev.page_number} → ${pageNumber} (last logged ${whenText})`;
+        } else {
+          deltaMsg = `Logged ${whenText}`;
+        }
+      }
 
       document.getElementById('positionPromptModal').classList.remove('open');
-      showToast('Position saved.', 'success');
-      openBookDetail(currentDetailBookId);
+      showToast(deltaMsg, 'success');
+      openBookDetail(bookId);
     });
 
     // ----------------------------------------------------------
