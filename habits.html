@@ -518,7 +518,6 @@
         window.location.replace('login.html');
       } else {
         document.getElementById('authGate').style.display = '';
-        applyThemeTier(supabase, userId);
         applyDaytime();
         applyWeather();
         initPinLock();
@@ -1235,6 +1234,7 @@
     // ----------------------------------------------------------
     const { data: { session: _s } } = await supabase.auth.getSession();
     userId = _s?.user?.id;
+      applyThemeTier(supabase, userId);
     if (!userId) { window.location.replace('login.html'); }
     else {
       loaderProgress(20, 'Loading habits...');
