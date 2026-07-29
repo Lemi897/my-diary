@@ -1058,8 +1058,58 @@
       ).join('');
     }
 
+    // ----------------------------------------------------------
+    // SMART ENTRY-TYPE DETECTION
+    // Guesses page/chapter/quote from what you actually typed, so
+    // the dropdown isn't the only way to set it. Manual selection
+    // always wins once you've touched the dropdown yourself —
+    // this only guesses until you override it.
+    // ----------------------------------------------------------
+    function parsePageNumber(text) {
+      // Forgiving: strips "page", "pg", "p." (any case, optional
+      // dot/space) before parsing, so "pg 142" / "p.142" / "Page 142"
+      // all correctly extract 142, not just bare "142". Longest
+      // prefix checked first — otherwise "p" alone would match
+      // before "page" gets a chance, stripping only the "P" off
+      // "Page 142" and leaving "age 142" behind.
+      const stripped = String(text).trim().replace(/^(page\.?|pg\.?|p\.?)\s*/i, '').trim();
+      if (!/^\d+$/.test(stripped)) return null;
+      return parseInt(stripped, 10);
+    }
+
+    function guessEntryType(text) {
+      const trimmed = String(text).trim();
+      if (!trimmed) return null;
+
+      const stripped = trimmed.replace(/^(page\.?|pg\.?|p\.?)\s*/i, '');
+      if (/^\d+$/.test(stripped)) return 'page';
+
+      // Full words need a boundary check (so "Changed" doesn't
+      // false-match "ch"); abbreviations only count when directly
+      // followed by a digit, which "Changed" never is.
+      if (/^(chapter|section|part)\b/i.test(trimmed)) return 'chapter';
+      if (/^(ch|sec)\.?\s*\d/i.test(trimmed)) return 'chapter';
+
+      const wordCount = trimmed.split(/\s+/).length;
+      if (wordCount >= 5 || /[.!?]$/.test(trimmed)) return 'quote';
+
+      return null; // ambiguous — don't override whatever's selected
+    }
+
+    let typeManuallySet = false;
+    document.getElementById('positionTypeSelect').addEventListener('change', () => {
+      typeManuallySet = true;
+    });
+    document.getElementById('positionValueInput').addEventListener('input', (e) => {
+      if (typeManuallySet) return;
+      const guess = guessEntryType(e.target.value);
+      if (guess) document.getElementById('positionTypeSelect').value = guess;
+    });
+
     document.getElementById('logEntryBtn').addEventListener('click', () => {
       document.getElementById('positionValueInput').value = '';
+      document.getElementById('positionTypeSelect').value = 'page';
+      typeManuallySet = false;
       document.getElementById('positionPromptModal').classList.add('open');
     });
     document.getElementById('positionPromptClose').addEventListener('click', () => {
@@ -1074,7 +1124,7 @@
       if (!isOnline()) { showToast('Connect to the internet to log your position.', 'warning'); return; }
 
       const bookId = currentDetailBookId;
-      const pageNumber = type === 'page' ? (parseInt(value, 10) || null) : null;
+      const pageNumber = type === 'page' ? parsePageNumber(value) : null;
       const now = new Date().toISOString();
 
       // Fetch the most recent entry BEFORE this one, to compute
