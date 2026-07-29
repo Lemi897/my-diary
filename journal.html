@@ -362,6 +362,20 @@
 </head>
 
 <body>
+  <div class="neo-tokyo-bg" aria-hidden="true">
+    <div class="neo-sky-orb"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:0s;"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:6s;"></div>
+    <div class="neo-particle" style="left:8%; animation-delay:0s;"></div>
+    <div class="neo-particle" style="left:22%; animation-delay:1.8s;"></div>
+    <div class="neo-particle" style="left:38%; animation-delay:3.2s;"></div>
+    <div class="neo-particle" style="left:54%; animation-delay:0.9s;"></div>
+    <div class="neo-particle" style="left:67%; animation-delay:2.6s;"></div>
+    <div class="neo-particle" style="left:79%; animation-delay:4.1s;"></div>
+    <div class="neo-particle" style="left:88%; animation-delay:1.3s;"></div>
+    <div class="neo-particle" style="left:95%; animation-delay:3.7s;"></div>
+  </div>
+
   <!-- PIN LOCK — device-level, separate from Supabase auth -->
   <div class="pin-lock-overlay" id="pinLockOverlay">
     <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
@@ -613,6 +627,9 @@
         window.location.replace('login.html');
       } else {
         document.getElementById('authGate').style.display = '';
+        applyThemeTier(supabase, userId);
+        applyDaytime();
+        applyWeather();
         initPinLock();
         wirePinLockUI();
       }
@@ -626,7 +643,11 @@
       replayOfflineQueue,
       queueOfflineAction,
       showToast,
-      truncate
+      truncate,
+      isNeoTokyoActive,
+      applyDaytime,
+      applyWeather,
+      applyThemeTier,
     } from './js/utils.js';
     import { getVerseFromLibrary } from './js/scripture.js';
 
