@@ -1586,6 +1586,217 @@
 }
 
 
+[data-theme="solarized-dark"] .loader-icon::before { content: '🖥️'; }
+[data-theme="solarized-dark"] .loader-title {
+  text-shadow: 0 0 20px rgba(38,139,210,0.5);
+  animation-duration: 1.0s, 4s;
+}
+[data-theme="solarized-dark"] .loader-subtitle,
+[data-theme="solarized-dark"] .loader-bar-track,
+[data-theme="solarized-dark"] .loader-status {
+  animation-duration: 1.0s;
+}
+[data-theme="solarized-dark"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="monokai"] .loader-icon::before { content: '⚡'; }
+[data-theme="monokai"] .loader-title {
+  text-shadow: 0 0 20px rgba(249,38,114,0.5);
+  animation-duration: 0.5s, 4s;
+}
+[data-theme="monokai"] .loader-subtitle,
+[data-theme="monokai"] .loader-bar-track,
+[data-theme="monokai"] .loader-status {
+  animation-duration: 0.5s;
+}
+[data-theme="monokai"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="one-dark"] .loader-icon::before { content: '⚛️'; }
+[data-theme="one-dark"] .loader-title {
+  text-shadow: 0 0 20px rgba(97,175,239,0.5);
+  animation-duration: 0.75s, 4s;
+}
+[data-theme="one-dark"] .loader-subtitle,
+[data-theme="one-dark"] .loader-bar-track,
+[data-theme="one-dark"] .loader-status {
+  animation-duration: 0.75s;
+}
+[data-theme="one-dark"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="rose-pine"] .loader-icon::before { content: '🌹'; }
+[data-theme="rose-pine"] .loader-title {
+  text-shadow: 0 0 20px rgba(235,188,186,0.5);
+  animation-duration: 1.05s, 4s;
+}
+[data-theme="rose-pine"] .loader-subtitle,
+[data-theme="rose-pine"] .loader-bar-track,
+[data-theme="rose-pine"] .loader-status {
+  animation-duration: 1.05s;
+}
+[data-theme="rose-pine"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="everforest"] .loader-icon::before { content: '🍃'; }
+[data-theme="everforest"] .loader-title {
+  text-shadow: 0 0 20px rgba(167,192,128,0.5);
+  animation-duration: 0.85s, 4s;
+}
+[data-theme="everforest"] .loader-subtitle,
+[data-theme="everforest"] .loader-bar-track,
+[data-theme="everforest"] .loader-status {
+  animation-duration: 0.85s;
+}
+[data-theme="everforest"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="kanagawa"] .loader-icon::before { content: '🌊'; }
+[data-theme="kanagawa"] .loader-title {
+  text-shadow: 0 0 20px rgba(126,156,216,0.5);
+  animation-duration: 0.9s, 4s;
+}
+[data-theme="kanagawa"] .loader-subtitle,
+[data-theme="kanagawa"] .loader-bar-track,
+[data-theme="kanagawa"] .loader-status {
+  animation-duration: 0.9s;
+}
+[data-theme="kanagawa"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="autumn"] .loader-icon::before { content: '🍂'; }
+[data-theme="autumn"] .loader-title {
+  text-shadow: 0 0 20px rgba(210,105,30,0.5);
+  animation-duration: 0.95s, 4s;
+}
+[data-theme="autumn"] .loader-subtitle,
+[data-theme="autumn"] .loader-bar-track,
+[data-theme="autumn"] .loader-status {
+  animation-duration: 0.95s;
+}
+[data-theme="autumn"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="synthwave"] .loader-icon::before { content: '📼'; }
+[data-theme="synthwave"] .loader-title {
+  text-shadow: 0 0 20px rgba(255,126,219,0.5);
+  animation-duration: 0.45s, 4s;
+}
+[data-theme="synthwave"] .loader-subtitle,
+[data-theme="synthwave"] .loader-bar-track,
+[data-theme="synthwave"] .loader-status {
+  animation-duration: 0.45s;
+}
+[data-theme="synthwave"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="matrix"] .loader-icon::before { content: '🟢'; }
+[data-theme="matrix"] .loader-title {
+  text-shadow: 0 0 20px rgba(0,255,65,0.5);
+  animation-duration: 0.3s, 4s;
+}
+[data-theme="matrix"] .loader-subtitle,
+[data-theme="matrix"] .loader-bar-track,
+[data-theme="matrix"] .loader-status {
+  animation-duration: 0.3s;
+}
+[data-theme="matrix"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="midnight-library"] .loader-icon::before { content: '🕯️'; }
+[data-theme="midnight-library"] .loader-title {
+  text-shadow: 0 0 20px rgba(212,175,55,0.5);
+  animation-duration: 1.1s, 4s;
+}
+[data-theme="midnight-library"] .loader-subtitle,
+[data-theme="midnight-library"] .loader-bar-track,
+[data-theme="midnight-library"] .loader-status {
+  animation-duration: 1.1s;
+}
+[data-theme="midnight-library"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="illuminated-vellum"] .loader-icon::before { content: '📜'; }
+[data-theme="illuminated-vellum"] .loader-title {
+  text-shadow: 0 0 20px rgba(201,162,39,0.5);
+  animation-duration: 1.0s, 4s;
+}
+[data-theme="illuminated-vellum"] .loader-subtitle,
+[data-theme="illuminated-vellum"] .loader-bar-track,
+[data-theme="illuminated-vellum"] .loader-status {
+  animation-duration: 1.0s;
+}
+[data-theme="illuminated-vellum"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="abyssal-bloom"] .loader-icon::before { content: '🫧'; }
+[data-theme="abyssal-bloom"] .loader-title {
+  text-shadow: 0 0 20px rgba(45,251,196,0.5);
+  animation-duration: 1.15s, 4s;
+}
+[data-theme="abyssal-bloom"] .loader-subtitle,
+[data-theme="abyssal-bloom"] .loader-bar-track,
+[data-theme="abyssal-bloom"] .loader-status {
+  animation-duration: 1.15s;
+}
+[data-theme="abyssal-bloom"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="petrichor"] .loader-icon::before { content: '💧'; }
+[data-theme="petrichor"] .loader-title {
+  text-shadow: 0 0 20px rgba(90,111,196,0.5);
+  animation-duration: 0.95s, 4s;
+}
+[data-theme="petrichor"] .loader-subtitle,
+[data-theme="petrichor"] .loader-bar-track,
+[data-theme="petrichor"] .loader-status {
+  animation-duration: 0.95s;
+}
+[data-theme="petrichor"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="superposition"] .loader-icon::before { content: '🌀'; }
+[data-theme="superposition"] .loader-title {
+  text-shadow: 0 0 20px rgba(139,92,246,0.5);
+  animation-duration: 0.6s, 4s;
+}
+[data-theme="superposition"] .loader-subtitle,
+[data-theme="superposition"] .loader-bar-track,
+[data-theme="superposition"] .loader-status {
+  animation-duration: 0.6s;
+}
+[data-theme="superposition"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="between-channels"] .loader-icon::before { content: '📺'; }
+[data-theme="between-channels"] .loader-title {
+  text-shadow: 0 0 20px rgba(154,160,166,0.5);
+  animation-duration: 0.4s, 4s;
+}
+[data-theme="between-channels"] .loader-subtitle,
+[data-theme="between-channels"] .loader-bar-track,
+[data-theme="between-channels"] .loader-status {
+  animation-duration: 0.4s;
+}
+[data-theme="between-channels"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
 /* ============================================================
    THEME METADATA
    Used by js/themes.js to display theme names and unlock info.

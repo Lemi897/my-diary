@@ -239,6 +239,16 @@
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 1rem;
     }
+    .theme-section-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); margin: 1.25rem 0 0.75rem;
+    }
+    .theme-section-header:first-child { margin-top: 0; }
+    .theme-section-count {
+      background: var(--accent-dim); color: var(--accent-1);
+      border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.7rem;
+    }
 
     .theme-card {
       border-radius: var(--radius-sm);
@@ -1130,10 +1140,9 @@
       const activeTheme = localStorage.getItem('active_theme') || '';
       const grid = document.getElementById('themesGrid');
 
-      grid.innerHTML = ALL_THEMES.map(theme => {
+      function cardHtml(theme) {
         const isUnlocked = theme.milestone === 0 || unlockedThemes.includes(theme.key);
         const isActive = theme.key === activeTheme;
-
         return `
           <div class="theme-card ${isActive ? 'active-theme' : ''} ${!isUnlocked ? 'locked-theme' : ''}"
             style="background-color:${theme.colors[0]};border-color:${isActive ? 'var(--warning)' : theme.colors[1]};"
@@ -1155,7 +1164,30 @@
             </div>
           </div>
         `;
-      }).join('');
+      }
+
+      // Unlocked first (what you can actually use right now, active
+      // theme pinned to the front), locked after — sorted nearest-
+      // to-unlock first so it reads as a progression, not a jumble.
+      const unlocked = ALL_THEMES.filter(t => t.milestone === 0 || unlockedThemes.includes(t.key));
+      const locked = ALL_THEMES.filter(t => t.milestone !== 0 && !unlockedThemes.includes(t.key))
+        .sort((a, b) => a.milestone - b.milestone);
+
+      unlocked.sort((a, b) => (a.key === activeTheme ? -1 : b.key === activeTheme ? 1 : 0));
+
+      grid.innerHTML = `
+        <div class="theme-section-header">
+          Unlocked <span class="theme-section-count">${unlocked.length}</span>
+        </div>
+        <div class="themes-grid">${unlocked.map(cardHtml).join('')}</div>
+
+        ${locked.length ? `
+          <div class="theme-section-header">
+            Locked <span class="theme-section-count">${locked.length}</span>
+          </div>
+          <div class="themes-grid">${locked.map(cardHtml).join('')}</div>
+        ` : ''}
+      `;
     }
 
     // ----------------------------------------------------------
