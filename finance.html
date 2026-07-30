@@ -193,6 +193,29 @@
     .savings-goal-actions{display:flex;gap:.5rem;margin-bottom:1rem;}
     .savings-deposit-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--lb);}
     .savings-deposit-row:last-child{border-bottom:none;}
+    .wishlist-totals-row{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .wishlist-total-chip{background:var(--ls);border:1px solid var(--lb);padding:.5rem .9rem;}
+    .wishlist-total-chip .label{color:var(--lm);text-transform:uppercase;letter-spacing:.08em;font-size:.6rem;display:block;margin-bottom:.2rem;}
+    .wishlist-total-chip .value{font-family:var(--mono);color:var(--lo);font-weight:700;font-size:.9rem;}
+    .wishlist-card{border:1px solid var(--lb);background:var(--ls);padding:1rem 1.25rem;margin-bottom:.75rem;}
+    .wishlist-card.ready{border-color:var(--lg2);box-shadow:0 0 0 1px var(--lg2);}
+    .wishlist-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;}
+    .wishlist-name{font-size:.9rem;color:var(--lt);margin-bottom:.35rem;}
+    .wishlist-cat-badge{font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.15rem .5rem;}
+    .wishlist-cat-badge.need{background:rgba(158,74,74,.15);color:var(--lr2);}
+    .wishlist-cat-badge.want{background:rgba(200,148,58,.15);color:var(--lo);}
+    .wishlist-cat-badge.wish{background:rgba(74,158,110,.15);color:var(--lg2);}
+    .wishlist-price{font-family:var(--mono);font-size:.85rem;color:var(--lt);white-space:nowrap;}
+    .wishlist-progress-track{height:4px;background:var(--lb2);margin:.6rem 0;overflow:hidden;}
+    .wishlist-progress-fill{height:100%;background:var(--lo);transition:width .5s ease;max-width:100%;}
+    .wishlist-card.ready .wishlist-progress-fill{background:var(--lg2);}
+    .wishlist-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--lm);flex-wrap:wrap;gap:.5rem;}
+    .wishlist-source-link{color:var(--lo);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;}
+    .wishlist-status-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .5rem;}
+    .wishlist-status-badge.ready{background:rgba(74,158,110,.2);color:var(--lg2);}
+    .wishlist-status-badge.purchased{background:rgba(120,120,120,.2);color:var(--lm);}
+    .wishlist-status-badge.abandoned{background:rgba(158,74,74,.15);color:var(--lr2);}
+    .wishlist-actions{display:flex;gap:.4rem;margin-top:.65rem;}
     .savings-deposit-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
     .savings-deposit-note{font-size:.75rem;color:var(--lsu);margin-top:.15rem;}
     .savings-deposit-amount{font-family:var(--mono);font-size:.82rem;color:var(--lg2);font-weight:500;}
@@ -333,6 +356,7 @@
       <button class="ledger-tab" onclick="switchTab('income',this)">Income</button>
       <button class="ledger-tab" onclick="switchTab('savings',this)">Savings</button>
       <button class="ledger-tab" onclick="switchTab('debts',this)">Debts</button>
+      <button class="ledger-tab" onclick="switchTab('wishlist',this)">Wishlist</button>
       <button class="ledger-tab" onclick="switchTab('log',this)">Log</button>
     </div>
 
@@ -389,6 +413,23 @@
           <button class="log-filter-btn" onclick="setDebtFilter('owed_to_me',this)">Owed to Me</button>
         </div>
         <div id="debtsContainer"><div class="savings-empty">No debts logged.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-wishlist">
+      <div class="savings-section">
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Needs, Wants &amp; Wishes</div>
+          <button class="savings-add-btn" onclick="openWishlistModal()">+ NEW ITEM</button>
+        </div>
+        <div class="wishlist-totals-row" id="wishlistTotals"></div>
+        <div class="debts-filter-row">
+          <button class="log-filter-btn active" onclick="setWishlistFilter('all',this)">All</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('need',this)">Needs</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('want',this)">Wants</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('wish',this)">Wishes</button>
+        </div>
+        <div id="wishlistContainer"><div class="savings-empty">No items yet.</div></div>
       </div>
     </div>
 
@@ -615,6 +656,50 @@
   </div>
 </div>
 
+<!-- WISHLIST ITEM MODAL -->
+<div class="ledger-modal-overlay" id="wishlistModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="wishlistModalTitle">NEW ITEM</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="wishlistDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteWishlistItem()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('wishlistModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Item Name</label><input class="ledger-input" id="wishlist_name" type="text" placeholder="e.g. AirPods Pro" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Category</label>
+        <select class="ledger-input" id="wishlist_category">
+          <option value="need">Need</option>
+          <option value="want">Want</option>
+          <option value="wish">Wish</option>
+        </select>
+      </div>
+      <div class="ledger-field"><label class="ledger-label">Price (KSH)</label><input class="ledger-input" id="wishlist_price" type="number" placeholder="0" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Link or Location (optional)</label><input class="ledger-input" id="wishlist_source" type="text" placeholder="Paste a link, or note where you saw it" /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('wishlistModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveWishlistItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD-TO-SAVINGS MODAL -->
+<div class="ledger-modal-overlay" id="wishlistDepositModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span>Add to Savings</span>
+      <button class="modal-close" onclick="closeModal('wishlistDepositModal')"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="wishlist_deposit_amount" type="number" placeholder="0" /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('wishlistDepositModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveWishlistDeposit()">Add</button>
+    </div>
+  </div>
+</div>
+
 <!-- DEPOSIT MODAL -->
 <div class="ledger-modal-overlay" id="depositModal">
   <div class="ledger-modal">
@@ -665,7 +750,7 @@
 <script type="module">
   import { supabase } from './js/supabase.js';
   import { initPinLock, wirePinLockUI } from './js/pinlock.js';
-  import { isOnline, onConnectivityChange, showToast, todayDate, isNeoTokyoActive, applyDaytime, applyWeather, applyThemeTier } from './js/utils.js';
+  import { isOnline, onConnectivityChange, showToast, todayDate, isNeoTokyoActive, applyDaytime, applyWeather, applyThemeTier, sanitize } from './js/utils.js';
   import { getVerseFromLibrary } from './js/scripture.js';
 
   // ----------------------------------------------------------
@@ -784,8 +869,9 @@
     updateOnline();
     onConnectivityChange(updateOnline);
     updateMonthLabel();
-    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets(),loadSavingsGoals(),loadDebts()]);
+    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets(),loadSavingsGoals(),loadDebts(),loadWishlist()]);
     render();
+    renderWishlist();
     loaderProgress(100, 'Ready!');
     setTimeout(hideLoader, 300);
   }
@@ -1146,6 +1232,173 @@
     await loadDebts(); renderDebts();
   };
 
+  // ----------------------------------------------------------
+  // WISHLIST — Needs, Wants & Wishes. Log a product the moment
+  // you're tempted, save toward it deliberately, and only get
+  // flagged "ready" once you've actually saved the full price —
+  // the decision to buy stays yours, this just removes the
+  // "did I actually save enough" guesswork.
+  // ----------------------------------------------------------
+  let allWishlistItems=[];
+  let wishlistFilter='all';
+
+  async function loadWishlist(){
+    const {data,error}=await supabase.from('wishlist_items').select('*').eq('user_id',userId).order('created_at',{ascending:false});
+    if(error){showToast('Failed to load wishlist','error');return;}
+    allWishlistItems=data||[];
+  }
+
+  window.setWishlistFilter=function(cat,btn){
+    wishlistFilter=cat;
+    document.querySelectorAll('#panel-wishlist .log-filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderWishlist();
+  };
+
+  function renderWishlist(){
+    const totalsEl=document.getElementById('wishlistTotals');
+    const cats=['need','want','wish'];
+    totalsEl.innerHTML=cats.map(c=>{
+      const sum=allWishlistItems.filter(i=>i.category===c && i.status!=='abandoned').reduce((s,i)=>s+Number(i.price||0),0);
+      const label=c==='need'?'Needs':c==='want'?'Wants':'Wishes';
+      return `<div class="wishlist-total-chip"><span class="label">${label}</span><span class="value">${fmtKSH(sum)}</span></div>`;
+    }).join('');
+
+    const container=document.getElementById('wishlistContainer');
+    const filtered=wishlistFilter==='all'?allWishlistItems:allWishlistItems.filter(i=>i.category===wishlistFilter);
+    if(!filtered.length){container.innerHTML='<div class="savings-empty">No items yet.</div>';return;}
+
+    container.innerHTML=filtered.map(item=>{
+      const price=Number(item.price||0);
+      const saved=Number(item.amount_saved||0);
+      const pct=price>0?Math.min(100,Math.round(saved/price*100)):0;
+      const isReady=item.status==='ready';
+      const isUrl=item.source && /^https?:\/\//i.test(item.source);
+      return `
+        <div class="wishlist-card ${isReady?'ready':''}">
+          <div class="wishlist-card-top">
+            <div>
+              <div class="wishlist-name">${sanitize(item.name)}</div>
+              <span class="wishlist-cat-badge ${item.category}">${item.category}</span>
+              ${item.status && item.status!=='saving'?`<span class="wishlist-status-badge ${item.status}">${item.status}</span>`:''}
+            </div>
+            <div class="wishlist-price">${fmtKSH(price)}</div>
+          </div>
+          <div class="wishlist-progress-track"><div class="wishlist-progress-fill" style="width:${pct}%;"></div></div>
+          <div class="wishlist-meta-row">
+            <span>${fmtKSH(saved)} saved (${pct}%)</span>
+            ${item.source
+              ? (isUrl
+                  ? `<a class="wishlist-source-link" href="${sanitize(item.source)}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> Open</a>`
+                  : `<span><i class="ri-map-pin-line"></i> ${sanitize(item.source)}</span>`)
+              : ''}
+          </div>
+          <div class="wishlist-actions">
+            ${item.status!=='purchased' && item.status!=='abandoned' ? `<button class="ledger-btn" onclick="openWishlistDepositModal('${item.id}')">+ Add Savings</button>` : ''}
+            ${isReady ? `<button class="ledger-btn confirm" onclick="markWishlistPurchased('${item.id}')">Mark Purchased</button>` : ''}
+            <button class="ledger-btn" onclick="openWishlistModal('${item.id}')">Edit</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.openWishlistModal=function(itemId){
+    const modal=document.getElementById('wishlistModal');
+    const deleteBtn=document.getElementById('wishlistDeleteBtn');
+    if(itemId){
+      const it=allWishlistItems.find(x=>x.id===itemId);
+      if(!it) return;
+      modal._editId=itemId;
+      document.getElementById('wishlistModalTitle').textContent='EDIT ITEM';
+      document.getElementById('wishlist_name').value=it.name||'';
+      document.getElementById('wishlist_category').value=it.category||'want';
+      document.getElementById('wishlist_price').value=it.price||'';
+      document.getElementById('wishlist_source').value=it.source||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      document.getElementById('wishlistModalTitle').textContent='NEW ITEM';
+      document.getElementById('wishlist_name').value='';
+      document.getElementById('wishlist_category').value='want';
+      document.getElementById('wishlist_price').value='';
+      document.getElementById('wishlist_source').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveWishlistItem=async function(){
+    const name=document.getElementById('wishlist_name').value.trim();
+    const category=document.getElementById('wishlist_category').value;
+    const price=Number(document.getElementById('wishlist_price').value);
+    const source=document.getElementById('wishlist_source').value.trim()||null;
+    if(!name||!price){showToast('Enter a name and price','error');return;}
+    if(!isOnline()){showToast('Connect to the internet to save this item','error');return;}
+
+    const editId=document.getElementById('wishlistModal')._editId;
+    let error;
+    if(editId){
+      ({error}=await supabase.from('wishlist_items').update({name,category,price,source}).eq('id',editId).eq('user_id',userId));
+    } else {
+      ({error}=await supabase.from('wishlist_items').insert({name,category,price,source,amount_saved:0,status:'saving',user_id:userId}));
+    }
+    if(error){showToast('Failed to save item','error');return;}
+    showToast('Item saved','success');
+    closeModal('wishlistModal');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.deleteWishlistItem=async function(){
+    const itemId=document.getElementById('wishlistModal')._editId;
+    if(!itemId) return;
+    if(!confirm('Delete this item?')) return;
+    const {error}=await supabase.from('wishlist_items').delete().eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to delete item','error');return;}
+    showToast('Item deleted','success');
+    closeModal('wishlistModal');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.openWishlistDepositModal=function(itemId){
+    const modal=document.getElementById('wishlistDepositModal');
+    modal._itemId=itemId;
+    document.getElementById('wishlist_deposit_amount').value='';
+    modal.classList.add('open');
+  };
+
+  window.saveWishlistDeposit=async function(){
+    const itemId=document.getElementById('wishlistDepositModal')._itemId;
+    const amount=Number(document.getElementById('wishlist_deposit_amount').value);
+    if(!itemId||!amount||amount<=0){showToast('Enter a valid amount','error');return;}
+    if(!isOnline()){showToast('Connect to the internet to add to savings','error');return;}
+
+    const item=allWishlistItems.find(x=>x.id===itemId);
+    if(!item) return;
+    const newSaved=Number(item.amount_saved||0)+amount;
+    const newStatus=newSaved>=Number(item.price||0)?'ready':'saving';
+
+    const {error}=await supabase.from('wishlist_items').update({amount_saved:newSaved,status:newStatus}).eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to update savings','error');return;}
+
+    closeModal('wishlistDepositModal');
+    await loadWishlist(); renderWishlist();
+
+    if(newStatus==='ready' && item.status!=='ready'){
+      showToast(`🎉 "${item.name}" is fully funded — ready when you are!`,'success');
+    } else {
+      showToast('Savings updated','success');
+    }
+  };
+
+  window.markWishlistPurchased=async function(itemId){
+    if(!confirm('Mark this item as purchased?')) return;
+    const {error}=await supabase.from('wishlist_items').update({status:'purchased'}).eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to update item','error');return;}
+    showToast('Marked as purchased','success');
+    await loadWishlist(); renderWishlist();
+  };
+
   function renderTxLog() {
     const c=document.getElementById('txLogContainer');
     const q=(document.getElementById('logSearch')?.value||'').toLowerCase();
@@ -1177,6 +1430,8 @@
     if(id==='savingsGoalModal') document.getElementById('savingsGoalModal')._editId=null;
     if(id==='depositModal') document.getElementById('depositModal')._goalId=null;
     if(id==='debtModal') document.getElementById('debtModal')._editId=null;
+    if(id==='wishlistModal') document.getElementById('wishlistModal')._editId=null;
+    if(id==='wishlistDepositModal') document.getElementById('wishlistDepositModal')._itemId=null;
   };
   window.openBudgetModal=function(){
     updateMonthLabel();renderBudgetGrid();document.getElementById('budgetModal').classList.add('open');
