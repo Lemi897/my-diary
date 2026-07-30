@@ -216,6 +216,21 @@
     .wishlist-status-badge.purchased{background:rgba(120,120,120,.2);color:var(--lm);}
     .wishlist-status-badge.abandoned{background:rgba(158,74,74,.15);color:var(--lr2);}
     .wishlist-actions{display:flex;gap:.4rem;margin-top:.65rem;}
+    .wishlist-card{display:flex;gap:.9rem;}
+    .wishlist-thumb{width:52px;height:52px;object-fit:cover;border-radius:4px;background:var(--lb2);flex-shrink:0;}
+    .wishlist-thumb-placeholder{width:52px;height:52px;border-radius:4px;background:var(--lb2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--lm);font-size:1.2rem;}
+    .wishlist-body{flex:1;min-width:0;}
+    .wishlist-days-ago{font-size:.65rem;color:var(--lm);}
+    .wishlist-goal-link{font-size:.72rem;color:var(--lm);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.3rem;}
+    .wishlist-goal-link a,.wishlist-goal-link button.link-style{background:none;border:none;color:var(--lo);font-family:inherit;font-size:inherit;cursor:pointer;padding:0;text-decoration:underline;}
+    .wishlist-shared-warning{font-size:.65rem;color:var(--lr2);margin-top:.25rem;display:flex;align-items:center;gap:.3rem;}
+    .wishlist-insight-bar{background:var(--ls);border:1px solid var(--lb);padding:.6rem .9rem;margin-bottom:1rem;font-size:.72rem;color:var(--lm);}
+    .wishlist-insight-bar span{color:var(--lo);font-weight:700;}
+    .wishlist-drag-handle{cursor:grab;color:var(--lm);padding:.3rem;align-self:flex-start;}
+    .wishlist-drag-handle:active{cursor:grabbing;}
+    .wishlist-history-toggle{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.35rem .7rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:inherit;margin-bottom:1rem;}
+    .wishlist-history-toggle:hover{border-color:var(--lo);color:var(--lo);}
+    .wishlist-price-history-list{font-size:.68rem;color:var(--lm);margin-top:.4rem;padding-left:.9rem;}
     .savings-deposit-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
     .savings-deposit-note{font-size:.75rem;color:var(--lsu);margin-top:.15rem;}
     .savings-deposit-amount{font-family:var(--mono);font-size:.82rem;color:var(--lg2);font-weight:500;}
@@ -423,12 +438,14 @@
           <button class="savings-add-btn" onclick="openWishlistModal()">+ NEW ITEM</button>
         </div>
         <div class="wishlist-totals-row" id="wishlistTotals"></div>
+        <div class="wishlist-insight-bar" id="wishlistInsight"></div>
         <div class="debts-filter-row">
           <button class="log-filter-btn active" onclick="setWishlistFilter('all',this)">All</button>
           <button class="log-filter-btn" onclick="setWishlistFilter('need',this)">Needs</button>
           <button class="log-filter-btn" onclick="setWishlistFilter('want',this)">Wants</button>
           <button class="log-filter-btn" onclick="setWishlistFilter('wish',this)">Wishes</button>
         </div>
+        <button class="wishlist-history-toggle" onclick="toggleWishlistHistory()" id="wishlistHistoryToggleBtn">Show History</button>
         <div id="wishlistContainer"><div class="savings-empty">No items yet.</div></div>
       </div>
     </div>
@@ -678,6 +695,7 @@
       <div class="ledger-field"><label class="ledger-label">Price (KSH)</label><input class="ledger-input" id="wishlist_price" type="number" placeholder="0" /></div>
     </div>
     <div class="ledger-field"><label class="ledger-label">Link or Location (optional)</label><input class="ledger-input" id="wishlist_source" type="text" placeholder="Paste a link, or note where you saw it" /></div>
+    <div class="ledger-field"><label class="ledger-label">Photo URL (optional)</label><input class="ledger-input" id="wishlist_image" type="text" placeholder="Paste an image link" /></div>
     <div class="modal-btn-row">
       <button class="ledger-btn" onclick="closeModal('wishlistModal')">Cancel</button>
       <button class="ledger-btn confirm" onclick="saveWishlistItem()">Save Item</button>
@@ -685,17 +703,27 @@
   </div>
 </div>
 
-<!-- QUICK ADD-TO-SAVINGS MODAL -->
-<div class="ledger-modal-overlay" id="wishlistDepositModal">
+<!-- LINK SAVINGS GOAL MODAL -->
+<div class="ledger-modal-overlay" id="wishlistGoalModal">
   <div class="ledger-modal">
     <div class="modal-title">
-      <span>Add to Savings</span>
-      <button class="modal-close" onclick="closeModal('wishlistDepositModal')"><i class="ri-close-line"></i></button>
+      <span>Link a Savings Goal</span>
+      <button class="modal-close" onclick="closeModal('wishlistGoalModal')"><i class="ri-close-line"></i></button>
     </div>
-    <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="wishlist_deposit_amount" type="number" placeholder="0" /></div>
+    <p style="font-size:.75rem;color:var(--lm);margin:-.5rem 0 1rem;">Saving toward this item happens through a real Savings Goal — pick an existing one, or create a new one just for this.</p>
+    <div class="ledger-field">
+      <label class="ledger-label">Existing Goal</label>
+      <select class="ledger-input" id="wishlist_goal_select">
+        <option value="">— Create a new goal instead —</option>
+      </select>
+    </div>
+    <div class="ledger-field" id="wishlist_new_goal_field">
+      <label class="ledger-label">New Goal Title</label>
+      <input class="ledger-input" id="wishlist_new_goal_title" type="text" placeholder="e.g. AirPods Pro Fund" />
+    </div>
     <div class="modal-btn-row">
-      <button class="ledger-btn" onclick="closeModal('wishlistDepositModal')">Cancel</button>
-      <button class="ledger-btn confirm" onclick="saveWishlistDeposit()">Add</button>
+      <button class="ledger-btn" onclick="closeModal('wishlistGoalModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveWishlistGoalLink()">Link Goal</button>
     </div>
   </div>
 </div>
@@ -1234,18 +1262,28 @@
 
   // ----------------------------------------------------------
   // WISHLIST — Needs, Wants & Wishes. Log a product the moment
-  // you're tempted, save toward it deliberately, and only get
-  // flagged "ready" once you've actually saved the full price —
-  // the decision to buy stays yours, this just removes the
-  // "did I actually save enough" guesswork.
+  // you're tempted, then save toward it through a REAL Savings
+  // Goal (not a self-contained number) — so "ready" reflects
+  // actual money you have, not a wishlist-only figure. Multiple
+  // items can share one goal; when they do, "ready" is shown
+  // honestly with a caveat, since the money doesn't multiply.
   // ----------------------------------------------------------
   let allWishlistItems=[];
   let wishlistFilter='all';
+  let wishlistShowHistory=false;
+  let wishlistPriceHistory={};
+  let wishlistDragSourceId=null;
 
   async function loadWishlist(){
-    const {data,error}=await supabase.from('wishlist_items').select('*').eq('user_id',userId).order('created_at',{ascending:false});
+    const {data,error}=await supabase.from('wishlist_items').select('*').eq('user_id',userId).order('sort_order',{ascending:true}).order('created_at',{ascending:false});
     if(error){showToast('Failed to load wishlist','error');return;}
     allWishlistItems=data||[];
+  }
+
+  async function loadWishlistPriceHistory(itemId){
+    const {data}=await supabase.from('wishlist_price_history').select('*').eq('item_id',itemId).eq('user_id',userId).order('changed_at',{ascending:false});
+    wishlistPriceHistory[itemId]=data||[];
+    return wishlistPriceHistory[itemId];
   }
 
   window.setWishlistFilter=function(cat,btn){
@@ -1255,52 +1293,158 @@
     renderWishlist();
   };
 
+  window.toggleWishlistHistory=function(){
+    wishlistShowHistory=!wishlistShowHistory;
+    document.getElementById('wishlistHistoryToggleBtn').textContent=wishlistShowHistory?'Hide History':'Show History';
+    renderWishlist();
+  };
+
+  function goalForItem(item){
+    return item.savings_goal_id ? allSavingsGoals.find(g=>g.id===item.savings_goal_id) : null;
+  }
+  function savedAmountForItem(item){
+    const g=goalForItem(item);
+    return g ? Number(g.current_amount||0) : 0;
+  }
+  function isItemReady(item){
+    return savedAmountForItem(item) >= Number(item.price||0);
+  }
+  function daysAgoText(dateStr){
+    const days=Math.floor((Date.now()-new Date(dateStr).getTime())/86400000);
+    if(days<=0) return 'added today';
+    if(days===1) return 'added 1 day ago';
+    return `added ${days} days ago`;
+  }
+
   function renderWishlist(){
+    const active=allWishlistItems.filter(i=>i.status!=='purchased'&&i.status!=='abandoned');
+    const history=allWishlistItems.filter(i=>i.status==='purchased'||i.status==='abandoned');
+
+    // How many ACTIVE items currently share each goal — needed for
+    // the honest "shared" caveat.
+    const goalUsage={};
+    active.forEach(i=>{ if(i.savings_goal_id) goalUsage[i.savings_goal_id]=(goalUsage[i.savings_goal_id]||0)+1; });
+
+    // Category totals (active items only)
     const totalsEl=document.getElementById('wishlistTotals');
     const cats=['need','want','wish'];
+    const catSums={};
+    cats.forEach(c=>{ catSums[c]=active.filter(i=>i.category===c).reduce((s,i)=>s+Number(i.price||0),0); });
     totalsEl.innerHTML=cats.map(c=>{
-      const sum=allWishlistItems.filter(i=>i.category===c && i.status!=='abandoned').reduce((s,i)=>s+Number(i.price||0),0);
       const label=c==='need'?'Needs':c==='want'?'Wants':'Wishes';
-      return `<div class="wishlist-total-chip"><span class="label">${label}</span><span class="value">${fmtKSH(sum)}</span></div>`;
+      return `<div class="wishlist-total-chip"><span class="label">${label}</span><span class="value">${fmtKSH(catSums[c])}</span></div>`;
     }).join('');
 
-    const container=document.getElementById('wishlistContainer');
-    const filtered=wishlistFilter==='all'?allWishlistItems:allWishlistItems.filter(i=>i.category===wishlistFilter);
-    if(!filtered.length){container.innerHTML='<div class="savings-empty">No items yet.</div>';return;}
+    // Category-balance insight
+    const grandTotal=catSums.need+catSums.want+catSums.wish;
+    const insightEl=document.getElementById('wishlistInsight');
+    if(grandTotal>0){
+      const pct=c=>Math.round(catSums[c]/grandTotal*100);
+      insightEl.style.display='block';
+      insightEl.innerHTML=`<span>${pct('want')}%</span> of your wishlist's value is Wants, <span>${pct('need')}%</span> Needs, <span>${pct('wish')}%</span> Wishes.`;
+    } else {
+      insightEl.style.display='none';
+    }
 
-    container.innerHTML=filtered.map(item=>{
-      const price=Number(item.price||0);
-      const saved=Number(item.amount_saved||0);
-      const pct=price>0?Math.min(100,Math.round(saved/price*100)):0;
-      const isReady=item.status==='ready';
-      const isUrl=item.source && /^https?:\/\//i.test(item.source);
-      return `
-        <div class="wishlist-card ${isReady?'ready':''}">
+    const container=document.getElementById('wishlistContainer');
+    const filtered=wishlistFilter==='all'?active:active.filter(i=>i.category===wishlistFilter);
+
+    if(!filtered.length && !wishlistShowHistory){
+      container.innerHTML='<div class="savings-empty">No items yet.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(item=>renderWishlistCard(item, goalUsage)).join('')
+      + (wishlistShowHistory && history.length ? `
+          <div class="section-header" style="margin-top:1.5rem;">History</div>
+          ${history.map(item=>renderWishlistCard(item, goalUsage, true)).join('')}
+        ` : '');
+
+    // Wire drag-and-drop on the active (non-history) cards only
+    container.querySelectorAll('.wishlist-card[data-draggable="true"]').forEach(card=>{
+      card.addEventListener('dragstart',e=>{ wishlistDragSourceId=card.dataset.itemId; e.dataTransfer.effectAllowed='move'; });
+      card.addEventListener('dragover',e=>{ e.preventDefault(); });
+      card.addEventListener('drop',async e=>{
+        e.preventDefault();
+        const targetId=card.dataset.itemId;
+        if(!wishlistDragSourceId || wishlistDragSourceId===targetId) return;
+        await reorderWishlistItems(wishlistDragSourceId, targetId);
+      });
+    });
+  }
+
+  function renderWishlistCard(item, goalUsage, isHistory){
+    const price=Number(item.price||0);
+    const saved=savedAmountForItem(item);
+    const pct=price>0?Math.min(100,Math.round(saved/price*100)):0;
+    const ready=!isHistory && isItemReady(item);
+    const isUrl=item.source && /^https?:\/\//i.test(item.source);
+    const goal=goalForItem(item);
+    const sharedCount=item.savings_goal_id ? (goalUsage[item.savings_goal_id]||0) : 0;
+
+    return `
+      <div class="wishlist-card ${ready?'ready':''}" ${!isHistory?`draggable="true" data-draggable="true" data-item-id="${item.id}"`:''}>
+        ${!isHistory?'<div class="wishlist-drag-handle"><i class="ri-drag-move-2-line"></i></div>':''}
+        ${item.image_url
+          ? `<img class="wishlist-thumb" src="${sanitize(item.image_url)}" alt="" onerror="this.style.display='none'"/>`
+          : `<div class="wishlist-thumb-placeholder"><i class="ri-image-line"></i></div>`}
+        <div class="wishlist-body">
           <div class="wishlist-card-top">
             <div>
               <div class="wishlist-name">${sanitize(item.name)}</div>
               <span class="wishlist-cat-badge ${item.category}">${item.category}</span>
-              ${item.status && item.status!=='saving'?`<span class="wishlist-status-badge ${item.status}">${item.status}</span>`:''}
+              ${item.status==='purchased'?'<span class="wishlist-status-badge purchased">purchased</span>':''}
+              ${item.status==='abandoned'?'<span class="wishlist-status-badge abandoned">abandoned</span>':''}
+              ${ready?'<span class="wishlist-status-badge ready">ready</span>':''}
+              <div class="wishlist-days-ago">${daysAgoText(item.created_at)}</div>
             </div>
             <div class="wishlist-price">${fmtKSH(price)}</div>
           </div>
-          <div class="wishlist-progress-track"><div class="wishlist-progress-fill" style="width:${pct}%;"></div></div>
+
+          ${!isHistory ? `<div class="wishlist-progress-track"><div class="wishlist-progress-fill" style="width:${pct}%;"></div></div>` : ''}
           <div class="wishlist-meta-row">
-            <span>${fmtKSH(saved)} saved (${pct}%)</span>
+            <span>${goal ? `${fmtKSH(saved)} saved (${pct}%)` : 'No goal linked yet'}</span>
             ${item.source
               ? (isUrl
                   ? `<a class="wishlist-source-link" href="${sanitize(item.source)}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> Open</a>`
                   : `<span><i class="ri-map-pin-line"></i> ${sanitize(item.source)}</span>`)
               : ''}
           </div>
-          <div class="wishlist-actions">
-            ${item.status!=='purchased' && item.status!=='abandoned' ? `<button class="ledger-btn" onclick="openWishlistDepositModal('${item.id}')">+ Add Savings</button>` : ''}
-            ${isReady ? `<button class="ledger-btn confirm" onclick="markWishlistPurchased('${item.id}')">Mark Purchased</button>` : ''}
-            <button class="ledger-btn" onclick="openWishlistModal('${item.id}')">Edit</button>
-          </div>
+
+          ${!isHistory ? `
+            <div class="wishlist-goal-link">
+              ${goal
+                ? `<span><i class="ri-piggy-bank-line"></i> Linked to "${sanitize(goal.title)}"</span><button class="link-style" onclick="openWishlistGoalModal('${item.id}')">Change</button>`
+                : `<button class="link-style" onclick="openWishlistGoalModal('${item.id}')">Link a Savings Goal</button>`}
+            </div>
+            ${sharedCount>1 ? `<div class="wishlist-shared-warning"><i class="ri-error-warning-line"></i> Shared with ${sharedCount-1} other item(s) — actual availability may be less than shown.</div>` : ''}
+          ` : ''}
+
+          ${!isHistory ? `
+            <div class="wishlist-actions">
+              ${ready ? `<button class="ledger-btn confirm" onclick="markWishlistPurchased('${item.id}')">Mark Purchased</button>` : ''}
+              <button class="ledger-btn" onclick="openWishlistModal('${item.id}')">Edit</button>
+              <button class="ledger-btn" onclick="abandonWishlistItem('${item.id}')">Abandon</button>
+            </div>
+          ` : ''}
         </div>
-      `;
-    }).join('');
+      </div>
+    `;
+  }
+
+  async function reorderWishlistItems(sourceId, targetId){
+    const sourceIdx=allWishlistItems.findIndex(i=>i.id===sourceId);
+    const targetIdx=allWishlistItems.findIndex(i=>i.id===targetId);
+    if(sourceIdx===-1||targetIdx===-1) return;
+    const [moved]=allWishlistItems.splice(sourceIdx,1);
+    allWishlistItems.splice(targetIdx,0,moved);
+
+    // Persist new order for all active items
+    const updates=allWishlistItems
+      .filter(i=>i.status!=='purchased'&&i.status!=='abandoned')
+      .map((i,idx)=>supabase.from('wishlist_items').update({sort_order:idx}).eq('id',i.id).eq('user_id',userId));
+    await Promise.all(updates);
+    renderWishlist();
   }
 
   window.openWishlistModal=function(itemId){
@@ -1310,19 +1454,23 @@
       const it=allWishlistItems.find(x=>x.id===itemId);
       if(!it) return;
       modal._editId=itemId;
+      modal._oldPrice=it.price;
       document.getElementById('wishlistModalTitle').textContent='EDIT ITEM';
       document.getElementById('wishlist_name').value=it.name||'';
       document.getElementById('wishlist_category').value=it.category||'want';
       document.getElementById('wishlist_price').value=it.price||'';
       document.getElementById('wishlist_source').value=it.source||'';
+      document.getElementById('wishlist_image').value=it.image_url||'';
       deleteBtn.style.display='block';
     } else {
       modal._editId=null;
+      modal._oldPrice=null;
       document.getElementById('wishlistModalTitle').textContent='NEW ITEM';
       document.getElementById('wishlist_name').value='';
       document.getElementById('wishlist_category').value='want';
       document.getElementById('wishlist_price').value='';
       document.getElementById('wishlist_source').value='';
+      document.getElementById('wishlist_image').value='';
       deleteBtn.style.display='none';
     }
     modal.classList.add('open');
@@ -1333,15 +1481,23 @@
     const category=document.getElementById('wishlist_category').value;
     const price=Number(document.getElementById('wishlist_price').value);
     const source=document.getElementById('wishlist_source').value.trim()||null;
+    const imageUrl=document.getElementById('wishlist_image').value.trim()||null;
     if(!name||!price){showToast('Enter a name and price','error');return;}
     if(!isOnline()){showToast('Connect to the internet to save this item','error');return;}
 
-    const editId=document.getElementById('wishlistModal')._editId;
+    const modal=document.getElementById('wishlistModal');
+    const editId=modal._editId;
+    const oldPrice=modal._oldPrice;
     let error;
+
     if(editId){
-      ({error}=await supabase.from('wishlist_items').update({name,category,price,source}).eq('id',editId).eq('user_id',userId));
+      ({error}=await supabase.from('wishlist_items').update({name,category,price,source,image_url:imageUrl}).eq('id',editId).eq('user_id',userId));
+      if(!error && oldPrice!=null && Number(oldPrice)!==price){
+        await supabase.from('wishlist_price_history').insert({item_id:editId,user_id:userId,old_price:oldPrice,new_price:price});
+      }
     } else {
-      ({error}=await supabase.from('wishlist_items').insert({name,category,price,source,amount_saved:0,status:'saving',user_id:userId}));
+      const maxOrder=allWishlistItems.reduce((m,i)=>Math.max(m,i.sort_order||0),0);
+      ({error}=await supabase.from('wishlist_items').insert({name,category,price,source,image_url:imageUrl,status:'saving',sort_order:maxOrder+1,user_id:userId}));
     }
     if(error){showToast('Failed to save item','error');return;}
     showToast('Item saved','success');
@@ -1360,37 +1516,6 @@
     await loadWishlist(); renderWishlist();
   };
 
-  window.openWishlistDepositModal=function(itemId){
-    const modal=document.getElementById('wishlistDepositModal');
-    modal._itemId=itemId;
-    document.getElementById('wishlist_deposit_amount').value='';
-    modal.classList.add('open');
-  };
-
-  window.saveWishlistDeposit=async function(){
-    const itemId=document.getElementById('wishlistDepositModal')._itemId;
-    const amount=Number(document.getElementById('wishlist_deposit_amount').value);
-    if(!itemId||!amount||amount<=0){showToast('Enter a valid amount','error');return;}
-    if(!isOnline()){showToast('Connect to the internet to add to savings','error');return;}
-
-    const item=allWishlistItems.find(x=>x.id===itemId);
-    if(!item) return;
-    const newSaved=Number(item.amount_saved||0)+amount;
-    const newStatus=newSaved>=Number(item.price||0)?'ready':'saving';
-
-    const {error}=await supabase.from('wishlist_items').update({amount_saved:newSaved,status:newStatus}).eq('id',itemId).eq('user_id',userId);
-    if(error){showToast('Failed to update savings','error');return;}
-
-    closeModal('wishlistDepositModal');
-    await loadWishlist(); renderWishlist();
-
-    if(newStatus==='ready' && item.status!=='ready'){
-      showToast(`🎉 "${item.name}" is fully funded — ready when you are!`,'success');
-    } else {
-      showToast('Savings updated','success');
-    }
-  };
-
   window.markWishlistPurchased=async function(itemId){
     if(!confirm('Mark this item as purchased?')) return;
     const {error}=await supabase.from('wishlist_items').update({status:'purchased'}).eq('id',itemId).eq('user_id',userId);
@@ -1398,6 +1523,54 @@
     showToast('Marked as purchased','success');
     await loadWishlist(); renderWishlist();
   };
+
+  window.abandonWishlistItem=async function(itemId){
+    if(!confirm('Move this item to history as abandoned?')) return;
+    const {error}=await supabase.from('wishlist_items').update({status:'abandoned'}).eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to update item','error');return;}
+    showToast('Moved to history','success');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.openWishlistGoalModal=function(itemId){
+    const modal=document.getElementById('wishlistGoalModal');
+    modal._itemId=itemId;
+    const item=allWishlistItems.find(x=>x.id===itemId);
+    const select=document.getElementById('wishlist_goal_select');
+    select.innerHTML='<option value="">— Create a new goal instead —</option>'
+      + allSavingsGoals.map(g=>`<option value="${g.id}">${sanitize(g.title)} (${fmtKSH(g.current_amount||0)} saved)</option>`).join('');
+    select.value=item?.savings_goal_id||'';
+    document.getElementById('wishlist_new_goal_title').value=item?.name||'';
+    document.getElementById('wishlist_new_goal_field').style.display=select.value?'none':'block';
+    select.onchange=()=>{ document.getElementById('wishlist_new_goal_field').style.display=select.value?'none':'block'; };
+    modal.classList.add('open');
+  };
+
+  window.saveWishlistGoalLink=async function(){
+    const modal=document.getElementById('wishlistGoalModal');
+    const itemId=modal._itemId;
+    const selectedGoalId=document.getElementById('wishlist_goal_select').value;
+    if(!isOnline()){showToast('Connect to the internet to link a goal','error');return;}
+
+    let goalId=selectedGoalId;
+    if(!goalId){
+      const title=document.getElementById('wishlist_new_goal_title').value.trim();
+      const item=allWishlistItems.find(x=>x.id===itemId);
+      if(!title){showToast('Enter a title for the new goal','error');return;}
+      const {data,error}=await supabase.from('savings_goals').insert({title,target_amount:item?.price||0,current_amount:0,user_id:userId}).select().single();
+      if(error){showToast('Failed to create goal','error');return;}
+      goalId=data.id;
+    }
+
+    const {error:linkError}=await supabase.from('wishlist_items').update({savings_goal_id:goalId}).eq('id',itemId).eq('user_id',userId);
+    if(linkError){showToast('Failed to link goal','error');return;}
+
+    showToast('Goal linked','success');
+    closeModal('wishlistGoalModal');
+    await Promise.all([loadWishlist(), loadSavingsGoals()]);
+    renderWishlist();
+  };
+
 
   function renderTxLog() {
     const c=document.getElementById('txLogContainer');
@@ -1430,8 +1603,8 @@
     if(id==='savingsGoalModal') document.getElementById('savingsGoalModal')._editId=null;
     if(id==='depositModal') document.getElementById('depositModal')._goalId=null;
     if(id==='debtModal') document.getElementById('debtModal')._editId=null;
-    if(id==='wishlistModal') document.getElementById('wishlistModal')._editId=null;
-    if(id==='wishlistDepositModal') document.getElementById('wishlistDepositModal')._itemId=null;
+    if(id==='wishlistModal') { document.getElementById('wishlistModal')._editId=null; document.getElementById('wishlistModal')._oldPrice=null; }
+    if(id==='wishlistGoalModal') document.getElementById('wishlistGoalModal')._itemId=null;
   };
   window.openBudgetModal=function(){
     updateMonthLabel();renderBudgetGrid();document.getElementById('budgetModal').classList.add('open');
