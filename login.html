@@ -53,7 +53,31 @@
       justify-content: center;
       padding: 1.5rem;
       background: radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 70%);
+      position: relative;
+      overflow: hidden;
     }
+
+    /* Interactive bubble background — soft blurred color fields
+       that drift on their own and gently repel away from the
+       cursor. Uses each theme's own accent colors, so it matches
+       whichever theme is active without any extra wiring.
+       .auth-card below gets explicit position+z-index because an
+       absolutely-positioned layer paints above static content by
+       default regardless of DOM order — learned that the hard way
+       building Neo-Tokyo's ambient scene; applying it correctly
+       here from the start. */
+    .bubble-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+    .bubble-wrap { position: absolute; will-change: transform; transition: transform 0.4s ease-out; }
+    .bubble { border-radius: 50%; filter: blur(50px); opacity: 0.5; }
+    .bubble-1 { width: 320px; height: 320px; background: radial-gradient(circle, var(--accent-1), transparent 70%); animation: bubbleDrift1 22s ease-in-out infinite; }
+    .bubble-2 { width: 260px; height: 260px; background: radial-gradient(circle, var(--accent-2), transparent 70%); animation: bubbleDrift2 26s ease-in-out infinite; }
+    .bubble-3 { width: 210px; height: 210px; background: radial-gradient(circle, var(--accent-3), transparent 70%); animation: bubbleDrift3 19s ease-in-out infinite; }
+    .bubble-wrap-1 { left: 8%; top: 12%; }
+    .bubble-wrap-2 { left: 62%; top: 48%; }
+    .bubble-wrap-3 { left: 30%; top: 68%; }
+    @keyframes bubbleDrift1 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(50px,-35px); } }
+    @keyframes bubbleDrift2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-60px,45px); } }
+    @keyframes bubbleDrift3 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(35px,50px); } }
 
     /* Auth card */
     .auth-card {
@@ -64,6 +88,8 @@
       width: 100%;
       max-width: 420px;
       box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+      position: relative;
+      z-index: 1;
     }
 
     /* Logo */
@@ -244,6 +270,11 @@
 
 <body>
   <div class="auth-page">
+    <div class="bubble-bg" id="bubbleBg" aria-hidden="true">
+      <div class="bubble-wrap bubble-wrap-1" id="bubbleWrap1"><div class="bubble bubble-1"></div></div>
+      <div class="bubble-wrap bubble-wrap-2" id="bubbleWrap2"><div class="bubble bubble-2"></div></div>
+      <div class="bubble-wrap bubble-wrap-3" id="bubbleWrap3"><div class="bubble bubble-3"></div></div>
+    </div>
     <div class="auth-card">
 
       <!-- Logo -->
@@ -309,6 +340,47 @@
     const SUPABASE_URL = 'https://teppimpaunucbwingqac.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_a1ozZ46y55IgOYSlU7RrZg_fuK4G2Qb';
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ----------------------------------------------------------
+    // INTERACTIVE BUBBLES — runs immediately, independent of auth.
+    // Bubbles drift on their own via CSS; this layer adds a gentle
+    // repulsion away from the cursor on top of that drift. Each
+    // bubble's own animated transform lives on the INNER .bubble
+    // div, while this JS only ever touches the OUTER .bubble-wrap's
+    // transform — two separate elements, so the two transforms
+    // compose instead of one overwriting the other.
+    // ----------------------------------------------------------
+    (function initBubbles() {
+      const wraps = document.querySelectorAll('.bubble-wrap');
+      if (!wraps.length) return;
+      let mouseX = -9999, mouseY = -9999;
+
+      document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+      });
+
+      function animateRepel() {
+        wraps.forEach(wrap => {
+          const rect = wrap.getBoundingClientRect();
+          const bx = rect.left + rect.width / 2;
+          const by = rect.top + rect.height / 2;
+          const dx = bx - mouseX;
+          const dy = by - mouseY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const maxDist = 280;
+          let offsetX = 0, offsetY = 0;
+          if (dist < maxDist) {
+            const force = (1 - dist / maxDist) * 45;
+            const angle = Math.atan2(dy, dx);
+            offsetX = Math.cos(angle) * force;
+            offsetY = Math.sin(angle) * force;
+          }
+          wrap.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        });
+        requestAnimationFrame(animateRepel);
+      }
+      animateRepel();
+    })();
 
     // ----------------------------------------------------------
     // If already signed in, skip straight to dashboard
