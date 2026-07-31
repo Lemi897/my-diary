@@ -791,20 +791,66 @@ p  { font-size: 0.95rem;color: var(--text-secondary); }
    Device-level lock, separate from Supabase auth. Shown by
    js/pinlock.js whenever a PIN is set. Sits above everything,
    including the app loader and any modal (z-index 20000).
+   Frosted rather than solid, so whatever's on the page behind it
+   — including each theme's own ambient scene — shows through
+   faintly. Makes this read as "your app, locked" instead of a
+   generic security prompt bolted on top.
    ------------------------------------------------------------ */
 .pin-lock-overlay {
   position: fixed; inset: 0; z-index: 20000;
-  background: var(--bg-primary);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: none; align-items: center; justify-content: center; flex-direction: column;
 }
 .pin-lock-overlay.visible { display: flex; }
-.pin-lock-icon { font-size: 2.5rem; color: var(--accent-1); margin-bottom: 1rem; }
-.pin-lock-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-primary); }
-.pin-lock-input {
-  width: 160px; text-align: center; font-size: 1.8rem; letter-spacing: 1rem;
-  padding: 0.75rem; border-radius: 10px; border: 2px solid var(--border);
-  background: var(--bg-card); color: var(--text-primary); outline: none;
-  font-family: var(--font-mono);
+.pin-lock-icon {
+  font-size: 2.5rem; color: var(--accent-1); margin-bottom: 1rem;
+  animation: pinIconBreathe 3s ease-in-out infinite;
 }
-.pin-lock-input:focus { border-color: var(--accent-1); }
+@keyframes pinIconBreathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.pin-lock-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-primary); }
+
+/* The real input stays functional (needed for the numeric mobile
+   keyboard) but visually invisible — the dots are what's seen. */
+.pin-lock-input-hidden {
+  position: absolute; opacity: 0; width: 1px; height: 1px;
+  pointer-events: none;
+}
+
+.pin-dots-row { display: flex; gap: 1rem; margin-top: 0.25rem; }
+.pin-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pin-dot.filled {
+  background: var(--accent-1);
+  border-color: var(--accent-1);
+}
+.pin-dot-pop { animation: pinDotPop 0.25s ease; }
+@keyframes pinDotPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.pin-dots-shake { animation: pinDotsShake 0.4s ease; }
+@keyframes pinDotsShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+
+.pin-dots-success .pin-dot {
+  background: var(--success, #22c55e);
+  border-color: var(--success, #22c55e);
+}
+
 .pin-lock-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; }
