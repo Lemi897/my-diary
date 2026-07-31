@@ -67,17 +67,20 @@
        building Neo-Tokyo's ambient scene; applying it correctly
        here from the start. */
     .bubble-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-    .bubble-wrap { position: absolute; will-change: transform; transition: transform 0.4s ease-out; }
-    .bubble { border-radius: 50%; filter: blur(50px); opacity: 0.5; }
-    .bubble-1 { width: 320px; height: 320px; background: radial-gradient(circle, var(--accent-1), transparent 70%); animation: bubbleDrift1 22s ease-in-out infinite; }
-    .bubble-2 { width: 260px; height: 260px; background: radial-gradient(circle, var(--accent-2), transparent 70%); animation: bubbleDrift2 26s ease-in-out infinite; }
-    .bubble-3 { width: 210px; height: 210px; background: radial-gradient(circle, var(--accent-3), transparent 70%); animation: bubbleDrift3 19s ease-in-out infinite; }
+    .bubble-wrap { position: absolute; will-change: transform; transition: transform 0.15s ease-out; }
+    .bubble { border-radius: 50%; filter: blur(45px); will-change: transform; }
+    .bubble-1 { width: 380px; height: 380px; opacity: 0.7; background: radial-gradient(circle, var(--accent-1), transparent 70%); animation: bubblePulse1 4s ease-in-out infinite, bubbleDrift1 20s ease-in-out infinite; }
+    .bubble-2 { width: 320px; height: 320px; opacity: 0.65; background: radial-gradient(circle, var(--accent-2), transparent 70%); animation: bubblePulse2 5s ease-in-out infinite 0.5s, bubbleDrift2 24s ease-in-out infinite; }
+    .bubble-3 { width: 260px; height: 260px; opacity: 0.65; background: radial-gradient(circle, var(--accent-3), transparent 70%); animation: bubblePulse3 4.5s ease-in-out infinite 1s, bubbleDrift3 18s ease-in-out infinite; }
     .bubble-wrap-1 { left: 8%; top: 12%; }
     .bubble-wrap-2 { left: 62%; top: 48%; }
     .bubble-wrap-3 { left: 30%; top: 68%; }
-    @keyframes bubbleDrift1 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(50px,-35px); } }
-    @keyframes bubbleDrift2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-60px,45px); } }
-    @keyframes bubbleDrift3 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(35px,50px); } }
+    @keyframes bubblePulse1 { 0%, 100% { scale: 1; } 50% { scale: 1.12; } }
+    @keyframes bubblePulse2 { 0%, 100% { scale: 1; } 50% { scale: 1.1; } }
+    @keyframes bubblePulse3 { 0%, 100% { scale: 1; } 50% { scale: 1.14; } }
+    @keyframes bubbleDrift1 { 0%, 100% { translate: 0 0; } 50% { translate: 50px -35px; } }
+    @keyframes bubbleDrift2 { 0%, 100% { translate: 0 0; } 50% { translate: -60px 45px; } }
+    @keyframes bubbleDrift3 { 0%, 100% { translate: 0 0; } 50% { translate: 35px 50px; } }
 
     /* Auth card */
     .auth-card {
@@ -351,35 +354,44 @@
     // compose instead of one overwriting the other.
     // ----------------------------------------------------------
     (function initBubbles() {
-      const wraps = document.querySelectorAll('.bubble-wrap');
-      if (!wraps.length) return;
-      let mouseX = -9999, mouseY = -9999;
+      const bubbleEls = document.querySelectorAll('.bubble-wrap');
+      if (!bubbleEls.length) return;
 
-      document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX; mouseY = e.clientY;
-      });
+      // Each bubble follows the pointer at a different strength and
+      // with its own offset, so they trail together as a loose group
+      // rather than all stacking exactly on the cursor.
+      const wraps = [
+        { el: bubbleEls[0], strength: 0.35, offsetX: 0,   offsetY: 0,   x: 0, y: 0 },
+        { el: bubbleEls[1], strength: 0.22, offsetX: 60,  offsetY: -40, x: 0, y: 0 },
+        { el: bubbleEls[2], strength: 0.28, offsetX: -50, offsetY: 50,  x: 0, y: 0 },
+      ];
 
-      function animateRepel() {
-        wraps.forEach(wrap => {
-          const rect = wrap.getBoundingClientRect();
-          const bx = rect.left + rect.width / 2;
-          const by = rect.top + rect.height / 2;
-          const dx = bx - mouseX;
-          const dy = by - mouseY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const maxDist = 280;
-          let offsetX = 0, offsetY = 0;
-          if (dist < maxDist) {
-            const force = (1 - dist / maxDist) * 45;
-            const angle = Math.atan2(dy, dx);
-            offsetX = Math.cos(angle) * force;
-            offsetY = Math.sin(angle) * force;
-          }
-          wrap.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-        });
-        requestAnimationFrame(animateRepel);
+      let pointerX = null, pointerY = null;
+      let hasPointer = false;
+
+      function setPointer(x, y) { pointerX = x; pointerY = y; hasPointer = true; }
+
+      document.addEventListener('mousemove', (e) => setPointer(e.clientX, e.clientY));
+      document.addEventListener('touchmove', (e) => {
+        if (e.touches.length) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length) setPointer(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+
+      function loop() {
+        if (hasPointer) {
+          wraps.forEach(w => {
+            const targetX = (pointerX - window.innerWidth / 2) * w.strength + w.offsetX;
+            const targetY = (pointerY - window.innerHeight / 2) * w.strength + w.offsetY;
+            w.x += (targetX - w.x) * 0.08;
+            w.y += (targetY - w.y) * 0.08;
+            w.el.style.transform = `translate(${w.x}px, ${w.y}px)`;
+          });
+        }
+        requestAnimationFrame(loop);
       }
-      animateRepel();
+      loop();
     })();
 
     // ----------------------------------------------------------
