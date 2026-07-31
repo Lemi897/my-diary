@@ -55,7 +55,18 @@
       background: radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 70%);
       position: relative;
       overflow: hidden;
+      perspective: 1200px;
+      transition: background 3s ease;
     }
+    /* Time-of-day — a real, live clock-based shift, not decoration.
+       Applies regardless of theme, unlike Neo-Tokyo's own daytime
+       system which is theme-gated; this is login's own, separate,
+       lightweight version so the shared applyDaytime() elsewhere
+       stays untouched. */
+    .auth-page[data-daytime="dawn"] { background: radial-gradient(ellipse at top, #2a1f2e 0%, #150d18 70%); }
+    .auth-page[data-daytime="day"]  { background: radial-gradient(ellipse at top, #1c2333 0%, #10141f 70%); }
+    .auth-page[data-daytime="dusk"] { background: radial-gradient(ellipse at top, #2e1f1a 0%, #180f0c 70%); }
+    .auth-page[data-daytime="night"] { background: radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 70%); }
 
     /* Interactive bubble background — soft blurred color fields
        that drift on their own and gently repel away from the
@@ -93,6 +104,23 @@
       box-shadow: 0 8px 40px rgba(0,0,0,0.4);
       position: relative;
       z-index: 1;
+      transition: transform 0.15s ease-out;
+      transform-style: preserve-3d;
+    }
+
+    /* Cursor trail — small fading dots drifting behind the pointer,
+       in the theme's own accent colors. */
+    .cursor-trail-dot {
+      position: fixed;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      animation: trailFade 0.7s ease-out forwards;
+    }
+    @keyframes trailFade {
+      0% { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.3); }
     }
 
     /* Logo */
@@ -121,6 +149,17 @@
       padding: 4px;
       margin-bottom: 1.75rem;
       gap: 4px;
+      position: relative;
+    }
+    .auth-tab-pill {
+      position: absolute;
+      top: 4px; left: 4px;
+      width: calc(50% - 6px);
+      height: calc(100% - 8px);
+      background-color: var(--accent-1);
+      border-radius: 6px;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 0;
     }
 
     .auth-tab {
@@ -135,11 +174,12 @@
       background: transparent;
       color: var(--text-muted);
       font-family: var(--font-main);
-      transition: var(--transition);
+      transition: color 0.3s ease;
+      position: relative;
+      z-index: 1;
     }
 
     .auth-tab.active {
-      background-color: var(--accent-1);
       color: #fff;
     }
 
@@ -187,6 +227,7 @@
     .form-input:focus {
       border-color: var(--accent-1);
       background-color: var(--bg-card);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-1) 25%, transparent);
     }
 
     /* Password toggle button */
@@ -227,6 +268,7 @@
     }
 
     .btn-auth:hover { opacity: 0.9; }
+    .btn-auth:active { transform: scale(0.97); }
     .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Error / success message */
@@ -286,6 +328,7 @@
 
       <!-- Sign In / Sign Up tabs -->
       <div class="auth-tabs">
+        <div class="auth-tab-pill" id="authTabPill"></div>
         <button class="auth-tab active" id="tabSignin"  onclick="switchTab('signin')">Sign In</button>
         <button class="auth-tab"        id="tabSignup"  onclick="switchTab('signup')">Sign Up</button>
       </div>
@@ -366,6 +409,9 @@
         { el: bubbleEls[2], strength: 0.28, offsetX: -50, offsetY: 50,  x: 0, y: 0 },
       ];
 
+      const card = document.querySelector('.auth-card');
+      let tiltX = 0, tiltY = 0;
+
       let pointerX = null, pointerY = null;
       let hasPointer = false;
 
@@ -388,11 +434,59 @@
             w.y += (targetY - w.y) * 0.08;
             w.el.style.transform = `translate(${w.x}px, ${w.y}px)`;
           });
+
+          if (card) {
+            const rect = card.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dx = (pointerX - cx) / (window.innerWidth / 2);
+            const dy = (pointerY - cy) / (window.innerHeight / 2);
+            const targetRotY = dx * 6;
+            const targetRotX = -dy * 6;
+            tiltX += (targetRotX - tiltX) * 0.1;
+            tiltY += (targetRotY - tiltY) * 0.1;
+            card.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+          }
         }
         requestAnimationFrame(loop);
       }
       loop();
+
+      // Cursor trail — small fading dots, throttled so it doesn't
+      // spawn one per pixel of movement.
+      const trailColors = ['var(--accent-1)', 'var(--accent-2)', 'var(--accent-3)'];
+      let lastTrailTime = 0;
+      document.addEventListener('mousemove', (e) => {
+        const now = Date.now();
+        if (now - lastTrailTime < 60) return;
+        lastTrailTime = now;
+        const dot = document.createElement('div');
+        dot.className = 'cursor-trail-dot';
+        dot.style.left = (e.clientX - 3) + 'px';
+        dot.style.top = (e.clientY - 3) + 'px';
+        dot.style.background = trailColors[Math.floor(Math.random() * trailColors.length)];
+        document.body.appendChild(dot);
+        setTimeout(() => dot.remove(), 700);
+      });
     })();
+
+    // ----------------------------------------------------------
+    // TIME-OF-DAY — a lightweight, login-specific version. Kept
+    // separate from the shared applyDaytime() in utils.js on
+    // purpose: that one is gated to only run for Neo-Tokyo, and
+    // changing that shared behavior to suit this one page could
+    // have knock-on effects everywhere else it's used.
+    // ----------------------------------------------------------
+    (function applyLoginDaytime() {
+      const hour = new Date().getHours();
+      let daytime;
+      if (hour >= 5 && hour < 7) daytime = 'dawn';
+      else if (hour >= 7 && hour < 17) daytime = 'day';
+      else if (hour >= 17 && hour < 19) daytime = 'dusk';
+      else daytime = 'night';
+      document.querySelector('.auth-page')?.setAttribute('data-daytime', daytime);
+    })();
+
 
     // ----------------------------------------------------------
     // If already signed in, skip straight to dashboard
@@ -409,6 +503,7 @@
       currentTab = tab;
       document.getElementById('tabSignin').classList.toggle('active', tab === 'signin');
       document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
+      document.getElementById('authTabPill').style.transform = tab === 'signup' ? 'translateX(calc(100% + 4px))' : 'translateX(0)';
       document.getElementById('nameGroup').style.display = tab === 'signup' ? 'flex' : 'none';
       document.getElementById('authBtnText').textContent = tab === 'signin' ? 'Sign In' : 'Create Account';
       document.getElementById('authBtn').querySelector('i').className =
