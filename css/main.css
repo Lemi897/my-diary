@@ -816,9 +816,15 @@ p  { font-size: 0.95rem;color: var(--text-secondary); }
 
 /* The real input stays functional (needed for the numeric mobile
    keyboard) but visually invisible — the dots are what's seen. */
+/* Wrapper clips the input from view while the input itself keeps
+   genuine, normal dimensions — see the comment in pinlock.js for
+   why this matters for mobile keyboards specifically. */
+.pin-input-clip { height: 0; overflow: hidden; }
 .pin-lock-input-hidden {
-  position: absolute; opacity: 0; width: 1px; height: 1px;
-  pointer-events: none;
+  width: 200px; height: 46px;
+  font-size: 16px; /* under 16px triggers iOS Safari's auto-zoom on focus */
+  opacity: 0;
+  border: none; outline: none; background: transparent;
 }
 
 .pin-dots-row { display: flex; gap: 1rem; margin-top: 0.25rem; }

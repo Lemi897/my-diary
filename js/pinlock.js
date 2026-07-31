@@ -19,6 +19,8 @@
 // landing on some pages and not others.
 // ============================================================
 
+import { supabase } from './supabase.js';
+
 const PIN_HASH_KEY = 'pin_lock_hash';
 
 // Re-lock after 3 minutes of real inactivity — not just backgrounding
@@ -67,6 +69,17 @@ function ensureDotUI() {
   const input = document.getElementById('pinLockInput');
   if (!input) return;
 
+  // The input keeps genuine, normal dimensions and stays visually
+  // hidden via a clipping wrapper instead of being sized down to
+  // ~0px. Some mobile browsers won't reliably raise the on-screen
+  // keyboard for a programmatically-focused element that's too
+  // small or zero-sized to plausibly be a real, visible field —
+  // this keeps the element "real" from the browser's perspective
+  // while still being invisible on screen.
+  const wrapper = document.createElement('div');
+  wrapper.className = 'pin-input-clip';
+  input.parentNode.insertBefore(wrapper, input);
+  wrapper.appendChild(input);
   input.classList.add('pin-lock-input-hidden');
 
   const dotsRow = document.createElement('div');
@@ -77,7 +90,11 @@ function ensureDotUI() {
     dot.className = 'pin-dot';
     dotsRow.appendChild(dot);
   }
-  input.insertAdjacentElement('afterend', dotsRow);
+  wrapper.insertAdjacentElement('afterend', dotsRow);
+
+  // Tapping the dots (the only thing visibly present) should
+  // refocus the real input, in case focus was ever lost.
+  dotsRow.addEventListener('click', () => input.focus());
 
   overlay.dataset.dotsReady = 'true';
 }
@@ -111,19 +128,96 @@ function flashSuccess() {
 }
 
 // ------------------------------------------------------------
+// captureIntruderPhoto() — fires after 3 consecutive wrong PINs.
+// Grabs one still frame from the front camera and logs it against
+// the account's own user_id, using the shared Supabase client's
+// already-persisted session (the PIN lock only ever runs on top
+// of an already-authenticated session, so this works without
+// needing anything passed in from the page).
+//
+// Every failure path here — camera denied, unavailable, upload
+// error, anything — must fail completely silently. This can never
+// surface an error to whoever's actually at the lock screen; the
+// only visible behavior stays "incorrect PIN," exactly as before.
+// ------------------------------------------------------------
+async function captureIntruderPhoto() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.playsInline = true;
+    video.muted = true;
+    await video.play();
+
+    // Give the camera a brief moment to actually produce a real frame
+    await new Promise(resolve => setTimeout(resolve, 400));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    stream.getTracks().forEach(track => track.stop());
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+    if (!blob) return;
+
+    const path = `${user.id}/${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage.from('intruder-photos').upload(path, blob, { contentType: 'image/jpeg' });
+    if (uploadError) return;
+
+    await supabase.from('pin_lock_attempts').insert({ user_id: user.id, image_path: path });
+  } catch (err) {
+    // Silently do nothing — camera permission denied, no camera
+    // present, offline, anything at all.
+  }
+}
+
+// ------------------------------------------------------------
 // initPinLock() — call once per page, early (right after the
 // auth check, before data loads). Shows the lock immediately on
 // load if a PIN is set, and re-locks after LOCK_GRACE_MS of real
 // inactivity — whether that's from switching away or just sitting
 // idle with the tab still open.
 // ------------------------------------------------------------
+const LAST_ACTIVITY_KEY = 'pin_lock_last_activity';
+let lastWriteTime = 0;
+
+function getLastActivity() {
+  return parseInt(localStorage.getItem(LAST_ACTIVITY_KEY) || '0', 10);
+}
+
+// Throttled — mousemove alone can fire dozens of times a second,
+// and writing to localStorage on every single one would be wasteful
+// and could visibly jank on lower-end phones. Once every 2 seconds
+// is more than precise enough against a 3-minute threshold.
+function markActivity(force) {
+  const now = Date.now();
+  if (force || now - lastWriteTime > 2000) {
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+    lastWriteTime = now;
+  }
+}
+
 export function initPinLock() {
   if (!isPinSet()) return;
 
-  showLock();
+  // This is a multi-page app — every navigation is a full page
+  // reload, and a fresh page load has no in-memory record of what
+  // just happened on the previous page. Without checking real
+  // elapsed time here, this would show the lock on every single
+  // click between pages, not just after genuine inactivity.
+  const elapsedSinceActivity = Date.now() - getLastActivity();
+  if (elapsedSinceActivity > LOCK_GRACE_MS) {
+    showLock();
+  }
+  markActivity(); // this page load itself counts as activity, checked above BEFORE this line updates it
 
-  let lastActivity = Date.now();
-  const markActivity = () => { lastActivity = Date.now(); };
   ['mousemove', 'keydown', 'touchstart', 'click', 'scroll'].forEach(evt =>
     document.addEventListener(evt, markActivity, { passive: true })
   );
@@ -143,7 +237,7 @@ export function initPinLock() {
   setInterval(() => {
     const overlay = document.getElementById('pinLockOverlay');
     const alreadyLocked = overlay && overlay.classList.contains('visible');
-    if (!document.hidden && !alreadyLocked && (Date.now() - lastActivity) > LOCK_GRACE_MS) {
+    if (!document.hidden && !alreadyLocked && (Date.now() - getLastActivity()) > LOCK_GRACE_MS) {
       showLock();
     }
   }, 15000);
@@ -179,6 +273,7 @@ export function wirePinLockUI() {
   const input = document.getElementById('pinLockInput');
   if (!input) return;
   const error = document.getElementById('pinLockError');
+  let consecutiveFails = 0;
 
   input.addEventListener('input', async () => {
     updateDots(input.value.length);
@@ -186,12 +281,20 @@ export function wirePinLockUI() {
 
     const ok = await verifyPin(input.value);
     if (ok) {
+      consecutiveFails = 0;
+      markActivity(true);
       flashSuccess();
       setTimeout(hideLock, 280);
     } else {
+      consecutiveFails++;
       if (error) error.style.display = 'block';
       shakeDots();
       setTimeout(() => { input.value = ''; updateDots(0); }, 300);
+
+      if (consecutiveFails >= 3) {
+        consecutiveFails = 0; // so a further 3 fails triggers again, not just once ever
+        captureIntruderPhoto(); // fire-and-forget — never block or delay the UI on this
+      }
     }
   });
 }

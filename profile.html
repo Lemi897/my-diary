@@ -11,7 +11,7 @@
   ============================================================ -->
 
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Profile | My Diary</title>
 
   <link rel="manifest" href="manifest.json" />
@@ -328,6 +328,24 @@
       margin-top: 0.15rem;
     }
 
+    .intruder-attempt-item {
+      display: flex; gap: 1rem; align-items: center;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+    }
+    .intruder-attempt-item:last-child { border-bottom: none; }
+    .intruder-attempt-photo {
+      width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+      background: var(--bg-secondary); flex-shrink: 0;
+      border: 1px solid var(--danger);
+    }
+    .intruder-attempt-photo-placeholder {
+      width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0;
+      background: var(--bg-secondary); display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 1.3rem;
+    }
+    .intruder-attempt-time { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+    .intruder-attempt-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
     /* Toggle switch */
     .toggle-switch {
       position: relative;
@@ -624,6 +642,12 @@
           <span class="badge badge-info">v1.0.0</span>
         </div>
 
+      </div>
+
+      <div class="card" id="intruderAttemptsCard" style="display:none; margin-top: 1.5rem;">
+        <div class="card-title">Failed Unlock Attempts</div>
+        <div class="settings-desc" style="margin-bottom:1rem;">Captured automatically after 3 wrong PIN attempts in a row on this or any device. Cleared automatically after 30 days.</div>
+        <div id="intruderAttemptsList"></div>
       </div>
 
     </main>
@@ -1336,6 +1360,7 @@
       }
     }
     renderPinSettingsButton();
+    loadIntruderAttempts();
 
     document.getElementById('pinSettingsBtn').addEventListener('click', () => {
       document.getElementById('newPinInput').value = '';
@@ -1372,6 +1397,59 @@
       renderPinSettingsButton();
       showToast('PIN removed.', 'info');
     });
+
+    // ----------------------------------------------------------
+    // FAILED UNLOCK ATTEMPTS — captured automatically by
+    // pinlock.js after 3 consecutive wrong PINs. Cleaned up here,
+    // opportunistically, whenever this page loads: anything past
+    // 30 days gets deleted (both the database row and the actual
+    // stored photo), then whatever's left gets shown.
+    // ----------------------------------------------------------
+    async function loadIntruderAttempts() {
+      if (!isOnline()) return;
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: stale } = await supabase.from('pin_lock_attempts')
+        .select('id, image_path')
+        .eq('user_id', userId)
+        .lt('attempted_at', thirtyDaysAgo);
+
+      if (stale && stale.length) {
+        const paths = stale.map(r => r.image_path).filter(Boolean);
+        if (paths.length) await supabase.storage.from('intruder-photos').remove(paths);
+        await supabase.from('pin_lock_attempts').delete().in('id', stale.map(r => r.id));
+      }
+
+      const { data: attempts } = await supabase.from('pin_lock_attempts')
+        .select('*').eq('user_id', userId).order('attempted_at', { ascending: false });
+
+      const card = document.getElementById('intruderAttemptsCard');
+      const list = document.getElementById('intruderAttemptsList');
+      if (!attempts || !attempts.length) { card.style.display = 'none'; return; }
+
+      card.style.display = 'block';
+
+      const rows = await Promise.all(attempts.map(async (a) => {
+        let photoHtml = `<div class="intruder-attempt-photo-placeholder"><i class="ri-image-off-line"></i></div>`;
+        if (a.image_path) {
+          const { data: signed } = await supabase.storage.from('intruder-photos').createSignedUrl(a.image_path, 3600);
+          if (signed?.signedUrl) photoHtml = `<img class="intruder-attempt-photo" src="${signed.signedUrl}" alt="" />`;
+        }
+        const when = new Date(a.attempted_at);
+        return `
+          <div class="intruder-attempt-item">
+            ${photoHtml}
+            <div>
+              <div class="intruder-attempt-time">${when.toLocaleDateString()} at ${when.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+              <div class="intruder-attempt-sub">3 wrong PIN attempts in a row</div>
+            </div>
+          </div>
+        `;
+      }));
+
+      list.innerHTML = rows.join('');
+    }
 
     // ----------------------------------------------------------
     // EXPORT JOURNAL
