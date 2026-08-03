@@ -79,7 +79,7 @@
     .book-status-badge.read { background: rgba(16,185,129,0.15); color: var(--success); }
     .item-actions { display: flex; gap: 0.4rem; }
 
-    .status-filter-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .status-filter-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; touch-action: pan-x; }
     .status-filter-row::-webkit-scrollbar { display: none; }
     .status-filter-btn { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; font-family: inherit; flex-shrink: 0; white-space: nowrap; }
     .status-filter-btn.active { background: var(--accent-dim); border-color: var(--accent-1); color: var(--accent-1); }
