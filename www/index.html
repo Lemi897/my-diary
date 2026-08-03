@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="" data-page="dashboard">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="description" content="My Diary - Personal life tracker" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <link rel="manifest" href="manifest.json" />
+  <title>My Diary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <script>(function(){ var t=localStorage.getItem('active_theme')||''; document.documentElement.setAttribute('data-theme',t); })();</script>
+  <style>
+    .greeting-section { margin-bottom: 2rem; }
+    .greeting-time { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .greeting-name { font-size: 2rem; font-weight: 800; line-height: 1.2; }
+    .greeting-name span { color: var(--accent-1); }
+    .streak-card {
+      background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+      border: none; position: relative; overflow: hidden;
+    }
+    .streak-card::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%;
+    }
+    .streak-number { font-size: 3.5rem; font-weight: 800; line-height: 1; color: #fff; }
+    .streak-label { font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-top: 0.25rem; }
+    .streak-flame { font-size: 2.5rem; animation: flamePulse 1.5s ease-in-out infinite; }
+    @keyframes flamePulse {
+      0%, 100% { transform: scale(1) rotate(-5deg); }
+      50%       { transform: scale(1.2) rotate(5deg); }
+    }
+    .streak-xp   { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-top: 0.5rem; }
+    .streak-best { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .stat-card {
+      background-color: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .stat-icon  { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+    .mood-display { font-size: 2rem; line-height: 1; }
+    .mood-label   { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .quote-card {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-left: 4px solid #f0c040; position: relative; overflow: hidden;
+    }
+    .quote-card::after {
+      content: '✝'; position: absolute; right: 1rem; top: 50%;
+      transform: translateY(-50%); font-size: 3rem; opacity: 0.07; color: #f0c040;
+    }
+    .scripture-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #f0c040; margin-bottom: 0.5rem; }
+    .quote-text   { font-size: 1rem; font-style: italic; color: #e8e8f0; line-height: 1.8; }
+    .quote-author { font-size: 0.82rem; font-weight: 600; color: #f0c040; margin-top: 0.6rem; }
+    .scripture-theme-tag { display: inline-block; font-size: 0.7rem; background: rgba(240,192,64,0.15); color: #f0c040; border-radius: 20px; padding: 0.15rem 0.6rem; margin-top: 0.5rem; }
+    .task-preview-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .task-preview-item:last-child { border-bottom: none; }
+    .task-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+    .task-preview-title { font-size: 0.9rem; flex: 1; }
+    .task-preview-due   { font-size: 0.75rem; color: var(--text-muted); }
+    .journal-preview {
+      font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .journal-preview-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    .theme-unlock-banner {
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+      border-radius: var(--radius); padding: 1rem 1.5rem;
+      display: none; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .theme-unlock-banner.visible { display: flex; }
+    .theme-unlock-text { font-size: 0.9rem; font-weight: 600; color: #fff; }
+    .theme-unlock-icon { font-size: 1.5rem; }
+  </style>
+</head>
+<body>
+  <!-- PIN LOCK — device-level, separate from Supabase auth -->
+  <div class="pin-lock-overlay" id="pinLockOverlay">
+    <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+    <div class="pin-lock-title">Enter PIN</div>
+    <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+    <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+  </div>
+
+  <!-- Neo-Tokyo ambient background — inert on every other theme,
+       only rendered/animated when data-theme="neo-tokyo" is active.
+       Particle count and skyline visibility scale with tier. -->
+  <div class="neo-tokyo-bg" aria-hidden="true">
+    <div class="neo-sky-orb"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:0s;"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:6s;"></div>
+    <div class="neo-skyline">
+      <div class="neo-stars"></div>
+      <div class="neo-cloud" style="left:10%; animation-delay:0s;"></div>
+      <div class="neo-cloud" style="left:45%; top:60px; animation-delay:15s;"></div>
+      <div class="neo-cloud" style="left:75%; top:30px; animation-delay:30s;"></div>
+      <div class="neo-rain">
+        <div class="neo-rain-drop" style="left:8%; animation-delay:0s;"></div>
+        <div class="neo-rain-drop" style="left:18%; animation-delay:0.1s;"></div>
+        <div class="neo-rain-drop" style="left:28%; animation-delay:0.2s;"></div>
+        <div class="neo-rain-drop" style="left:38%; animation-delay:0.3s;"></div>
+        <div class="neo-rain-drop" style="left:48%; animation-delay:0.15s;"></div>
+        <div class="neo-rain-drop" style="left:58%; animation-delay:0.25s;"></div>
+        <div class="neo-rain-drop" style="left:68%; animation-delay:0.05s;"></div>
+        <div class="neo-rain-drop" style="left:78%; animation-delay:0.35s;"></div>
+        <div class="neo-rain-drop" style="left:88%; animation-delay:0.18s;"></div>
+      </div>
+      <div class="neo-tower-bg roof-antenna" style="left:38%; width:8%; height:62%;"></div>
+      <div class="neo-tower-bg roof-flat" style="left:48%; width:6%; height:58%;"></div>
+      <div class="neo-tower-bg roof-tiered" style="left:13%; width:7%; height:64%;"></div>
+      <div class="neo-beam" style="left:41%; height:72%; transform:rotate(-8deg);"></div>
+      <div class="neo-beam" style="left:49%; height:64%; transform:rotate(6deg);"></div>
+      <div class="neo-tower-teal roof-flat" style="left:0%; width:9%; height:46%;"></div>
+      <div class="neo-tower-fg roof-antenna" style="left:10%; width:7%; height:56%;"></div>
+      <div class="neo-tower-violet roof-tiered" style="left:18%; width:10%; height:38%;"></div>
+      <div class="neo-tower-acid roof-flat" style="left:29%; width:8%; height:51%;"></div>
+      <div class="neo-tower-fg roof-antenna" style="left:38%; width:6%; height:33%;"></div>
+      <div class="neo-tower-violet roof-tiered" style="left:60%; width:8%; height:48%;"></div>
+      <div class="neo-tower-teal roof-flat" style="left:69%; width:7%; height:41%;"></div>
+      <div class="neo-tower-fg roof-antenna" style="left:77%; width:9%; height:54%;"></div>
+      <div class="neo-tower-acid roof-flat" style="left:88%; width:7%; height:43%;"></div>
+
+      <div class="neo-tower-bg roof-flat" style="left:3%; width:7%; height:32%;"></div>
+      <div class="neo-tower-fg roof-antenna" style="left:7%; width:8%; height:48%;"></div>
+      <div class="neo-tower-violet roof-tiered" style="left:16%; width:5%; height:30%;"></div>
+      <div class="neo-tower-teal roof-flat" style="left:24%; width:5%; height:39%;"></div>
+      <div class="neo-tower-acid roof-antenna" style="left:33%; width:5%; height:44%;"></div>
+      <div class="neo-tower-bg roof-tiered" style="left:42%; width:6%; height:29%;"></div>
+      <div class="neo-tower-fg roof-flat" style="left:55%; width:5%; height:41%;"></div>
+      <div class="neo-tower-violet roof-antenna" style="left:63%; width:8%; height:30%;"></div>
+      <div class="neo-tower-teal roof-tiered" style="left:72%; width:6%; height:30%;"></div>
+      <div class="neo-tower-acid roof-flat" style="left:81%; width:8%; height:29%;"></div>
+      <div class="neo-tower-bg roof-antenna" style="left:90%; width:5%; height:35%;"></div>
+      <div class="neo-tower-fg roof-tiered" style="left:95%; width:5%; height:46%;"></div>
+      <div class="neo-tower-violet roof-flat" style="left:44%; width:8%; height:29%;"></div>
+      <div class="neo-tower-teal roof-antenna" style="left:58%; width:6%; height:29%;"></div>
+
+      <div class="neo-street-light" style="left:8%;"></div>
+      <div class="neo-street-light" style="left:22%;"></div>
+      <div class="neo-street-light" style="left:36%;"></div>
+      <div class="neo-street-light" style="left:55%;"></div>
+      <div class="neo-street-light" style="left:70%;"></div>
+      <div class="neo-street-light" style="left:84%;"></div>
+
+      <!-- Forest floor: a denser, layered treeline with scattered
+           lights, a highway visible through the gap with real cars
+           actually driving on it, people on a path -->
+      <div class="neo-tree-round large" style="left:0%;"></div>
+      <div class="neo-tree-pine small" style="left:5%;"></div>
+      <div class="neo-tree-pine" style="left:9%;"></div>
+      <div class="neo-tree-light" style="left:5%; bottom:60px; animation-delay:0s;"></div>
+      <div class="neo-tree-round" style="left:14%;"></div>
+      <div class="neo-tree-pine large" style="left:19%;"></div>
+      <div class="neo-tree-round small" style="left:26%;"></div>
+      <div class="neo-tree-light" style="left:19%; bottom:80px; animation-delay:1.2s;"></div>
+      <div class="neo-tree-pine" style="left:29%;"></div>
+      <div class="neo-tree-round small" style="left:2%;"></div>
+      <div class="neo-tree-pine large" style="left:12%;"></div>
+      <div class="neo-tree-round" style="left:23%;"></div>
+      <div class="neo-tree-light" style="left:12%; bottom:70px; animation-delay:2.1s;"></div>
+
+      <div class="neo-highway">
+        <div class="neo-highway-line"></div>
+        <div class="neo-car" style="animation-delay:0s;"></div>
+        <div class="neo-car" style="animation-delay:2.2s;"></div>
+        <div class="neo-car reverse" style="animation-delay:1.5s;"></div>
+        <div class="neo-car reverse" style="animation-delay:3.8s;"></div>
+        <div class="neo-car tier2plus" style="animation-delay:1.1s;"></div>
+        <div class="neo-car tier2plus" style="animation-delay:3.3s;"></div>
+        <div class="neo-car reverse tier2plus" style="animation-delay:0.6s;"></div>
+      </div>
+
+      <!-- Flyover receding behind the city, with dimmer distant buildings -->
+      <div class="neo-bg-building" style="left:38%; width:6%; height:100px;"></div>
+      <div class="neo-bg-building" style="left:45%; width:5%; height:130px;"></div>
+      <div class="neo-bg-building" style="left:52%; width:7%; height:85px;"></div>
+      <div class="neo-bg-building" style="left:61%; width:5%; height:110px;"></div>
+      <svg class="neo-flyover-svg" viewBox="0 0 1000 420" preserveAspectRatio="none">
+        <path class="neo-flyover-road" d="M 640,170 C 680,210 690,300 680,388" />
+        <path class="neo-flyover-line" d="M 640,170 C 680,210 690,300 680,388" />
+      </svg>
+      <div class="neo-ramp-car" style="animation-delay:0.5s;"></div>
+      <div class="neo-ramp-car" style="animation-delay:2.8s;"></div>
+
+      <div class="neo-tree-pine" style="left:68%;"></div>
+      <div class="neo-tree-round large" style="left:73%;"></div>
+      <div class="neo-tree-pine small" style="left:80%;"></div>
+      <div class="neo-tree-light" style="left:74%; bottom:65px; animation-delay:0.6s;"></div>
+      <div class="neo-tree-round" style="left:84%;"></div>
+      <div class="neo-tree-pine large" style="left:90%;"></div>
+      <div class="neo-tree-round small" style="left:96%;"></div>
+      <div class="neo-tree-light" style="left:89%; bottom:85px; animation-delay:1.8s;"></div>
+
+      <div class="neo-person" style="left:45%; animation-delay:0s;"></div>
+      <div class="neo-person tier2plus" style="left:58%; animation-delay:4s;"></div>
+    </div>
+    <div class="neo-particle" style="left:8%; animation-delay:0s;"></div>
+    <div class="neo-particle" style="left:22%; animation-delay:1.8s;"></div>
+    <div class="neo-particle" style="left:38%; animation-delay:3.2s;"></div>
+    <div class="neo-particle" style="left:54%; animation-delay:0.9s;"></div>
+    <div class="neo-particle" style="left:67%; animation-delay:2.6s;"></div>
+    <div class="neo-particle" style="left:79%; animation-delay:4.1s;"></div>
+    <div class="neo-particle" style="left:88%; animation-delay:1.3s;"></div>
+    <div class="neo-particle" style="left:95%; animation-delay:3.7s;"></div>
+  </div>
+
+  <div id="appLoader" class="app-loader">
+    <div class="loader-icon" aria-hidden="true"></div>
+    <div class="loader-title">My<span>Diary</span></div>
+    <div class="loader-subtitle" id="loaderSubtitle"></div>
+    <div class="loader-bar-track">
+      <div id="loaderBar" class="loader-bar-fill"></div>
+    </div>
+    <div id="loaderStatus" class="loader-status">Connecting...</div>
+  </div>
+
+  <div class="app-wrapper">
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html"   class="nav-link active"><i class="ri-home-5-line nav-icon"></i> Dashboard</a>
+        <a href="habits.html"  class="nav-link"><i class="ri-checkbox-circle-line nav-icon"></i> Habits</a>
+        <a href="tasks.html"   class="nav-link"><i class="ri-task-line nav-icon"></i> Tasks</a>
+        <a href="journal.html" class="nav-link"><i class="ri-quill-pen-line nav-icon"></i> Journal</a>
+        <a href="linguistic.html" class="nav-link">
+          <i class="ri-book-open-line nav-icon"></i> Linguistic
+        </a>
+        <a href="goals.html"   class="nav-link"><i class="ri-focus-3-line nav-icon"></i> Goals</a>
+        <a href="finance.html" class="nav-link"><i class="ri-money-dollar-circle-line nav-icon"></i> Finance</a>
+        <a href="profile.html" class="nav-link"><i class="ri-user-3-line nav-icon"></i> Profile</a>
+      </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
+      <div class="online-badge" id="onlineBadge"><div class="dot"></div><span class="status-text">Online</span></div>
+    </aside>
+
+    <main class="main-content">
+      <div class="theme-unlock-banner" id="themeUnlockBanner">
+        <span class="emoji-swap theme-unlock-icon"><i class="ri-palette-line neo-icon"></i>🎨</span>
+        <div>
+          <div class="theme-unlock-text" id="themeUnlockText">New theme unlocked!</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.75);">Go to Profile to apply it.</div>
+        </div>
+      </div>
+
+      <section class="greeting-section">
+        <div class="greeting-time" id="greetingTime">Good morning</div>
+        <div class="greeting-name">Hey, <span id="userName">Maestro</span> <span class="emoji-swap">👋</span></div>
+      </section>
+
+      <div class="card streak-card mb-lg flex-between">
+        <div>
+          <div class="streak-number" id="streakCount">0</div>
+          <div class="streak-label">Day Streak</div>
+          <div class="streak-best" id="streakBest">Best: 0 days</div>
+          <div class="streak-xp" id="streakXP">0 XP earned</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="streak-flame">🔥</div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.6);margin-top:0.5rem;" id="nextThemeHint"></div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-checkbox-circle-line neo-icon"></i>✅</span></div>
+          <div class="stat-value" id="habitsDoneToday">0</div>
+          <div class="stat-label">Habits done today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div>
+          <div class="stat-value" id="pendingTasksCount">0</div>
+          <div class="stat-label">Pending tasks</div>
+        </div>
+        <div class="stat-card">
+          <div class="mood-display" id="todayMoodEmoji">😐</div>
+          <div class="mood-label" id="todayMoodLabel">No entry yet</div>
+          <div class="stat-label">Today's mood</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><span class="emoji-swap"><i class="ri-wallet-3-line neo-icon"></i>💸</span></div>
+          <div class="stat-value" id="spentToday">KSH 0</div>
+          <div class="stat-label">Spent today</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">Pending Tasks</div>
+            <a href="tasks.html" class="btn btn-ghost btn-sm">View all</a>
+          </div>
+          <div id="pendingTasksList">
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div><p>No pending tasks</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">Latest Journal Entry</div>
+            <a href="journal.html" class="btn btn-ghost btn-sm">View all</a>
+          </div>
+          <div id="latestJournalEntry">
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-book-open-line neo-icon"></i>📖</span></div><p>No journal entries yet</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">Active Goals</div>
+            <a href="goals.html" class="btn btn-ghost btn-sm">View all</a>
+          </div>
+          <div id="activeGoalsList">
+            <div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-focus-3-line neo-icon"></i>🎯</span></div><p>No active goals</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex-between mb-md">
+            <div class="card-title">😊 Mood — Last 30 Days</div>
+            <a href="journal.html" class="btn btn-ghost btn-sm">Journal</a>
+          </div>
+          <canvas id="moodChart" height="120"></canvas>
+          <div id="moodChartEmpty" class="text-muted" style="text-align:center;padding:1rem;display:none;">No mood data yet — start journaling!</div>
+        </div>
+
+        <div class="card quote-card">
+          <div class="scripture-label"><span class="emoji-swap"><i class="ri-book-open-line neo-icon"></i>📖</span> Verse of the Day</div>
+          <div class="quote-text" id="dailyQuote">Loading scripture...</div>
+          <div class="quote-author" id="quoteAuthor"></div>
+          <div class="scripture-theme-tag" id="scriptureThemeTag"></div>
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html"   class="bottom-nav-link active"><i class="ri-home-5-line nav-icon"></i><span>Home</span></a>
+        <a href="habits.html"  class="bottom-nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+        <a href="tasks.html"   class="bottom-nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+        <a href="journal.html" class="bottom-nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+        <a href="linguistic.html" class="bottom-nav-link">
+          <i class="ri-book-open-line nav-icon"></i><span>Linguistic</span>
+        </a>
+        <a href="goals.html"   class="bottom-nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+        <a href="finance.html" class="bottom-nav-link"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+        <a href="profile.html" class="bottom-nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
+      </div>
+    </nav>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script type="module">
+    import { supabase, getCurrentUser } from './js/supabase.js';
+    import { initPinLock, wirePinLockUI } from './js/pinlock.js';
+    import { todayDate, formatDateShort, formatKSH, isOnline, onConnectivityChange, truncate, replayOfflineQueue, sanitize, showToast, applyThemeTier, isNeoTokyoActive, applyDaytime, applyWeather } from './js/utils.js';
+    import { getVerseFromLibrary } from './js/scripture.js';
+    import { initNotifications } from './js/notifications.js';
+
+    // ----------------------------------------------------------
+    // TYPEWRITER — types the loader subtitle out character by
+    // character with a blinking dot cursor. Starts immediately
+    // (doesn't wait on auth/data), since it's purely decorative
+    // and should already be running by the time someone actually
+    // looks at the loading screen.
+    // ----------------------------------------------------------
+    function typeText(el, text, speed = 35) {
+      let i = 0;
+      const textSpan = document.createElement('span');
+      const cursor = document.createElement('span');
+      cursor.className = 'typewriter-cursor';
+      cursor.textContent = '●';
+      el.appendChild(textSpan);
+      el.appendChild(cursor);
+      (function step() {
+        if (i < text.length) {
+          textSpan.textContent += text[i];
+          i++;
+          setTimeout(step, speed);
+        }
+      })();
+    }
+    typeText(document.getElementById('loaderSubtitle'), 'Your personal life tracker');
+
+    function loaderProgress(pct, status) {
+      const bar = document.getElementById('loaderBar');
+      const txt = document.getElementById('loaderStatus');
+      if (bar) bar.style.width = pct + '%';
+      if (txt && status) txt.textContent = status;
+    }
+    function hideLoader() {
+      const loader = document.getElementById('appLoader');
+      if (!loader) return;
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+      setTimeout(() => loader.remove(), 650);
+    }
+
+    let userId = null;
+
+    { const { data: { session } } = await supabase.auth.getSession(); if (!session) window.location.replace('login.html'); }
+    initPinLock();
+    wirePinLockUI();
+
+    function themeColor(varName, fallback) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      return val || fallback;
+    }
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return `rgba(233,69,96,${alpha})`;
+      const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+
+    function setGreeting() {
+      const hour = new Date().getHours();
+      const el = document.getElementById('greetingTime');
+      const neo = isNeoTokyoActive();
+      if (hour < 12) el.textContent = neo ? 'Good morning' : 'Good morning ☀️';
+      else if (hour < 17) el.textContent = neo ? 'Good afternoon' : 'Good afternoon 🌤️';
+      else el.textContent = neo ? 'Good evening' : 'Good evening 🌙';
+    }
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      if (online) { badge.classList.remove('offline'); text.textContent = 'Online'; }
+      else { badge.classList.add('offline'); text.textContent = 'Offline'; }
+    }
+
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(async (online) => {
+      updateOnlineBadge(online);
+      if (online) {
+        const result = await replayOfflineQueue();
+        if (result && result.replayed > 0) showToast(`${isNeoTokyoActive() ? '' : '✅ '}${result.replayed} offline action(s) synced.`, 'success');
+      }
+    });
+
+    const THEME_MILESTONES = {
+      7:{name:'Tokyo Night',key:'tokyo-night'},14:{name:'Dracula',key:'dracula'},
+      21:{name:'Catppuccin',key:'catppuccin'},30:{name:'Nord',key:'nord'},
+      45:{name:'Gruvbox',key:'gruvbox'},60:{name:'Sunset',key:'sunset'},
+      75:{name:'Ocean Deep',key:'ocean-deep'},90:{name:'Sakura',key:'sakura'},
+      120:{name:'Forest',key:'forest'},150:{name:'Cyberpunk',key:'cyberpunk'}
+    };
+
+    async function loadStreak() {
+      const { data, error } = await supabase.from('streaks').select('*').eq('user_id', userId).limit(1).single();
+      if (error || !data) return;
+      document.getElementById('streakCount').textContent = data.current_streak;
+      document.getElementById('streakBest').textContent = `Best: ${data.longest_streak} days`;
+      document.getElementById('streakXP').textContent = `${data.total_xp} XP earned`;
+      const milestones = Object.keys(THEME_MILESTONES).map(Number).sort((a,b)=>a-b);
+      const next = milestones.find(m => m > data.current_streak);
+      if (next) {
+        const daysLeft = next - data.current_streak;
+        document.getElementById('nextThemeHint').textContent = `${daysLeft} days to unlock ${THEME_MILESTONES[next].name}`;
+      }
+      const justUnlocked = THEME_MILESTONES[data.current_streak];
+      if (justUnlocked) {
+        const alreadyShown = localStorage.getItem(`theme_shown_${justUnlocked.key}`);
+        if (!alreadyShown) {
+          await supabase.from('unlocked_themes').upsert(
+            { user_id: userId, theme_name: justUnlocked.key },
+            { onConflict: 'user_id,theme_name' }
+          );
+          const unlocked = JSON.parse(localStorage.getItem('unlocked_themes') || '[]');
+          if (!unlocked.includes(justUnlocked.key)) { unlocked.push(justUnlocked.key); localStorage.setItem('unlocked_themes', JSON.stringify(unlocked)); }
+          document.getElementById('themeUnlockText').textContent = `${isNeoTokyoActive() ? '' : '🎨 '}You unlocked the "${justUnlocked.name}" theme!`;
+          document.getElementById('themeUnlockBanner').classList.add('visible');
+          localStorage.setItem(`theme_shown_${justUnlocked.key}`, 'true');
+        }
+      }
+    }
+
+    async function loadHabitsDoneToday() {
+      const today = todayDate();
+      const { data, error } = await supabase.from('habit_logs').select('id').eq('user_id', userId).eq('log_date', today).eq('done', true);
+      if (!error && data) document.getElementById('habitsDoneToday').textContent = data.length;
+    }
+
+    async function loadPendingTasks() {
+      const [countRes, previewRes] = await Promise.all([
+        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('done', false).is('parent_id', null),
+        supabase.from('tasks').select('id, title, due_date, priority').eq('user_id', userId).eq('done', false).is('parent_id', null).order('due_date', { ascending: true }).limit(3)
+      ]);
+      const totalCount = countRes.count ?? 0;
+      const data = previewRes.data || [];
+      if (previewRes.error) return;
+      document.getElementById('pendingTasksCount').textContent = totalCount;
+      const list = document.getElementById('pendingTasksList');
+      if (data.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="emoji-swap"><i class="ri-file-list-3-line neo-icon"></i>📋</span></div><p>No pending tasks</p></div>`; return; }
+      const now = new Date();
+      const overdueCount = data.filter(t => t.due_date && new Date(t.due_date) < now).length;
+      const danger = themeColor('--danger', '#ef4444');
+      const priorityColors = {
+        urgent: themeColor('--danger', '#ef4444'),
+        high: '#fb923c',
+        medium: themeColor('--warning', '#f59e0b'),
+        low: themeColor('--success', '#10b981')
+      };
+      const banner = overdueCount > 0
+        ? `<div style="background:color-mix(in srgb, ${danger} 12%, transparent);border:1px solid color-mix(in srgb, ${danger} 30%, transparent);border-radius:8px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;font-size:0.82rem;font-weight:600;color:${danger};display:flex;align-items:center;gap:0.5rem;"><i class="ri-alarm-warning-line"></i>${overdueCount} overdue task${overdueCount>1?'s':''} — take action!</div>` : '';
+      list.innerHTML = banner + data.map(task => {
+        const isOverdue = task.due_date && new Date(task.due_date) < now;
+        const priorityColor = priorityColors[task.priority] || themeColor('--text-muted', '#a0a0b0');
+        return `<div class="task-preview-item" style="${isOverdue?`border-left:3px solid ${danger};padding-left:0.5rem;`:''}">
+          <div class="task-check" style="border-color:${priorityColor};"></div>
+          <div style="flex:1;">
+            <div class="task-preview-title" style="${isOverdue?`color:${danger};`:''}">${isOverdue?'<i class="ri-alarm-warning-line"></i> ':''}${sanitize(truncate(task.title,38))}</div>
+            ${task.due_date?`<div class="task-preview-due" style="${isOverdue?`color:${danger};font-weight:600;`:''}">${isOverdue?'⚠️ ':''}${sanitize(formatDateShort(task.due_date))}</div>`:''}
+          </div>
+          <span class="badge priority-${sanitize(task.priority||'low')}" style="font-size:0.7rem;">${sanitize(task.priority||'')}</span>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadTodayMood() {
+      const today = todayDate();
+      const { data, error } = await supabase.from('journal_entries').select('mood, mood_score').eq('user_id', userId).gte('created_at', `${today}T00:00:00`).lte('created_at', `${today}T23:59:59`).order('created_at', { ascending: false }).limit(1).single();
+      if (error || !data) return;
+      const moodMap = {1:'😭',2:'😔',3:'😟',4:'😕',5:'😐',6:'🙂',7:'😊',8:'😄',9:'🤩',10:'🥳'};
+      const moodEl = document.getElementById('todayMoodEmoji');
+      const isNeoTokyo = document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+      if (isNeoTokyo) {
+        moodEl.textContent = '';
+        moodEl.className = `mood-display mood-core-${data.mood_score || 5}`;
+      } else {
+        moodEl.className = 'mood-display';
+        moodEl.textContent = moodMap[data.mood_score] || '😐';
+      }
+      document.getElementById('todayMoodLabel').textContent = data.mood || 'No label';
+    }
+
+    // FIX 2: Use date range query for timestamptz column + include mpesa_fee in sum
+    async function loadSpentToday() {
+      const today = todayDate();
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('amount_ksh, mpesa_fee')
+        .eq('user_id', userId)
+        .gte('expense_date', `${today}T00:00:00`)
+        .lte('expense_date', `${today}T23:59:59`);
+      if (error || !data) return;
+      const total = data.reduce((sum, e) => sum + parseFloat(e.amount_ksh || 0) + parseFloat(e.mpesa_fee || 0), 0);
+      document.getElementById('spentToday').textContent = formatKSH(total);
+    }
+
+    // FIX 1: Strip HTML tags from journal content before displaying
+    async function loadLatestJournal() {
+      const { data, error } = await supabase.from('journal_entries').select('title, content, mood, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).single();
+      if (error || !data) return;
+      const container = document.getElementById('latestJournalEntry');
+      // Strip HTML tags so raw <p> tags don't show as text
+      const plainText = (data.content || '').replace(/<[^>]*>/g, '').trim();
+      container.innerHTML = `
+        <div class="journal-preview-meta">
+          <span>${sanitize(formatDateShort(data.created_at))}</span>
+          <span>•</span>
+          <span>${sanitize(data.mood || 'No mood')}</span>
+        </div>
+        <div style="font-weight:600;margin-bottom:0.4rem;">${sanitize(data.title || 'Untitled Entry')}</div>
+        <div class="journal-preview">${sanitize(truncate(plainText, 150))}</div>`;
+    }
+
+    async function loadActiveGoals() {
+      const { data, error } = await supabase.from('goals').select('id, title, progress, target_date, category').eq('user_id', userId).eq('status', 'active').order('created_at', { ascending: false }).limit(3);
+      if (error || !data || data.length === 0) return;
+      const list = document.getElementById('activeGoalsList');
+      list.innerHTML = data.map(goal => `
+        <div style="margin-bottom:1rem;">
+          <div class="flex-between mb-sm">
+            <div style="font-size:0.9rem;font-weight:600;">${sanitize(truncate(goal.title, 35))}</div>
+            <div class="text-muted">${sanitize(String(goal.progress))}%</div>
+          </div>
+          <div class="progress-bar-wrapper"><div class="progress-bar-fill" style="width:${sanitize(String(goal.progress))}%"></div></div>
+          ${goal.target_date ? `<div class="text-muted mt-sm">Due: ${sanitize(formatDateShort(goal.target_date))}</div>` : ''}
+        </div>`).join('');
+    }
+
+    let moodChartInstance = null;
+    async function loadMoodChart() {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const { data, error } = await supabase.from('journal_entries').select('mood_score, created_at').eq('user_id', userId).gte('created_at', thirtyDaysAgo.toISOString()).order('created_at', { ascending: true }).limit(30);
+      const canvas = document.getElementById('moodChart');
+      const empty = document.getElementById('moodChartEmpty');
+      if (error || !data || data.length === 0) { canvas.style.display = 'none'; empty.style.display = 'block'; return; }
+      canvas.style.display = 'block'; empty.style.display = 'none';
+      const labels = data.map(e => { const d = new Date(e.created_at); return `${d.getDate()}/${d.getMonth()+1}`; });
+      const scores = data.map(e => e.mood_score);
+      const isNeoTokyo = document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+      const moodEmojis = isNeoTokyo
+        ? ['','1','2','3','4','5','6','7','8','9','10']
+        : ['','😭','😔','😟','😕','😐','🙂','😊','😄','🤩','🥳'];
+      const accent1 = themeColor('--accent-1', '#e94560');
+      const accent3 = themeColor('--accent-3', '#f0c040');
+      const textMuted = themeColor('--text-muted', '#a0a0b0');
+      const gridColor = themeColor('--border', '#2a2a3e');
+      if (moodChartInstance) moodChartInstance.destroy();
+      moodChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Mood', data: scores, borderColor: accent1, backgroundColor: hexToRgba(accent1, 0.1), borderWidth: 2, pointBackgroundColor: accent3, pointRadius: 4, tension: 0.4, fill: true }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${moodEmojis[ctx.raw]||''} ${ctx.raw}/10` } } },
+          scales: {
+            y: { min:1, max:10, ticks: { color: textMuted, stepSize:3, callback: v => moodEmojis[v]||v }, grid: { color: gridColor } },
+            x: { ticks: { color: textMuted }, grid: { display:false } }
+          }
+        }
+      });
+    }
+
+    function loadDailyQuote() {
+      try {
+        const verse = getVerseFromLibrary('daily');
+        document.getElementById('dailyQuote').textContent = `"${verse.text}"`;
+        document.getElementById('quoteAuthor').textContent = verse.ref;
+        if (verse.apply) document.getElementById('scriptureThemeTag').textContent = `${isNeoTokyoActive() ? '' : '💡 '}${verse.apply}`;
+      } catch(e) {
+        document.getElementById('dailyQuote').textContent = '"This is the day the LORD has made; let us rejoice and be glad in it."';
+        document.getElementById('quoteAuthor').textContent = 'Psalm 118:24';
+      }
+    }
+
+    async function loadUserName() {
+      const { data, error } = await supabase.from('profiles').select('name').eq('id', userId).limit(1).single();
+      if (!error && data && data.name) document.getElementById('userName').textContent = data.name;
+    }
+
+    async function updateStreakOnLogin() {
+      if (!isOnline()) {
+        showToast('Offline — today\'s streak will update once you\'re back online.', 'warning');
+        return;
+      }
+      const today = todayDate();
+      const { data, error } = await supabase.from('streaks').select('*').eq('user_id', userId).limit(1).maybeSingle();
+      if (error) return;
+      if (!data) { await supabase.from('streaks').insert({ user_id: userId, current_streak: 1, longest_streak: 1, total_xp: 10, last_active_date: today }); return; }
+      if (data.last_active_date === today) return;
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const continued = data.last_active_date === yesterdayStr;
+      const newStreak = continued ? data.current_streak + 1 : 1;
+      const newLongest = Math.max(newStreak, data.longest_streak || 0);
+      const newXP = (data.total_xp || 0) + 10;
+      const { error: updateError } = await supabase.from('streaks').update({ current_streak: newStreak, longest_streak: newLongest, total_xp: newXP, last_active_date: today }).eq('id', data.id);
+      if (updateError) showToast('Failed to update streak — try reloading.', 'error');
+    }
+
+    async function init() {
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      userId = _s?.user?.id;
+      if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
+      await applyThemeTier(supabase, userId);
+      applyDaytime();
+      applyWeather();
+      loaderProgress(10, 'Loading...');
+      setGreeting();
+      loadDailyQuote();
+      loaderProgress(25, 'Checking connection...');
+      updateOnlineBadge(isOnline());
+      loaderProgress(40, 'Updating streak...');
+      await updateStreakOnLogin();
+      loaderProgress(60, 'Loading your data...');
+      await Promise.all([loadUserName(), loadStreak(), loadHabitsDoneToday(), loadPendingTasks(), loadTodayMood(), loadSpentToday(), loadLatestJournal(), loadActiveGoals(), loadMoodChart()]);
+      loaderProgress(100, 'Ready!');
+      setTimeout(hideLoader, 300);
+      initNotifications();
+    }
+
+    window.signOut = async function() { await supabase.auth.signOut(); window.location.replace('login.html'); };
+    init();
+  </script>
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/service-worker.js').then(()=>{}).catch(err=>{});}</script>
+</body>
+</html>

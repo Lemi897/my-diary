@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="" data-page="profile">
+<head>
+  <!-- ============================================================
+    profile.html - Profile and Settings Page
+    Shows: user name, bio, avatar, stats overview, badges earned,
+    theme switcher (unlocked themes), streak info, data export,
+    and app settings.
+    Profile data stored in: profiles table in Supabase.
+    Theme and streak data from localStorage and streaks table.
+  ============================================================ -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Profile | My Diary</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Blocking theme loader: runs before first paint to prevent flash -->
+  <script>
+    (function(){
+      var t = localStorage.getItem('active_theme') || '';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <style>
+    /* --------------------------------------------------------
+       Profile page specific styles
+    -------------------------------------------------------- */
+
+    /* Profile card at top */
+    .profile-card {
+      background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Avatar circle with initials */
+    .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .avatar-edit-hint {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 24px;
+      height: 24px;
+      background-color: var(--accent-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+
+    .avatar-color-picker {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .avatar-color-picker.hidden {
+      display: none;
+    }
+    .avatar-color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .avatar-color-swatch:hover {
+      transform: scale(1.15);
+      border-color: #fff;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-bio {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Profile stats row */
+    .profile-stats {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .profile-stat {
+      text-align: center;
+    }
+
+    .profile-stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .profile-stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Streak display in profile */
+    .streak-display {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .streak-flame-lg {
+      font-size: 2.5rem;
+      animation: flamePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes flamePulse {
+      0%, 100% { transform: scale(1) rotate(-5deg); }
+      50%       { transform: scale(1.2) rotate(5deg); }
+    }
+
+    .streak-info { flex: 1; }
+
+    .streak-count-lg {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .streak-details {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.7);
+      margin-top: 0.25rem;
+    }
+
+    .streak-xp-bar-wrapper {
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      height: 6px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .streak-xp-bar {
+      height: 100%;
+      background: #fff;
+      border-radius: 99px;
+      transition: width 0.5s ease;
+    }
+
+    /* Badges section */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .badge-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .badge-card.earned {
+      border-color: var(--warning);
+      background: rgba(255,209,102,0.08);
+    }
+
+    .badge-card.locked {
+      opacity: 0.4;
+    }
+
+    .badge-icon {
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .badge-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .badge-req {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* Theme switcher */
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .theme-section-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); margin: 1.25rem 0 0.75rem;
+    }
+    .theme-section-header:first-child { margin-top: 0; }
+    .theme-section-count {
+      background: var(--accent-dim); color: var(--accent-1);
+      border-radius: 20px; padding: 0.1rem 0.55rem; font-size: 0.7rem;
+    }
+
+    .theme-card {
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .theme-card.active-theme {
+      border-color: var(--warning);
+    }
+
+    .theme-card.locked-theme {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .theme-preview {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .theme-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+
+    .theme-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .theme-unlock-info {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .theme-active-badge {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      font-size: 0.7rem;
+      background: var(--warning);
+      color: #000;
+      padding: 0.1rem 0.4rem;
+      border-radius: 99px;
+      font-weight: 700;
+    }
+
+    /* Settings section */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .settings-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .intruder-attempt-item {
+      display: flex; gap: 1rem; align-items: center;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+    }
+    .intruder-attempt-item:last-child { border-bottom: none; }
+    .intruder-attempt-photo {
+      width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+      background: var(--bg-secondary); flex-shrink: 0;
+      border: 1px solid var(--danger);
+    }
+    .intruder-attempt-photo-placeholder {
+      width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0;
+      background: var(--bg-secondary); display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); font-size: 1.3rem;
+    }
+    .intruder-attempt-time { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+    .intruder-attempt-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background-color: var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent-1);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    /* Edit profile form */
+    .edit-profile-section {
+      display: none;
+    }
+
+    .edit-profile-section.open {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="neo-tokyo-bg" aria-hidden="true">
+    <div class="neo-sky-orb"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:0s;"></div>
+    <div class="neo-bird" style="left:5%; animation-delay:6s;"></div>
+    <div class="neo-particle" style="left:8%; animation-delay:0s;"></div>
+    <div class="neo-particle" style="left:22%; animation-delay:1.8s;"></div>
+    <div class="neo-particle" style="left:38%; animation-delay:3.2s;"></div>
+    <div class="neo-particle" style="left:54%; animation-delay:0.9s;"></div>
+    <div class="neo-particle" style="left:67%; animation-delay:2.6s;"></div>
+    <div class="neo-particle" style="left:79%; animation-delay:4.1s;"></div>
+    <div class="neo-particle" style="left:88%; animation-delay:1.3s;"></div>
+    <div class="neo-particle" style="left:95%; animation-delay:3.7s;"></div>
+  </div>
+
+  <!-- PIN LOCK — device-level, separate from Supabase auth -->
+  <div class="pin-lock-overlay" id="pinLockOverlay">
+    <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+    <div class="pin-lock-title">Enter PIN</div>
+    <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+    <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+  </div>
+
+  <!-- auth handled inside main module script -->
+  <div id="authGate">
+  <div id="appLoader" class="app-loader">
+    <div class="loader-icon" aria-hidden="true"></div>
+    <div class="loader-title">My<span>Diary</span></div>
+    <div class="loader-subtitle">Your personal life tracker</div>
+    <div class="loader-bar-track">
+      <div id="loaderBar" class="loader-bar-fill"></div>
+    </div>
+    <div id="loaderStatus" class="loader-status">Connecting...</div>
+  </div>
+  <div class="app-wrapper">
+
+    <!-- --------------------------------------------------------
+      SIDEBAR NAVIGATION
+    -------------------------------------------------------- -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">My<span>Diary</span></div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">
+          <i class="ri-home-5-line nav-icon"></i> Dashboard
+        </a>
+        <a href="habits.html" class="nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i> Habits
+        </a>
+        <a href="tasks.html" class="nav-link">
+          <i class="ri-task-line nav-icon"></i> Tasks
+        </a>
+        <a href="journal.html" class="nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i> Journal
+        </a>
+        <a href="linguistic.html" class="nav-link">
+          <i class="ri-book-open-line nav-icon"></i> Linguistic
+        </a>
+        <a href="goals.html" class="nav-link">
+          <i class="ri-focus-3-line nav-icon"></i> Goals
+        </a>
+        <a href="finance.html" class="nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i> Finance
+        </a>
+        <a href="profile.html" class="nav-link active">
+          <i class="ri-user-3-line nav-icon"></i> Profile
+        </a>
+      </nav>
+      <button onclick="signOut()" style="margin:0 0.5rem 0.75rem;padding:0.55rem 1rem;background:rgba(239,35,60,0.12);border:1px solid rgba(239,35,60,0.25);border-radius:8px;color:#ef233c;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.5rem;width:calc(100% - 1rem);font-family:inherit;"><i class="ri-logout-circle-line"></i>Sign Out</button>
+      <div class="online-badge" id="onlineBadge">
+        <div class="dot"></div>
+        <span class="status-text">Online</span>
+      </div>
+    </aside>
+
+    <!-- --------------------------------------------------------
+      MAIN CONTENT
+    -------------------------------------------------------- -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <div>
+          <div class="page-title">Profile</div>
+          <div class="page-subtitle">Your stats, themes, badges and settings</div>
+        </div>
+        <button class="btn btn-primary" id="editProfileBtn">
+          <i class="ri-edit-line"></i> Edit Profile
+        </button>
+      </div>
+
+      <!-- Profile card -->
+      <div class="profile-card">
+        <div>
+          <div class="avatar" id="avatarCircle" onclick="toggleAvatarColorPicker()">
+            M
+            <div class="avatar-edit-hint"><i class="ri-palette-line"></i></div>
+          </div>
+          <div class="avatar-color-picker hidden" id="avatarColorPicker"></div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">Maestro</div>
+          <div class="profile-bio" id="profileBio">My personal diary and life tracker.</div>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-value text-accent" id="statJournalEntries">0</div>
+              <div class="profile-stat-label">Journal entries</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-success" id="statGoalsCompleted">0</div>
+              <div class="profile-stat-label">Goals completed</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-warning" id="statHabitsTotal">0</div>
+              <div class="profile-stat-label">Habits tracked</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-value text-info" id="statTasksDone">0</div>
+              <div class="profile-stat-label">Tasks completed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit profile form (hidden by default) -->
+      <div class="card mb-lg edit-profile-section" id="editProfileSection">
+        <div class="card-title">Edit Profile</div>
+        <div class="form-group">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" id="editName" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio</label>
+          <textarea class="form-textarea" id="editBio" rows="2"
+            placeholder="A short bio about yourself"></textarea>
+        </div>
+        <button class="btn btn-primary" id="saveProfileBtn">
+          <i class="ri-save-line"></i> Save Profile
+        </button>
+      </div>
+
+      <!-- Streak display -->
+      <div class="streak-display mb-lg">
+        <div class="streak-flame-lg">🔥</div>
+        <div class="streak-info">
+          <div class="streak-count-lg" id="streakCount">0 days</div>
+          <div class="streak-details" id="streakDetails">Best: 0 days • 0 XP earned</div>
+          <div class="streak-xp-bar-wrapper">
+            <div class="streak-xp-bar" id="streakXpBar" style="width:0%"></div>
+          </div>
+          <div style="font-size:0.75rem;color:rgba(255,255,255,0.6);margin-top:0.3rem;"
+            id="nextMilestoneHint"></div>
+        </div>
+      </div>
+
+      <!-- Character Stats -->
+      <div class="card mb-lg">
+        <div class="card-title">Character Stats</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          A holistic snapshot pulled from everything you track — habits, tasks, journal, goals, and Linguistic.
+        </p>
+        <canvas id="statsRadarChart" height="220"></canvas>
+        <div id="statsEmptyHint" style="display:none;text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:0.75rem;">
+          Your stats grow as you use the app — add a word, finish a goal, write an entry, and check back.
+        </div>
+      </div>
+
+      <!-- Themes section -->
+      <div class="card mb-lg">
+        <div class="card-title">Themes</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">
+          Unlock themes by maintaining your daily streak. Click an unlocked theme to apply it.
+        </p>
+        <div class="themes-grid" id="themesGrid"></div>
+      </div>
+
+      <!-- Badges section -->
+      <div class="card mb-lg">
+        <div class="card-title">Badges</div>
+        <div class="badges-grid" id="badgesGrid"></div>
+      </div>
+
+      <!-- Settings section -->
+      <div class="card mb-lg">
+        <div class="card-title">Settings</div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Evening Reminder</div>
+            <div class="settings-desc">Remind me to fill in my diary each evening</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="reminderToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Streak Notifications</div>
+            <div class="settings-desc">Alert me when I am close to breaking my streak</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="streakNotifToggle" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Device PIN Lock</div>
+            <div class="settings-desc" id="pinStatusDesc">Add a PIN to lock this device when the app is reopened</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="pinSettingsBtn">Set PIN</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Reset Active Theme</div>
+            <div class="settings-desc">Go back to the default dark theme</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="resetThemeBtn">
+            Reset Theme
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Export Journal as Text</div>
+            <div class="settings-desc">Download all your journal entries as a .txt file</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="exportJournalBtn">
+            <i class="ri-download-line"></i> Export
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">App Version</div>
+            <div class="settings-desc">My Diary v1.0.0</div>
+          </div>
+          <span class="badge badge-info">v1.0.0</span>
+        </div>
+
+      </div>
+
+      <div class="card" id="intruderAttemptsCard" style="display:none; margin-top: 1.5rem;">
+        <div class="card-title">Failed Unlock Attempts</div>
+        <div class="settings-desc" style="margin-bottom:1rem;">Captured automatically after 3 wrong PIN attempts in a row on this or any device. Cleared automatically after 30 days.</div>
+        <div id="intruderAttemptsList"></div>
+      </div>
+
+    </main>
+
+    <!-- --------------------------------------------------------
+      BOTTOM NAVIGATION (mobile)
+    -------------------------------------------------------- -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-links">
+        <a href="index.html" class="bottom-nav-link">
+          <i class="ri-home-5-line nav-icon"></i><span>Home</span>
+        </a>
+        <a href="habits.html" class="bottom-nav-link">
+          <i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span>
+        </a>
+        <a href="tasks.html" class="bottom-nav-link">
+          <i class="ri-task-line nav-icon"></i><span>Tasks</span>
+        </a>
+        <a href="journal.html" class="bottom-nav-link">
+          <i class="ri-quill-pen-line nav-icon"></i><span>Journal</span>
+        </a>
+        <a href="linguistic.html" class="bottom-nav-link">
+          <i class="ri-book-open-line nav-icon"></i><span>Linguistic</span>
+        </a>
+        <a href="goals.html" class="bottom-nav-link">
+          <i class="ri-focus-3-line nav-icon"></i><span>Goals</span>
+        </a>
+        <a href="finance.html" class="bottom-nav-link">
+          <i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span>
+        </a>
+        <a href="profile.html" class="bottom-nav-link active">
+          <i class="ri-user-3-line nav-icon"></i>
+          <span>Profile</span>
+        </a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- PIN SETUP MODAL -->
+  <div class="modal-overlay" id="pinSetupModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="pinSetupTitle">Set a PIN</div>
+        <button class="modal-close" id="pinSetupClose">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New 4-digit PIN</label>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-input" id="newPinInput" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm PIN</label>
+        <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" class="form-input" id="confirmPinInput" autocomplete="off" />
+      </div>
+      <div id="pinSetupError" style="color:var(--danger);font-size:0.85rem;display:none;margin-bottom:0.5rem;">PINs don't match, or aren't 4 digits.</div>
+      <button class="btn btn-primary btn-full mt-md" id="savePinBtn">Save PIN</button>
+      <button class="btn btn-ghost btn-full mt-sm" id="removePinBtn" style="display:none;color:var(--danger);">Remove PIN</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+    PROFILE PAGE JAVASCRIPT
+    Handles: load profile, edit and save profile, streak display,
+    theme switcher with unlock checks, badges display,
+    settings toggles, journal export, stats loading.
+  ============================================================ -->
+  <script type="module">
+    import { supabase, getCurrentUser } from './js/supabase.js';
+    import { initPinLock, wirePinLockUI, isPinSet, setPin, removePin } from './js/pinlock.js';
+
+    // ----------------------------------------------------------
+    // AUTH CHECK — runs first, before anything else
+    // Single Supabase client via supabase.js (no duplicate)
+    // Sets userId immediately so all queries have it ready
+    // ----------------------------------------------------------
+    {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.replace('login.html');
+      } else {
+        document.getElementById('authGate').style.display = '';
+        applyDaytime();
+        applyWeather();
+        initPinLock();
+        wirePinLockUI();
+      }
+    }
+
+    // Module-level userId — set in init(), used by all functions
+    let userId = null;
+    import {
+      isOnline,
+      onConnectivityChange,
+      replayOfflineQueue,
+      showToast,
+      isNeoTokyoActive,
+      applyDaytime,
+      applyWeather,
+      applyThemeTier,
+    } from './js/utils.js';
+
+
+    // ----------------------------------------------------------
+    // AVATAR COLOR PICKER
+    // Replaces the old fake "click to change photo" hint — this is
+    // honest about what it actually does: pick a background color,
+    // synced to Supabase so it's consistent across devices.
+    // Real photo upload would need Supabase Storage — bigger lift,
+    // deferred for now.
+    // ----------------------------------------------------------
+    const AVATAR_COLORS = ['#e94560','#4cc9f0','#00d4aa','#f0c040','#a78bfa','#fb7185','#34d399','#fb923c'];
+
+    document.getElementById('avatarColorPicker').innerHTML = AVATAR_COLORS.map(c =>
+      `<div class="avatar-color-swatch" style="background:${c};" onclick="setAvatarColor('${c}')"></div>`
+    ).join('');
+
+    window.toggleAvatarColorPicker = function() {
+      document.getElementById('avatarColorPicker').classList.toggle('hidden');
+    };
+
+    window.setAvatarColor = async function(color) {
+      document.getElementById('avatarCircle').style.background = color;
+      document.getElementById('avatarColorPicker').classList.add('hidden');
+      if (!isOnline()) { showToast('Connect to the internet to save your avatar color.', 'warning'); return; }
+      const { error } = await supabase.from('profiles').update({ avatar_color: color }).eq('id', userId);
+      if (error) { showToast('Failed to save avatar color.', 'error'); return; }
+      showToast('Avatar color updated!', 'success');
+    };
+
+    // ----------------------------------------------------------
+    // LOADER HELPERS
+    // ----------------------------------------------------------
+    function loaderProgress(pct, status) {
+      const bar = document.getElementById('loaderBar');
+      const txt = document.getElementById('loaderStatus');
+      if (bar) bar.style.width = pct + '%';
+      if (txt && status) txt.textContent = status;
+    }
+    function hideLoader() {
+      const loader = document.getElementById('appLoader');
+      if (!loader) return;
+      loader.style.opacity = '0';
+      loader.style.visibility = 'hidden';
+      setTimeout(() => loader.remove(), 650);
+    }
+
+    // ----------------------------------------------------------
+    // SANITIZE — prevent XSS in rendered HTML
+    // ----------------------------------------------------------
+    function sanitize(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ----------------------------------------------------------
+    // CHARACTER STATS
+    // A holistic snapshot pulled from across the whole app, not
+    // just this page. Scores are 0-100 on a square-root curve —
+    // meaningful early progress, diminishing returns after that,
+    // same shape as a typical RPG stat growth curve.
+    //
+    // Every multiplier/factor below is a tunable constant, same
+    // as the Linguistic XP formula — nothing here is fixed. This
+    // is a first-pass mapping and deliberately easy to retune
+    // once there's real usage to sanity-check it against.
+    // ----------------------------------------------------------
+    function themeColor(varName, fallback) {
+      const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+      return val || fallback;
+    }
+
+    function statScore(raw, factor) {
+      return Math.max(0, Math.min(100, Math.round(Math.sqrt(raw) * factor)));
+    }
+
+    let statsChartInstance = null;
+
+    async function loadCharacterStats() {
+      const [
+        vocabRes, booksReadRes,
+        goalsCompletedRes, tasksDoneRes,
+        journalRes, creativeGoalsRes,
+        spiritualHabitsRes, spiritualGoalsRes,
+        streakRes
+      ] = await Promise.all([
+        supabase.from('vocabulary').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('books').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'read'),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('done', true).is('parent_id', null),
+        supabase.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed').eq('category', 'Creative'),
+        supabase.from('habits').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('category', 'Spiritual').gt('streak', 0),
+        supabase.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'completed').eq('category', 'Spiritual'),
+        supabase.from('streaks').select('longest_streak').eq('user_id', userId).limit(1).maybeSingle()
+      ]);
+
+      const vocabCount = vocabRes.count || 0;
+      const booksRead = booksReadRes.count || 0;
+      const goalsCompleted = goalsCompletedRes.count || 0;
+      const tasksDone = tasksDoneRes.count || 0;
+      const journalEntries = journalRes.count || 0;
+      const creativeGoals = creativeGoalsRes.count || 0;
+      const spiritualHabits = spiritualHabitsRes.count || 0;
+      const spiritualGoals = spiritualGoalsRes.count || 0;
+      const bestStreak = streakRes.data?.longest_streak || 0;
+
+      const scores = {
+        Linguistic:   statScore(vocabCount + booksRead * 3, 13),
+        Intelligence: statScore(goalsCompleted * 4 + tasksDone, 10),
+        Creativity:   statScore(journalEntries + creativeGoals * 3, 14),
+        Spiritual:    statScore(spiritualHabits * 3 + spiritualGoals * 4, 22),
+        Discipline:   statScore(bestStreak, 13)
+      };
+
+      renderStatsChart(scores);
+    }
+
+    function renderStatsChart(scores) {
+      const canvas = document.getElementById('statsRadarChart');
+      const hint = document.getElementById('statsEmptyHint');
+      const values = Object.values(scores);
+      const allZero = values.every(v => v === 0);
+      hint.style.display = allZero ? 'block' : 'none';
+
+      const accent1 = themeColor('--accent-1', '#7c3aed');
+      const textMuted = themeColor('--text-muted', '#a0a0b0');
+      const gridColor = themeColor('--border', '#2a2a3e');
+
+      if (statsChartInstance) statsChartInstance.destroy();
+      statsChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'radar',
+        data: {
+          labels: Object.keys(scores),
+          datasets: [{
+            label: 'Stats',
+            data: values,
+            borderColor: accent1,
+            backgroundColor: hexToRgba(accent1, 0.15),
+            pointBackgroundColor: accent1,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              min: 0, max: 100,
+              ticks: { display: false, stepSize: 25 },
+              grid: { color: gridColor },
+              angleLines: { color: gridColor },
+              pointLabels: { color: textMuted, font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function hexToRgba(hex, alpha) {
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return `rgba(124,58,237,${alpha})`;
+      const r = parseInt(h.substring(0,2), 16), g = parseInt(h.substring(2,4), 16), b = parseInt(h.substring(4,6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    // ----------------------------------------------------------
+    // THEME AND ONLINE BADGE
+    // ----------------------------------------------------------
+    const savedTheme = localStorage.getItem('active_theme') || '';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    function updateOnlineBadge(online) {
+      const badge = document.getElementById('onlineBadge');
+      const text = badge.querySelector('.status-text');
+      badge.classList.toggle('offline', !online);
+      text.textContent = online ? 'Online' : 'Offline';
+    }
+    updateOnlineBadge(isOnline());
+    onConnectivityChange(async (online) => {
+      updateOnlineBadge(online);
+      if (online) {
+        const result = await replayOfflineQueue();
+        if (result && result.replayed > 0) {
+          showToast(`✅ ${result.replayed} offline action(s) synced.`, 'success');
+        }
+      }
+    });
+
+    // ----------------------------------------------------------
+    // ALL THEMES DEFINITION
+    // Each theme has name, key, milestone, and preview colors
+    // ----------------------------------------------------------
+    const ALL_THEMES = [
+      {
+        key: '', name: 'Default Dark', milestone: 0,
+        colors: ['#0f0f0f', '#1a1a2e', '#e94560']
+      },
+      {
+        key: 'tokyo-night', name: 'Tokyo Night', milestone: 7,
+        colors: ['#1a1b26', '#1f2335', '#7aa2f7']
+      },
+      {
+        key: 'dracula', name: 'Dracula', milestone: 14,
+        colors: ['#282a36', '#2d2f3f', '#ff79c6']
+      },
+      {
+        key: 'catppuccin', name: 'Catppuccin', milestone: 21,
+        colors: ['#1e1e2e', '#313244', '#cba6f7']
+      },
+      {
+        key: 'nord', name: 'Nord', milestone: 30,
+        colors: ['#2e3440', '#434c5e', '#88c0d0']
+      },
+      {
+        key: 'gruvbox', name: 'Gruvbox', milestone: 45,
+        colors: ['#282828', '#3c3836', '#fe8019']
+      },
+      {
+        key: 'sunset', name: 'Sunset', milestone: 60,
+        colors: ['#1a0a00', '#3d1c00', '#ff6b35']
+      },
+      {
+        key: 'ocean-deep', name: 'Ocean Deep', milestone: 75,
+        colors: ['#020c1b', '#112240', '#64ffda']
+      },
+      {
+        key: 'sakura', name: 'Sakura', milestone: 90,
+        colors: ['#1a0a12', '#3d1530', '#ff85a1']
+      },
+      {
+        key: 'forest', name: 'Forest', milestone: 120,
+        colors: ['#0a1a0a', '#143314', '#52b788']
+      },
+      {
+        key: 'cyberpunk', name: 'Cyberpunk', milestone: 150,
+        colors: ['#0d0d0d', '#1a0a2e', '#ffff00']
+      },
+      {
+        key: 'tomb-of-the-mask', name: 'Tomb of the Mask', milestone: 0,
+        colors: ['#05050a', '#14141f', '#00f0ff']
+      },
+      {
+        key: 'midnight-library', name: 'Midnight Library', milestone: 180,
+        colors: ['#0d1321', '#1a2238', '#d4af37']
+      },
+      {
+        key: 'solarized-dark', name: 'Solarized Dark', milestone: 210,
+        colors: ['#002b36', '#073642', '#268bd2']
+      },
+      {
+        key: 'kanagawa', name: 'Kanagawa', milestone: 240,
+        colors: ['#1f1f28', '#2a2a37', '#7e9cd8']
+      },
+      {
+        key: 'rose-pine', name: 'Rosé Pine', milestone: 270,
+        colors: ['#191724', '#1f1d2e', '#ebbcba']
+      },
+      {
+        key: 'one-dark', name: 'One Dark', milestone: 300,
+        colors: ['#282c34', '#2c313a', '#61afef']
+      },
+      {
+        key: 'everforest', name: 'Everforest', milestone: 330,
+        colors: ['#2b3339', '#323c41', '#a7c080']
+      },
+      {
+        key: 'autumn', name: 'Autumn', milestone: 365,
+        colors: ['#1f140f', '#2e1f17', '#d2691e']
+      },
+      {
+        key: 'monokai', name: 'Monokai', milestone: 400,
+        colors: ['#272822', '#3e3d32', '#f92672']
+      },
+      {
+        key: 'synthwave', name: 'Synthwave', milestone: 450,
+        colors: ['#241b2f', '#34294f', '#ff7edb']
+      },
+      {
+        key: 'matrix', name: 'Matrix', milestone: 500,
+        colors: ['#000000', '#0d0d0d', '#00ff41']
+      },
+      {
+        key: 'illuminated-vellum', name: 'Illuminated Vellum', milestone: 0,
+        colors: ['#f4ecd8', '#ffffff', '#c9a227']
+      },
+      {
+        key: 'abyssal-bloom', name: 'Abyssal Bloom', milestone: 0,
+        colors: ['#010204', '#060a12', '#2dfbc4']
+      },
+      {
+        key: 'petrichor', name: 'Petrichor', milestone: 0,
+        colors: ['#2b2016', '#3d2f1f', '#5a6fc4']
+      },
+      {
+        key: 'superposition', name: 'Superposition', milestone: 0,
+        colors: ['#0d0a1a', '#16112b', '#8b5cf6']
+      },
+      {
+        key: 'between-channels', name: 'Between Channels', milestone: 0,
+        colors: ['#1a1c1f', '#24262a', '#9aa0a6']
+      },
+      {
+        key: 'neo-tokyo', name: 'Neo-Tokyo', milestone: 0,
+        colors: ['#08060c', '#140f1e', '#ff2d55']
+      }
+    ];
+
+    // Populated from Supabase in loadUnlockedThemes(); source of truth for
+    // which themes are unlocked (syncs across devices, unlike localStorage).
+    let unlockedThemeKeys = [];
+
+    async function loadUnlockedThemes() {
+      const { data, error } = await supabase
+        .from('unlocked_themes')
+        .select('theme_name')
+        .eq('user_id', userId);
+      if (!error && data) {
+        unlockedThemeKeys = data.map(r => r.theme_name);
+        // Keep localStorage as a fast local cache (used for instant theme
+        // paint on page load, before this async call resolves).
+        localStorage.setItem('unlocked_themes', JSON.stringify(unlockedThemeKeys));
+      }
+    }
+
+    // ----------------------------------------------------------
+    // ALL BADGES DEFINITION
+    // Badges are earned based on streaks, entries, goals, etc.
+    // ----------------------------------------------------------
+    const ALL_BADGES = [
+      { icon: '🌱', name: 'First Step',    desc: 'First journal entry',    key: 'first_entry' },
+      { icon: '🔥', name: 'On Fire',       desc: '7 day streak',           key: 'streak_7' },
+      { icon: '💪', name: 'Consistent',    desc: '14 day streak',          key: 'streak_14' },
+      { icon: '🎯', name: 'Goal Getter',   desc: 'Complete first goal',    key: 'first_goal' },
+      { icon: '📚', name: 'Bookworm',      desc: '10 journal entries',     key: 'entries_10' },
+      { icon: '🏆', name: 'Champion',      desc: '30 day streak',          key: 'streak_30' },
+      { icon: '💰', name: 'Saver',         desc: 'First savings deposit',  key: 'first_save' },
+      { icon: '✅', name: 'Task Master',   desc: 'Complete 10 tasks',      key: 'tasks_10' },
+      { icon: '🌟', name: 'Legend',        desc: '60 day streak',          key: 'streak_60' },
+      { icon: '🚀', name: 'Unstoppable',   desc: '100 day streak',         key: 'streak_100' }
+    ];
+
+    // ----------------------------------------------------------
+    // LOAD PROFILE DATA
+    // ----------------------------------------------------------
+    async function loadProfile() {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .limit(1)
+        .single();
+
+      if (!error && data) {
+        document.getElementById('profileName').textContent = data.name || 'Maestro';
+        document.getElementById('profileBio').textContent = data.bio || 'My personal diary and life tracker.';
+        document.getElementById('editName').value = data.name || '';
+        document.getElementById('editBio').value = data.bio || '';
+
+        // Update avatar initials
+        const initials = (data.name || 'M').charAt(0).toUpperCase();
+        document.getElementById('avatarCircle').childNodes[0].textContent = initials;
+
+        // Apply saved avatar color, if one was chosen
+        if (data.avatar_color) {
+          document.getElementById('avatarCircle').style.background = data.avatar_color;
+        }
+      }
+    }
+
+    // ----------------------------------------------------------
+    // LOAD STATS
+    // Counts from Supabase for journal, goals, habits, tasks
+    // ----------------------------------------------------------
+    async function loadStats() {
+      const [journalRes, goalsRes, habitsRes, tasksRes] = await Promise.all([
+        supabase.from('journal_entries').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('habits').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('user_id', userId).eq('done', true).is('parent_id', null)
+      ]);
+
+      document.getElementById('statJournalEntries').textContent = journalRes.count || 0;
+      document.getElementById('statGoalsCompleted').textContent = goalsRes.count || 0;
+      document.getElementById('statHabitsTotal').textContent    = habitsRes.count || 0;
+      document.getElementById('statTasksDone').textContent      = tasksRes.count || 0;
+    }
+
+    // ----------------------------------------------------------
+    // LOAD STREAK
+    // ----------------------------------------------------------
+    async function loadStreak() {
+      const { data, error } = await supabase
+        .from('streaks')
+        .select('*')
+        .eq('user_id', userId)
+        .limit(1)
+        .single();
+
+      if (error || !data) return;
+
+      document.getElementById('streakCount').textContent = `${data.current_streak} days`;
+      document.getElementById('streakDetails').textContent =
+        `Best: ${data.longest_streak} days • ${data.total_xp} XP earned`;
+
+      // XP bar: progress to next 100 XP milestone
+      const xpProgress = (data.total_xp % 100);
+      document.getElementById('streakXpBar').style.width = `${xpProgress}%`;
+
+      // Next theme milestone hint
+      const milestones = ALL_THEMES.map(t => t.milestone).filter(m => m > data.current_streak);
+      if (milestones.length > 0) {
+        const next = Math.min(...milestones);
+        const theme = ALL_THEMES.find(t => t.milestone === next);
+        document.getElementById('nextMilestoneHint').textContent =
+          `${next - data.current_streak} days to unlock ${theme?.name}`;
+      } else {
+        document.getElementById('nextMilestoneHint').textContent = 'All themes unlocked! 🎉';
+      }
+
+      renderBadges(data);
+    }
+
+    // ----------------------------------------------------------
+    // RENDER THEMES GRID
+    // Shows all themes, locked ones are dimmed
+    // ----------------------------------------------------------
+    function renderThemes(currentStreak) {
+      const unlockedThemes = unlockedThemeKeys;
+      const activeTheme = localStorage.getItem('active_theme') || '';
+      const grid = document.getElementById('themesGrid');
+
+      function cardHtml(theme) {
+        const isUnlocked = theme.milestone === 0 || unlockedThemes.includes(theme.key);
+        const isActive = theme.key === activeTheme;
+        return `
+          <div class="theme-card ${isActive ? 'active-theme' : ''} ${!isUnlocked ? 'locked-theme' : ''}"
+            style="background-color:${theme.colors[0]};border-color:${isActive ? 'var(--warning)' : theme.colors[1]};"
+            onclick="${isUnlocked ? `applyTheme('${theme.key}')` : ''}">
+
+            ${isActive ? '<div class="theme-active-badge">Active</div>' : ''}
+
+            <div class="theme-preview">
+              ${theme.colors.map(c => `
+                <div class="theme-swatch" style="background-color:${c};"></div>
+              `).join('')}
+            </div>
+
+            <div class="theme-name" style="color:${theme.colors[2]};">${theme.name}</div>
+            <div class="theme-unlock-info">
+              ${isUnlocked
+                ? (theme.key === '' ? 'Default' : theme.milestone === 0 ? 'Always unlocked' : `Unlocked at ${theme.milestone} days`)
+                : `🔒 ${theme.milestone} day streak`}
+            </div>
+          </div>
+        `;
+      }
+
+      // Unlocked first (what you can actually use right now, active
+      // theme pinned to the front), locked after — sorted nearest-
+      // to-unlock first so it reads as a progression, not a jumble.
+      const unlocked = ALL_THEMES.filter(t => t.milestone === 0 || unlockedThemes.includes(t.key));
+      const locked = ALL_THEMES.filter(t => t.milestone !== 0 && !unlockedThemes.includes(t.key))
+        .sort((a, b) => a.milestone - b.milestone);
+
+      unlocked.sort((a, b) => (a.key === activeTheme ? -1 : b.key === activeTheme ? 1 : 0));
+
+      grid.innerHTML = `
+        <div class="theme-section-header">
+          Unlocked <span class="theme-section-count">${unlocked.length}</span>
+        </div>
+        <div class="themes-grid">${unlocked.map(cardHtml).join('')}</div>
+
+        ${locked.length ? `
+          <div class="theme-section-header">
+            Locked <span class="theme-section-count">${locked.length}</span>
+          </div>
+          <div class="themes-grid">${locked.map(cardHtml).join('')}</div>
+        ` : ''}
+      `;
+    }
+
+    // ----------------------------------------------------------
+    // APPLY THEME
+    // Saves to localStorage and reloads page to apply
+    // ----------------------------------------------------------
+    window.applyTheme = function(themeKey) {
+      localStorage.setItem('active_theme', themeKey);
+      document.documentElement.setAttribute('data-theme', themeKey);
+      showToast(`Theme applied! 🎨`, 'success');
+      renderThemes();
+    };
+
+    // ----------------------------------------------------------
+    // RENDER BADGES
+    // Checks earned conditions and marks badges accordingly
+    // ----------------------------------------------------------
+    async function renderBadges(streakData) {
+      const [journalRes, goalsRes, tasksRes, savingsRes] = await Promise.all([
+        supabase.from('journal_entries').select('id', { count: 'exact' }).eq('user_id', userId),
+        supabase.from('goals').select('id', { count: 'exact' }).eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('tasks').select('id', { count: 'exact' }).eq('user_id', userId).eq('done', true).is('parent_id', null),
+        supabase.from('savings_deposits').select('id', { count: 'exact' }).eq('user_id', userId)
+      ]);
+
+      const streak  = streakData?.current_streak || 0;
+      const entries = journalRes.count || 0;
+      const goals   = goalsRes.count || 0;
+      const tasks   = tasksRes.count || 0;
+      const saves   = savingsRes.count || 0;
+
+      // Map badge keys to earned conditions
+      const earned = {
+        first_entry: entries >= 1,
+        streak_7:    streak >= 7,
+        streak_14:   streak >= 14,
+        first_goal:  goals >= 1,
+        entries_10:  entries >= 10,
+        streak_30:   streak >= 30,
+        first_save:  saves >= 1,
+        tasks_10:    tasks >= 10,
+        streak_60:   streak >= 60,
+        streak_100:  streak >= 100
+      };
+
+      const grid = document.getElementById('badgesGrid');
+      grid.innerHTML = ALL_BADGES.map(badge => `
+        <div class="badge-card ${earned[badge.key] ? 'earned' : 'locked'}">
+          <div class="badge-icon">${badge.icon}</div>
+          <div class="badge-name">${sanitize(badge.name)}</div>
+          <div class="badge-req">${sanitize(badge.desc)}</div>
+          ${earned[badge.key]
+            ? '<div style="font-size:0.7rem;color:var(--warning);margin-top:0.3rem;">✓ Earned</div>'
+            : ''}
+        </div>
+      `).join('');
+    }
+
+    // ----------------------------------------------------------
+    // EDIT PROFILE TOGGLE
+    // ----------------------------------------------------------
+    document.getElementById('editProfileBtn').addEventListener('click', () => {
+      const section = document.getElementById('editProfileSection');
+      section.classList.toggle('open');
+    });
+
+    // ----------------------------------------------------------
+    // SAVE PROFILE
+    // Upserts profile data to Supabase profiles table
+    // ----------------------------------------------------------
+    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to save your profile.', 'warning'); return; }
+      const name = document.getElementById('editName').value.trim();
+      const bio  = document.getElementById('editBio').value.trim();
+
+      if (!name) { showToast('Please enter your name.', 'warning'); return; }
+
+      // Check if a profile row exists
+      const { data: existing } = await supabase
+        .from('profiles').select('id').eq('id', userId).limit(1).single();
+
+      let error;
+      if (existing) {
+        ({ error } = await supabase
+          .from('profiles')
+          .update({ name, bio })
+          .eq('id', existing.id));
+      } else {
+        ({ error } = await supabase
+          .from('profiles')
+          .insert({ id: userId, name, bio }));
+      }
+
+      if (error) { showToast('Failed to save profile.', 'error'); return; }
+
+      showToast('Profile saved!', 'success');
+      document.getElementById('editProfileSection').classList.remove('open');
+      loadProfile();
+    });
+
+    // ----------------------------------------------------------
+    // RESET THEME
+    // ----------------------------------------------------------
+    document.getElementById('resetThemeBtn').addEventListener('click', () => {
+      localStorage.setItem('active_theme', '');
+      document.documentElement.setAttribute('data-theme', '');
+      showToast('Theme reset to default.', 'info');
+      renderThemes();
+    });
+
+    // ----------------------------------------------------------
+    // PIN LOCK SETTINGS
+    // ----------------------------------------------------------
+    function renderPinSettingsButton() {
+      const btn = document.getElementById('pinSettingsBtn');
+      const desc = document.getElementById('pinStatusDesc');
+      const removeBtn = document.getElementById('removePinBtn');
+      if (isPinSet()) {
+        btn.textContent = 'Change PIN';
+        desc.textContent = 'This device is locked when the app is reopened after being idle';
+        removeBtn.style.display = 'block';
+      } else {
+        btn.textContent = 'Set PIN';
+        desc.textContent = 'Add a PIN to lock this device when the app is reopened';
+        removeBtn.style.display = 'none';
+      }
+    }
+    renderPinSettingsButton();
+    loadIntruderAttempts();
+
+    document.getElementById('pinSettingsBtn').addEventListener('click', () => {
+      document.getElementById('newPinInput').value = '';
+      document.getElementById('confirmPinInput').value = '';
+      document.getElementById('pinSetupError').style.display = 'none';
+      document.getElementById('pinSetupTitle').textContent = isPinSet() ? 'Change PIN' : 'Set a PIN';
+      document.getElementById('pinSetupModal').classList.add('open');
+    });
+    document.getElementById('pinSetupClose').addEventListener('click', () => {
+      document.getElementById('pinSetupModal').classList.remove('open');
+    });
+    document.getElementById('pinSetupModal').addEventListener('click', (e) => {
+      if (e.target.id === 'pinSetupModal') e.target.classList.remove('open');
+    });
+
+    document.getElementById('savePinBtn').addEventListener('click', async () => {
+      const pin = document.getElementById('newPinInput').value;
+      const confirmPin = document.getElementById('confirmPinInput').value;
+      const error = document.getElementById('pinSetupError');
+      if (!/^\d{4}$/.test(pin) || pin !== confirmPin) {
+        error.style.display = 'block';
+        return;
+      }
+      await setPin(pin);
+      document.getElementById('pinSetupModal').classList.remove('open');
+      renderPinSettingsButton();
+      showToast('PIN set for this device.', 'success');
+    });
+
+    document.getElementById('removePinBtn').addEventListener('click', () => {
+      if (!confirm('Remove the device PIN? Anyone with this device unlocked will be able to open the app freely.')) return;
+      removePin();
+      document.getElementById('pinSetupModal').classList.remove('open');
+      renderPinSettingsButton();
+      showToast('PIN removed.', 'info');
+    });
+
+    // ----------------------------------------------------------
+    // FAILED UNLOCK ATTEMPTS — captured automatically by
+    // pinlock.js after 3 consecutive wrong PINs. Cleaned up here,
+    // opportunistically, whenever this page loads: anything past
+    // 30 days gets deleted (both the database row and the actual
+    // stored photo), then whatever's left gets shown.
+    // ----------------------------------------------------------
+    async function loadIntruderAttempts() {
+      if (!isOnline()) return;
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: stale } = await supabase.from('pin_lock_attempts')
+        .select('id, image_path')
+        .eq('user_id', userId)
+        .lt('attempted_at', thirtyDaysAgo);
+
+      if (stale && stale.length) {
+        const paths = stale.map(r => r.image_path).filter(Boolean);
+        if (paths.length) await supabase.storage.from('intruder-photos').remove(paths);
+        await supabase.from('pin_lock_attempts').delete().in('id', stale.map(r => r.id));
+      }
+
+      const { data: attempts } = await supabase.from('pin_lock_attempts')
+        .select('*').eq('user_id', userId).order('attempted_at', { ascending: false });
+
+      const card = document.getElementById('intruderAttemptsCard');
+      const list = document.getElementById('intruderAttemptsList');
+      if (!attempts || !attempts.length) { card.style.display = 'none'; return; }
+
+      card.style.display = 'block';
+
+      const rows = await Promise.all(attempts.map(async (a) => {
+        let photoHtml = `<div class="intruder-attempt-photo-placeholder"><i class="ri-image-off-line"></i></div>`;
+        if (a.image_path) {
+          const { data: signed } = await supabase.storage.from('intruder-photos').createSignedUrl(a.image_path, 3600);
+          if (signed?.signedUrl) photoHtml = `<img class="intruder-attempt-photo" src="${signed.signedUrl}" alt="" />`;
+        }
+        const when = new Date(a.attempted_at);
+        return `
+          <div class="intruder-attempt-item">
+            ${photoHtml}
+            <div>
+              <div class="intruder-attempt-time">${when.toLocaleDateString()} at ${when.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+              <div class="intruder-attempt-sub">3 wrong PIN attempts in a row</div>
+            </div>
+          </div>
+        `;
+      }));
+
+      list.innerHTML = rows.join('');
+    }
+
+    // ----------------------------------------------------------
+    // EXPORT JOURNAL
+    // Downloads all journal entries as a plain text file
+    // ----------------------------------------------------------
+    document.getElementById('exportJournalBtn').addEventListener('click', async () => {
+      if (!isOnline()) { showToast('Connect to the internet to export your journal.', 'warning'); return; }
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .select('title, content, mood, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error || !data) { showToast('Failed to export.', 'error'); return; }
+
+      const text = data.map(e => [
+        `Date: ${new Date(e.created_at).toLocaleString('en-KE')}`,
+        `Title: ${e.title || 'Untitled'}`,
+        `Mood: ${e.mood || 'Unknown'}`,
+        `\n${(e.content || '').replace(/<[^>]*>/g, '')}`,
+        '\n---\n'
+      ].join('\n')).join('\n');
+
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my-diary-journal-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Journal exported!', 'success');
+    });
+
+    // ----------------------------------------------------------
+    // SETTINGS TOGGLES
+    // Save toggle states to localStorage
+    // ----------------------------------------------------------
+    const reminderToggle = document.getElementById('reminderToggle');
+    const streakNotifToggle = document.getElementById('streakNotifToggle');
+
+    reminderToggle.checked = localStorage.getItem('reminder_toggle') !== 'false';
+    streakNotifToggle.checked = localStorage.getItem('streak_notif_toggle') !== 'false';
+
+    reminderToggle.addEventListener('change', () => {
+      localStorage.setItem('reminder_toggle', reminderToggle.checked);
+    });
+
+    streakNotifToggle.addEventListener('change', () => {
+      localStorage.setItem('streak_notif_toggle', streakNotifToggle.checked);
+    });
+
+    // ----------------------------------------------------------
+    // INIT
+    // ----------------------------------------------------------
+    async function init() {
+      const { data: { session: _s } } = await supabase.auth.getSession();
+      userId = _s?.user?.id;
+      applyThemeTier(supabase, userId);
+      if (!userId) { hideLoader(); window.location.replace('login.html'); return; }
+      loaderProgress(20, 'Loading profile...');
+      await Promise.all([loadProfile(), loadStats(), loadStreak(), loadUnlockedThemes(), loadCharacterStats()]);
+      renderThemes();
+      loaderProgress(100, 'Ready!');
+      setTimeout(hideLoader, 300);
+    }
+
+
+    // ----------------------------------------------------------
+    // SIGN OUT
+    // ----------------------------------------------------------
+    window.signOut = async function() {
+      await supabase.auth.signOut();
+      window.location.replace('login.html');
+    };
+    init();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    }
+  </script>
+
+</div><!-- /authGate -->
+</body>
+</html>

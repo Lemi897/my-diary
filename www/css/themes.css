@@ -1,0 +1,1833 @@
+/* ============================================================
+   themes.css - Color themes for My Diary PWA
+   Each theme overrides the CSS variables defined in main.css.
+   Themes are applied by adding a data-theme attribute to <body>
+   Example: <body data-theme="tokyo-night">
+   
+   Default theme is built into main.css (Dark Default).
+   Themes are unlocked via streak milestones (see js/utils.js).
+   New themes can be added here without touching other files.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+
+
+/* ------------------------------------------------------------
+   TOKYO NIGHT
+   Unlocked at: 7 day streak
+   Source inspiration: VS Code Tokyo Night theme by enkia
+   ------------------------------------------------------------ */
+[data-theme="tokyo-night"] {
+  --bg-primary:    #1a1b26;
+  --bg-secondary:  #16161e;
+  --bg-card:       #1f2335;
+  --accent-1:      #7aa2f7;
+  --accent-dim:    rgba(122,162,247,0.12);
+  --accent-2:      #bb9af7;
+  --accent-3:      #2ac3de;
+  --text-primary:  #c0caf5;
+  --text-secondary:#a9b1d6;
+  --text-muted:    #565f89;
+  --border:        #292e42;
+  --success:       #9ece6a;
+  --warning:       #e0af68;
+  --danger:        #f7768e;
+  --info:          #2ac3de;
+}
+[data-theme="tokyo-night"] .loader-icon::before { content: '🌃'; }
+[data-theme="tokyo-night"] .loader-title {
+  text-shadow: 0 0 24px rgba(122,162,247,0.45);
+  animation-duration: 1.1s, 4s;
+}
+[data-theme="tokyo-night"] .loader-subtitle,
+[data-theme="tokyo-night"] .loader-bar-track,
+[data-theme="tokyo-night"] .loader-status {
+  animation-duration: 1.1s;
+}
+[data-theme="tokyo-night"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   DRACULA
+   Unlocked at: 14 day streak
+   Source inspiration: Dracula theme by Zeno Rocha
+   ------------------------------------------------------------ */
+[data-theme="dracula"] {
+  --bg-primary:    #282a36;
+  --bg-secondary:  #21222c;
+  --bg-card:       #2d2f3f;
+  --accent-1:      #ff79c6;
+  --accent-dim:    rgba(255,121,198,0.12);
+  --accent-2:      #bd93f9;
+  --accent-3:      #50fa7b;
+  --text-primary:  #f8f8f2;
+  --text-secondary:#c3c3c3;
+  --text-muted:    #6272a4;
+  --border:        #44475a;
+  --success:       #50fa7b;
+  --warning:       #ffb86c;
+  --danger:        #ff5555;
+  --info:          #8be9fd;
+}
+[data-theme="dracula"] .loader-icon::before { content: '🦇'; }
+[data-theme="dracula"] .loader-title {
+  text-shadow: 0 0 22px rgba(255,121,198,0.5);
+  animation-duration: 1.0s, 4s;
+}
+[data-theme="dracula"] .loader-subtitle,
+[data-theme="dracula"] .loader-bar-track,
+[data-theme="dracula"] .loader-status {
+  animation-duration: 1.0s;
+}
+[data-theme="dracula"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   CATPPUCCIN MOCHA
+   Unlocked at: 21 day streak
+   Source inspiration: Catppuccin palette by catppuccin org
+   ------------------------------------------------------------ */
+[data-theme="catppuccin"] {
+  --bg-primary:    #1e1e2e;
+  --bg-secondary:  #181825;
+  --bg-card:       #1e1e2e;
+  --accent-1:      #cba6f7;
+  --accent-dim:    rgba(203,166,247,0.12);
+  --accent-2:      #89b4fa;
+  --accent-3:      #a6e3a1;
+  --text-primary:  #cdd6f4;
+  --text-secondary:#bac2de;
+  --text-muted:    #585b70;
+  --border:        #313244;
+  --success:       #a6e3a1;
+  --warning:       #f9e2af;
+  --danger:        #f38ba8;
+  --info:          #89dceb;
+}
+[data-theme="catppuccin"] .loader-icon::before { content: '🐱'; }
+[data-theme="catppuccin"] .loader-title {
+  text-shadow: 0 0 20px rgba(203,166,247,0.5);
+  animation-duration: 0.6s, 4s;
+}
+[data-theme="catppuccin"] .loader-subtitle,
+[data-theme="catppuccin"] .loader-bar-track,
+[data-theme="catppuccin"] .loader-status {
+  animation-duration: 0.6s;
+}
+[data-theme="catppuccin"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   NORD
+   Unlocked at: 30 day streak
+   Source inspiration: Nord palette by Arctic Ice Studio
+   ------------------------------------------------------------ */
+[data-theme="nord"] {
+  --bg-primary:    #2e3440;
+  --bg-secondary:  #3b4252;
+  --bg-card:       #434c5e;
+  --accent-1:      #88c0d0;
+  --accent-dim:    rgba(136,192,208,0.12);
+  --accent-2:      #81a1c1;
+  --accent-3:      #a3be8c;
+  --text-primary:  #eceff4;
+  --text-secondary:#d8dee9;
+  --text-muted:    #4c566a;
+  --border:        #3b4252;
+  --success:       #a3be8c;
+  --warning:       #ebcb8b;
+  --danger:        #bf616a;
+  --info:          #88c0d0;
+}
+[data-theme="nord"] .loader-icon::before { content: '❄️'; }
+[data-theme="nord"] .loader-title {
+  text-shadow: 0 0 20px rgba(136,192,208,0.5);
+  animation-duration: 1.15s, 4s;
+}
+[data-theme="nord"] .loader-subtitle,
+[data-theme="nord"] .loader-bar-track,
+[data-theme="nord"] .loader-status {
+  animation-duration: 1.15s;
+}
+[data-theme="nord"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   GRUVBOX
+   Unlocked at: 45 day streak
+   Source inspiration: Gruvbox by morhetz
+   ------------------------------------------------------------ */
+[data-theme="gruvbox"] {
+  --bg-primary:    #282828;
+  --bg-secondary:  #1d2021;
+  --bg-card:       #3c3836;
+  --accent-1:      #fe8019;
+  --accent-dim:    rgba(254,128,25,0.12);
+  --accent-2:      #fabd2f;
+  --accent-3:      #b8bb26;
+  --text-primary:  #ebdbb2;
+  --text-secondary:#d5c4a1;
+  --text-muted:    #928374;
+  --border:        #504945;
+  --success:       #b8bb26;
+  --warning:       #fabd2f;
+  --danger:        #fb4934;
+  --info:          #83a598;
+}
+[data-theme="gruvbox"] .loader-icon::before { content: '☕'; }
+[data-theme="gruvbox"] .loader-title {
+  text-shadow: 0 0 18px rgba(254,128,25,0.5);
+  animation-duration: 0.85s, 4s;
+}
+[data-theme="gruvbox"] .loader-subtitle,
+[data-theme="gruvbox"] .loader-bar-track,
+[data-theme="gruvbox"] .loader-status {
+  animation-duration: 0.85s;
+}
+[data-theme="gruvbox"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   SUNSET
+   Unlocked at: 60 day streak
+   Source inspiration: Coolors warm sunset palette
+   ------------------------------------------------------------ */
+[data-theme="sunset"] {
+  --bg-primary:    #1a0a00;
+  --bg-secondary:  #2d1200;
+  --bg-card:       #3d1c00;
+  --accent-1:      #ff6b35;
+  --accent-dim:    rgba(255,107,53,0.12);
+  --accent-2:      #f7931e;
+  --accent-3:      #ffcc02;
+  --text-primary:  #fff5e6;
+  --text-secondary:#ffd5b0;
+  --text-muted:    #8a5a3a;
+  --border:        #5a2d00;
+  --success:       #7bc67e;
+  --warning:       #ffcc02;
+  --danger:        #ff4444;
+  --info:          #74c0fc;
+}
+[data-theme="sunset"] .loader-icon::before { content: '🌅'; }
+[data-theme="sunset"] .loader-title {
+  text-shadow: 0 0 20px rgba(255,107,53,0.5);
+  animation-duration: 1.05s, 4s;
+}
+[data-theme="sunset"] .loader-subtitle,
+[data-theme="sunset"] .loader-bar-track,
+[data-theme="sunset"] .loader-status {
+  animation-duration: 1.05s;
+}
+[data-theme="sunset"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   OCEAN DEEP
+   Unlocked at: 75 day streak
+   Source inspiration: Lospec deep sea palette
+   ------------------------------------------------------------ */
+[data-theme="ocean-deep"] {
+  --bg-primary:    #020c1b;
+  --bg-secondary:  #0a192f;
+  --bg-card:       #112240;
+  --accent-1:      #64ffda;
+  --accent-dim:    rgba(100,255,218,0.12);
+  --accent-2:      #0096ff;
+  --accent-3:      #7928ca;
+  --text-primary:  #ccd6f6;
+  --text-secondary:#8892b0;
+  --text-muted:    #4a5568;
+  --border:        #1d3461;
+  --success:       #64ffda;
+  --warning:       #ffd166;
+  --danger:        #ff6b6b;
+  --info:          #0096ff;
+}
+[data-theme="ocean-deep"] .loader-icon::before { content: '🌊'; }
+[data-theme="ocean-deep"] .loader-title {
+  text-shadow: 0 0 20px rgba(100,255,218,0.5);
+  animation-duration: 0.95s, 4s;
+}
+[data-theme="ocean-deep"] .loader-subtitle,
+[data-theme="ocean-deep"] .loader-bar-track,
+[data-theme="ocean-deep"] .loader-status {
+  animation-duration: 0.95s;
+}
+[data-theme="ocean-deep"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   SAKURA
+   Unlocked at: 90 day streak
+   Source inspiration: Japanese cherry blossom palette
+   ------------------------------------------------------------ */
+[data-theme="sakura"] {
+  --bg-primary:    #1a0a12;
+  --bg-secondary:  #2d1020;
+  --bg-card:       #3d1530;
+  --accent-1:      #ff85a1;
+  --accent-dim:    rgba(255,133,161,0.12);
+  --accent-2:      #ffb3c6;
+  --accent-3:      #ffc8dd;
+  --text-primary:  #fff0f5;
+  --text-secondary:#ffb3c6;
+  --text-muted:    #8a4a6a;
+  --border:        #5a1a3a;
+  --success:       #a8e6cf;
+  --warning:       #ffd166;
+  --danger:        #ff4d6d;
+  --info:          #c77dff;
+}
+[data-theme="sakura"] .loader-icon::before { content: '🌸'; }
+[data-theme="sakura"] .loader-title {
+  text-shadow: 0 0 20px rgba(255,133,161,0.5);
+  animation-duration: 0.9s, 4s;
+}
+[data-theme="sakura"] .loader-subtitle,
+[data-theme="sakura"] .loader-bar-track,
+[data-theme="sakura"] .loader-status {
+  animation-duration: 0.9s;
+}
+[data-theme="sakura"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   FOREST
+   Unlocked at: 120 day streak
+   Source inspiration: Lospec forest palette
+   ------------------------------------------------------------ */
+[data-theme="forest"] {
+  --bg-primary:    #0a1a0a;
+  --bg-secondary:  #0f2a0f;
+  --bg-card:       #143314;
+  --accent-1:      #52b788;
+  --accent-dim:    rgba(82,183,136,0.12);
+  --accent-2:      #74c69d;
+  --accent-3:      #b7e4c7;
+  --text-primary:  #d8f3dc;
+  --text-secondary:#95d5b2;
+  --text-muted:    #2d6a4f;
+  --border:        #1b4332;
+  --success:       #52b788;
+  --warning:       #f4a261;
+  --danger:        #e63946;
+  --info:          #48cae4;
+}
+[data-theme="forest"] .loader-icon::before { content: '🌲'; }
+[data-theme="forest"] .loader-title {
+  text-shadow: 0 0 18px rgba(82,183,136,0.5);
+  animation-duration: 0.8s, 4s;
+}
+[data-theme="forest"] .loader-subtitle,
+[data-theme="forest"] .loader-bar-track,
+[data-theme="forest"] .loader-status {
+  animation-duration: 0.8s;
+}
+[data-theme="forest"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ------------------------------------------------------------
+   CYBERPUNK
+   Unlocked at: 150 day streak (ultimate theme)
+   Source inspiration: Cyberpunk 2077 color palette
+   ------------------------------------------------------------ */
+[data-theme="cyberpunk"] {
+  --bg-primary:    #0d0d0d;
+  --bg-secondary:  #1a0a2e;
+  --bg-card:       #16002e;
+  --accent-1:      #ffff00;
+  --accent-dim:    rgba(255,255,0,0.12);
+  --accent-2:      #ff006e;
+  --accent-3:      #8338ec;
+  --text-primary:  #ffffff;
+  --text-secondary:#cccccc;
+  --text-muted:    #666666;
+  --border:        #2a0a4e;
+  --success:       #00ff41;
+  --warning:       #ffff00;
+  --danger:        #ff006e;
+  --info:          #00b4d8;
+}
+[data-theme="cyberpunk"] .loader-icon::before { content: '🤖'; }
+[data-theme="cyberpunk"] .loader-title {
+  font-family: var(--font-mono);
+  text-shadow: 0 0 22px rgba(255,255,0,0.7);
+  animation-duration: 0.35s, 4s;
+}
+[data-theme="cyberpunk"] .loader-subtitle {
+  font-family: var(--font-mono);
+  animation-duration: 0.35s;
+  animation-delay: 0.06s;
+}
+[data-theme="cyberpunk"] .loader-bar-track {
+  animation-duration: 0.35s;
+  animation-delay: 0.12s;
+}
+[data-theme="cyberpunk"] .loader-status {
+  font-family: var(--font-mono);
+  animation-duration: 0.35s;
+  animation-delay: 0.18s;
+}
+[data-theme="cyberpunk"] .loader-bar-fill {
+  box-shadow: 0 0 12px var(--accent-1);
+}
+
+
+/* ============================================================
+   TOMB OF THE MASK
+   Neon-arcade theme. Not gated behind a streak milestone —
+   available immediately in the theme picker, since it was a
+   deliberate choice rather than a reward to earn.
+   ============================================================ */
+[data-theme="tomb-of-the-mask"] {
+  --bg-primary:    #05050a;
+  --bg-secondary:  #020204;
+  --bg-card:       #14141f;
+  --accent-1:      #00f0ff;
+  --accent-2:      #ff2e88;
+  --accent-3:      #baff29;
+  --accent-dim:    rgba(0,240,255,0.12);
+  --text-primary:  #e8e8f5;
+  --text-secondary:#9a9ac0;
+  --text-muted:    #5a5a7a;
+  --border:        #2a2a3d;
+  --success:       #baff29;
+  --warning:       #ffd23f;
+  --danger:        #ff3b3b;
+  --info:          #00f0ff;
+}
+
+[data-theme="tomb-of-the-mask"] .sidebar-logo span {
+  text-shadow: 0 0 10px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .loader-icon::before { content: '🎭'; }
+[data-theme="tomb-of-the-mask"] .loader-icon {
+  filter: drop-shadow(0 0 10px var(--accent-2));
+}
+[data-theme="tomb-of-the-mask"] .loader-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.5rem;
+  text-shadow: 0 0 16px var(--accent-1);
+  animation-duration: 0.4s, 4s;
+}
+[data-theme="tomb-of-the-mask"] .loader-title span {
+  color: var(--accent-2);
+}
+[data-theme="tomb-of-the-mask"] .loader-subtitle {
+  font-family: var(--font-mono);
+  animation-duration: 0.4s;
+  animation-delay: 0.08s;
+}
+[data-theme="tomb-of-the-mask"] .loader-bar-track {
+  animation-duration: 0.4s;
+  animation-delay: 0.14s;
+  border-radius: 3px;
+  height: 5px;
+}
+[data-theme="tomb-of-the-mask"] .loader-bar-fill {
+  background: repeating-linear-gradient(90deg, var(--accent-1) 0 6px, var(--accent-2) 6px 12px);
+  border-radius: 3px;
+  box-shadow: 0 0 10px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .loader-status {
+  font-family: var(--font-mono);
+  animation-duration: 0.4s;
+  animation-delay: 0.2s;
+}
+[data-theme="tomb-of-the-mask"] .nav-link {
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+}
+[data-theme="tomb-of-the-mask"] .nav-link.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--accent-1));
+}
+[data-theme="tomb-of-the-mask"] .bottom-nav-link.active .nav-icon {
+  filter: drop-shadow(0 0 6px var(--accent-1));
+}
+[data-theme="tomb-of-the-mask"] .nav-link.active {
+  box-shadow: inset 0 0 14px rgba(0,240,255,0.08);
+  text-shadow: 0 0 8px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .bottom-nav-link.active {
+  text-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="tomb-of-the-mask"] .card {
+  box-shadow: 0 0 16px rgba(0,240,255,0.06), inset 0 0 24px rgba(0,240,255,0.02);
+}
+[data-theme="tomb-of-the-mask"] .page-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.05rem;
+  text-shadow: 0 0 10px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .btn-primary {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+
+/* index.html : The Lobby */
+[data-theme="tomb-of-the-mask"] .streak-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(255,210,63,0.4);
+  box-shadow: 0 0 24px rgba(255,210,63,0.15);
+}
+[data-theme="tomb-of-the-mask"] .streak-number {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 2rem;
+  color: #ffd23f;
+  text-shadow: 0 0 16px rgba(255,210,63,0.7);
+}
+[data-theme="tomb-of-the-mask"] .stat-card {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .stat-value {
+  font-family: var(--font-mono);
+  color: var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .theme-unlock-banner {
+  background: var(--bg-card);
+  border: 1px solid rgba(186,255,41,0.5);
+  box-shadow: 0 0 20px rgba(186,255,41,0.2);
+}
+[data-theme="tomb-of-the-mask"] .theme-unlock-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.68rem;
+  color: #baff29;
+}
+
+/* habits.html : The Daily Maze */
+[data-theme="tomb-of-the-mask"] .habit-card {
+  box-shadow: 0 0 12px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .week-dot {
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+}
+[data-theme="tomb-of-the-mask"] .week-dot.done {
+  background: var(--accent-1);
+  box-shadow: 0 0 8px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .archived-card {
+  background: repeating-linear-gradient(135deg, var(--bg-card) 0 10px, #0d0d16 10px 20px);
+}
+
+/* tasks.html : The Objective Board */
+[data-theme="tomb-of-the-mask"] .priority-urgent {
+  background: rgba(255,59,59,0.15); color: #ff3b3b; box-shadow: 0 0 8px rgba(255,59,59,0.3);
+}
+[data-theme="tomb-of-the-mask"] .priority-high {
+  background: rgba(255,210,63,0.15); color: #ffd23f;
+}
+[data-theme="tomb-of-the-mask"] .priority-medium {
+  background: rgba(0,240,255,0.15); color: #00f0ff;
+}
+[data-theme="tomb-of-the-mask"] .priority-low {
+  background: rgba(154,154,192,0.15); color: #9a9ac0;
+}
+[data-theme="tomb-of-the-mask"] .due-overdue {
+  color: #ff3b3b;
+}
+[data-theme="tomb-of-the-mask"] .task-card:has(.due-overdue) {
+  background-image: repeating-linear-gradient(135deg, #ff3b3b 0 8px, transparent 8px 16px);
+  background-size: 100% 4px;
+  background-repeat: no-repeat;
+  background-position: top;
+  box-shadow: 0 0 14px rgba(255,59,59,0.25);
+}
+
+/* goals.html : The Climb */
+[data-theme="tomb-of-the-mask"] .progress-bar-fill {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+  box-shadow: 0 0 8px var(--accent-3);
+}
+[data-theme="tomb-of-the-mask"] .milestone-check.done {
+  background: #ffd23f; box-shadow: 0 0 8px #ffd23f; border-radius: 4px;
+}
+[data-theme="tomb-of-the-mask"] .status-completed {
+  background: rgba(186,255,41,0.15); color: #baff29;
+}
+[data-theme="tomb-of-the-mask"] .status-paused {
+  background: rgba(154,154,192,0.15); color: #9a9ac0;
+}
+
+/* journal.html : The Scroll — kept quiet on purpose */
+[data-theme="tomb-of-the-mask"] .mood-slider {
+  accent-color: var(--accent-3);
+}
+[data-theme="tomb-of-the-mask"] .entry-item.active {
+  border-left: 3px solid var(--accent-1);
+  box-shadow: 0 0 10px var(--accent-dim);
+}
+
+/* profile.html : Character Select */
+[data-theme="tomb-of-the-mask"] .badge-card.earned {
+  border-color: rgba(255,210,63,0.5);
+  box-shadow: 0 0 12px rgba(255,210,63,0.2);
+}
+[data-theme="tomb-of-the-mask"] .badge-card.locked {
+  filter: grayscale(1);
+  opacity: 0.4;
+}
+[data-theme="tomb-of-the-mask"] .theme-card.active-theme {
+  box-shadow: 0 0 16px var(--accent-1);
+}
+[data-theme="tomb-of-the-mask"] .avatar-color-swatch:hover {
+  box-shadow: 0 0 12px currentColor;
+}
+
+
+/* finance.html : The Vault */
+[data-theme="tomb-of-the-mask"] .wallet-card {
+  box-shadow: 0 0 24px rgba(255,210,63,0.15);
+  border-color: rgba(255,210,63,0.4);
+}
+[data-theme="tomb-of-the-mask"] .wallet-amount {
+  text-shadow: 0 0 16px rgba(255,210,63,0.5);
+}
+[data-theme="tomb-of-the-mask"] .month-progress-fill.over,
+[data-theme="tomb-of-the-mask"] .cat-bar-fill.over {
+  background-image: repeating-linear-gradient(135deg, var(--danger) 0 6px, transparent 6px 12px);
+  box-shadow: 0 0 10px rgba(255,59,59,0.4);
+}
+[data-theme="tomb-of-the-mask"] .savings-goal-card {
+  box-shadow: 0 0 14px var(--accent-dim);
+}
+[data-theme="tomb-of-the-mask"] .savings-progress-fill {
+  box-shadow: 0 0 8px var(--success);
+}
+[data-theme="tomb-of-the-mask"] .debt-row.paid {
+  opacity: 0.4;
+}
+
+/* login.html : Insert Coin */
+[data-theme="tomb-of-the-mask"] .auth-page {
+  background-image:
+    radial-gradient(ellipse at top, var(--bg-secondary) 0%, var(--bg-primary) 70%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px);
+}
+[data-theme="tomb-of-the-mask"] .auth-card {
+  border-color: rgba(0,240,255,0.4);
+  box-shadow: 0 0 30px rgba(0,240,255,0.15);
+}
+[data-theme="tomb-of-the-mask"] .auth-logo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.25rem;
+  text-shadow: 0 0 16px var(--accent-2);
+}
+[data-theme="tomb-of-the-mask"] .auth-tagline {
+  font-family: var(--font-mono);
+}
+[data-theme="tomb-of-the-mask"] .btn-auth {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 16px var(--accent-dim);
+}
+
+
+/* ============================================================
+   MIDNIGHT LIBRARY — Unlocked at: 180 day streak
+   Candlelight gold against deep navy. Cozy, late-night reading.
+   ============================================================ */
+[data-theme="midnight-library"] {
+  --bg-primary:    #0d1321; --bg-secondary: #0a0f1b; --bg-card: #1a2238;
+  --accent-1: #d4af37; --accent-dim: rgba(212,175,55,0.12);
+  --accent-2: #495867; --accent-3: #c9a66b;
+  --text-primary: #f0ebd8; --text-secondary: #8b95a8; --text-muted: #556070;
+  --border: #263047;
+  --success: #6b9080; --warning: #d4af37; --danger: #bc4749; --info: #7d98a1;
+}
+
+/* ============================================================
+   SOLARIZED DARK — Unlocked at: 210 day streak
+   Ethan Schoonover's original. Calm, muted, deliberate.
+   ============================================================ */
+[data-theme="solarized-dark"] {
+  --bg-primary:    #002b36; --bg-secondary: #00252e; --bg-card: #073642;
+  --accent-1: #268bd2; --accent-dim: rgba(38,139,210,0.12);
+  --accent-2: #cb4b16; --accent-3: #b58900;
+  --text-primary: #eee8d5; --text-secondary: #93a1a1; --text-muted: #586e75;
+  --border: #0a4552;
+  --success: #859900; --warning: #b58900; --danger: #dc322f; --info: #2aa198;
+}
+
+/* ============================================================
+   KANAGAWA — Unlocked at: 240 day streak
+   Hokusai's Great Wave. Indigo wave-blue, warm sand.
+   ============================================================ */
+[data-theme="kanagawa"] {
+  --bg-primary:    #1f1f28; --bg-secondary: #1a1a22; --bg-card: #2a2a37;
+  --accent-1: #7e9cd8; --accent-dim: rgba(126,156,216,0.12);
+  --accent-2: #c0a36e; --accent-3: #957fb8;
+  --text-primary: #dcd7ba; --text-secondary: #a3a3b8; --text-muted: #727169;
+  --border: #363646;
+  --success: #98bb6c; --warning: #c0a36e; --danger: #e46876; --info: #7aa89f;
+}
+
+/* ============================================================
+   ROSÉ PINE — Unlocked at: 270 day streak
+   Dusty rose, pine green, muted gold. Soft, elegant.
+   ============================================================ */
+[data-theme="rose-pine"] {
+  --bg-primary:    #191724; --bg-secondary: #16141f; --bg-card: #1f1d2e;
+  --accent-1: #ebbcba; --accent-dim: rgba(235,188,186,0.12);
+  --accent-2: #31748f; --accent-3: #c4a7e7;
+  --text-primary: #e0def4; --text-secondary: #908caa; --text-muted: #6e6a86;
+  --border: #26233a;
+  --success: #9ccfd8; --warning: #f6c177; --danger: #eb6f92; --info: #31748f;
+}
+
+/* ============================================================
+   ONE DARK — Unlocked at: 300 day streak
+   Atom editor's signature look. Clean, understated.
+   ============================================================ */
+[data-theme="one-dark"] {
+  --bg-primary:    #282c34; --bg-secondary: #21252b; --bg-card: #2c313a;
+  --accent-1: #61afef; --accent-dim: rgba(97,175,239,0.12);
+  --accent-2: #98c379; --accent-3: #e5c07b;
+  --text-primary: #dcdfe4; --text-secondary: #abb2bf; --text-muted: #5c6370;
+  --border: #3b4048;
+  --success: #98c379; --warning: #e5c07b; --danger: #e06c75; --info: #56b6c2;
+}
+
+/* ============================================================
+   EVERFOREST — Unlocked at: 330 day streak
+   Mossier, warmer cousin of Forest. Muted olive tones.
+   ============================================================ */
+[data-theme="everforest"] {
+  --bg-primary:    #2b3339; --bg-secondary: #272e33; --bg-card: #323c41;
+  --accent-1: #a7c080; --accent-dim: rgba(167,192,128,0.12);
+  --accent-2: #dbbc7f; --accent-3: #e69875;
+  --text-primary: #d3c6aa; --text-secondary: #9da9a0; --text-muted: #7a8478;
+  --border: #3a464c;
+  --success: #a7c080; --warning: #dbbc7f; --danger: #e67e80; --info: #7fbbb3;
+}
+
+/* ============================================================
+   AUTUMN — Unlocked at: 365 day streak
+   Rust and harvest gold. A different warm palette from Sunset.
+   ============================================================ */
+[data-theme="autumn"] {
+  --bg-primary:    #1f140f; --bg-secondary: #190f0b; --bg-card: #2e1f17;
+  --accent-1: #d2691e; --accent-dim: rgba(210,105,30,0.12);
+  --accent-2: #8b3a1f; --accent-3: #c9a227;
+  --text-primary: #f5e6d3; --text-secondary: #c9a56a; --text-muted: #8a6a4a;
+  --border: #3d2a1c;
+  --success: #8a9a5b; --warning: #c9a227; --danger: #a3311c; --info: #b0805a;
+}
+
+/* ============================================================
+   MONOKAI — Unlocked at: 400 day streak
+   Sublime Text's classic default. Vibrant, high-energy.
+   ============================================================ */
+[data-theme="monokai"] {
+  --bg-primary:    #272822; --bg-secondary: #232419; --bg-card: #3e3d32;
+  --accent-1: #f92672; --accent-dim: rgba(249,38,114,0.12);
+  --accent-2: #a6e22e; --accent-3: #fd971f;
+  --text-primary: #f8f8f2; --text-secondary: #c8c8b8; --text-muted: #75715e;
+  --border: #49483e;
+  --success: #a6e22e; --warning: #e6db74; --danger: #f92672; --info: #66d9ef;
+}
+
+/* ============================================================
+   SYNTHWAVE — Unlocked at: 450 day streak
+   80s retro-futurism. VHS neon, sunset grid.
+   ============================================================ */
+[data-theme="synthwave"] {
+  --bg-primary:    #241b2f; --bg-secondary: #1e1728; --bg-card: #34294f;
+  --accent-1: #ff7edb; --accent-dim: rgba(255,126,219,0.12);
+  --accent-2: #f97e72; --accent-3: #36f9f6;
+  --text-primary: #f4eee4; --text-secondary: #a99bc4; --text-muted: #6e6086;
+  --border: #443465;
+  --success: #72f1b8; --warning: #ffcc00; --danger: #fe4450; --info: #36f9f6;
+}
+
+/* ============================================================
+   MATRIX — Unlocked at: 500 day streak (ultimate)
+   Green-on-black falling code. Pure and iconic.
+   ============================================================ */
+[data-theme="matrix"] {
+  --bg-primary:    #000000; --bg-secondary: #050505; --bg-card: #0d0d0d;
+  --accent-1: #00ff41; --accent-dim: rgba(0,255,65,0.12);
+  --accent-2: #008f11; --accent-3: #00ff41;
+  --text-primary: #d0f0d0; --text-secondary: #00cc35; --text-muted: #006618;
+  --border: #113311;
+  --success: #00ff41; --warning: #ffcc00; --danger: #ff3333; --info: #00cccc;
+}
+
+/* ============================================================
+   ILLUMINATED VELLUM — Always unlocked (original concept)
+   Medieval manuscript gold leaf + lapis lazuli on aged vellum.
+   The only light theme in the app.
+   ============================================================ */
+[data-theme="illuminated-vellum"] {
+  --bg-primary:    #f4ecd8; --bg-secondary: #eee2c4; --bg-card: #ffffff;
+  --accent-1: #c9a227; --accent-dim: rgba(201,162,39,0.15);
+  --accent-2: #2a4d8f; --accent-3: #8b2e2e;
+  --text-primary: #2b2015; --text-secondary: #5c4d38; --text-muted: #8a7a5c;
+  --border: #d4c4a0;
+  --success: #4a6741; --warning: #c9a227; --danger: #8b2e2e; --info: #2a4d8f;
+}
+
+/* ============================================================
+   ABYSSAL BLOOM — Always unlocked (original concept)
+   True deep-sea darkness. Light only where earned, not decorative.
+   ============================================================ */
+[data-theme="abyssal-bloom"] {
+  --bg-primary:    #010204; --bg-secondary: #000102; --bg-card: #060a12;
+  --accent-1: #2dfbc4; --accent-dim: rgba(45,251,196,0.1);
+  --accent-2: #ff6b4a; --accent-3: #3d1a5c;
+  --text-primary: #7a8290; --text-secondary: #5a6070; --text-muted: #363c48;
+  --border: #0d1420;
+  --success: #2dfbc4; --warning: #ff6b4a; --danger: #ff3b3b; --info: #4a90a4;
+}
+
+/* ============================================================
+   PETRICHOR — Always unlocked (original concept)
+   The smell of rain on dry earth. Drought, then relief.
+   ============================================================ */
+[data-theme="petrichor"] {
+  --bg-primary:    #2b2016; --bg-secondary: #241a11; --bg-card: #3d2f1f;
+  --accent-1: #5a6fc4; --accent-dim: rgba(90,111,196,0.12);
+  --accent-2: #c9a227; --accent-3: #7a9b5c;
+  --text-primary: #f0e6d2; --text-secondary: #c9b088; --text-muted: #8a7355;
+  --border: #4a3a26;
+  --success: #7a9b5c; --warning: #c9a227; --danger: #b5502e; --info: #5a6fc4;
+}
+
+/* ============================================================
+   SUPERPOSITION — Always unlocked (original concept)
+   NOTE: palette only, for now. The actual oscillating undone-state
+   /collapse-on-completion behavior described when this was pitched
+   is not implemented yet — that needs real component-level work,
+   deliberately deferred rather than half-built here.
+   ============================================================ */
+[data-theme="superposition"] {
+  --bg-primary:    #0d0a1a; --bg-secondary: #0a0815; --bg-card: #16112b;
+  --accent-1: #8b5cf6; --accent-dim: rgba(139,92,246,0.12);
+  --accent-2: #ff6f61; --accent-3: #22d38f;
+  --text-primary: #d8d4e8; --text-secondary: #a89fc0; --text-muted: #6a6284;
+  --border: #241d3d;
+  --success: #22d38f; --warning: #ff6f61; --danger: #ff4d6d; --info: #8b5cf6;
+}
+
+/* ============================================================
+   BETWEEN CHANNELS — Always unlocked (original concept)
+   NOTE: palette only, for now. The animated static-noise texture
+   and rare color-glitch flash described when this was pitched are
+   not implemented yet — same reasoning as Superposition above.
+   ============================================================ */
+[data-theme="between-channels"] {
+  --bg-primary:    #1a1c1f; --bg-secondary: #151719; --bg-card: #24262a;
+  --accent-1: #9aa0a6; --accent-dim: rgba(154,160,166,0.12);
+  --accent-2: #6a6e73; --accent-3: #ff4d6d;
+  --text-primary: #c8ccd0; --text-secondary: #9aa0a6; --text-muted: #6a6e73;
+  --border: #35383c;
+  --success: #7fa88a; --warning: #c9a06a; --danger: #ff4d6d; --info: #6a8ca0;
+}
+
+
+/* ============================================================
+   NEO-TOKYO — Always unlocked (original concept)
+   Inspired by Akira's Neo-Tokyo — NOT a recreation of the film's
+   copyrighted characters or logo, but its actual visual
+   innovations: an unusually large hand-picked color palette (the
+   real film used 327 shades, 50 invented from scratch, including
+   a signature red later nicknamed "Akirared" — this theme's
+   --accent-1 is an homage to that history, not a reproduction of
+   anything from the film itself), neon urban night, drifting
+   light and energy.
+
+   NOVEL MECHANIC: the first theme whose intensity scales with
+   your actual Linguistic level, via a data-tier attribute set at
+   runtime by js/utils.js's applyThemeTier(). Verified by actually
+   rendering and screenshotting all 3 tiers with Playwright before
+   shipping — tier 1 was originally too faint to read as anything,
+   fixed before this ever reached the app.
+   Currently implemented on index.html only — extending the
+   ambient background + tier logic to the other 8 pages is a
+   separate, deliberate next step, not done yet.
+   ============================================================ */
+[data-theme="neo-tokyo"] {
+  --bg-primary: #08060c;
+  --bg-secondary: #0c0810;
+  --bg-card: #140f1e;
+  --accent-1: #ff2d55;
+  --accent-dim: rgba(255,45,85,0.12);
+  --accent-2: #00e5ff;
+  --accent-3: #b829ff;
+  --text-primary: #f0e8f5;
+  --text-secondary: #b8a8c8;
+  --text-muted: #6a5a78;
+  --border: #2a1f38;
+  --success: #00ffa8;
+  --warning: #ffb703;
+  --danger: #ff2d55;
+  --info: #00e5ff;
+  /* Extra maximalist slots, echoing Akira's 327-shade philosophy —
+     more named colors than the standard 3-accent system, used only
+     by this theme's own bespoke rules below. */
+  --neo-amber: #ffb703;
+  --neo-acid: #ccff00;
+  --neo-teal: #00ffa8;
+}
+
+/* Body becomes transparent so the fixed ambient layer beneath
+   shows through as the true backdrop, for this theme only. */
+[data-theme="neo-tokyo"] body {
+  background-color: transparent;
+}
+
+/* .main-content has its own opaque background AND no explicit
+   z-index in the shared stylesheet (position: static by default),
+   which — per normal CSS stacking rules — paints BEFORE a fixed
+   z-index:0 layer, not after. Without this fix, the ambient
+   background silently covers all real dashboard content instead
+   of sitting behind it. Individual .card/.streak-card elements
+   keep their own opaque backgrounds untouched, so text stays
+   readable — only the outer wrapper needs to let particles
+   show through the gaps around them. */
+[data-theme="neo-tokyo"] .main-content {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+/* Ambient background — inert/hidden for every other theme */
+.neo-tokyo-bg {
+  display: none;
+}
+[data-theme="neo-tokyo"] .neo-tokyo-bg {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 100%, #140a1e 0%, #08060c 70%);
+}
+
+.neo-skyline {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 220px;
+  overflow: hidden;
+  opacity: 0.28;
+  transition: opacity 0.6s ease;
+}
+
+.neo-stars {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 8% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 18% 45%, #fff, transparent),
+    radial-gradient(1px 1px at 30% 15%, #fff, transparent),
+    radial-gradient(1px 1px at 44% 40%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 10%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 35%, #fff, transparent),
+    radial-gradient(1px 1px at 82% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 94% 42%, #fff, transparent);
+  opacity: 0.5;
+}
+
+/* Background towers — warm amber, with a genuinely randomized
+   window-lit facade (an embedded SVG pattern, generated once with
+   pseudo-random lit/unlit/dim windows) instead of a uniform grid,
+   which read as identical graph-paper boxes. */
+.neo-tower-bg {
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #2a1608 0 2px, #1a0d05 2px 14px);
+  box-shadow: 0 0 40px rgba(255,140,20,0.15);
+  color: #ffb347;
+}
+.neo-tower-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #ffcc66;
+}
+
+/* Foreground buildings — cool blue-teal, same randomized-window
+   technique, different palette. */
+.neo-tower-fg {
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #0a1520 0 2px, #030d16 2px 14px);
+  box-shadow: 0 0 30px rgba(0,180,255,0.12);
+  color: #00e5ff;
+}
+.neo-tower-fg::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #4dd8ff;
+}
+
+/* More color variety across the skyline — echoing the reference's
+   genuinely multi-colored city rather than just two families. */
+.neo-tower-violet {
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #1f0a2a 0 2px, #14051c 2px 14px);
+  box-shadow: 0 0 30px rgba(184,41,255,0.15);
+  color: var(--accent-3);
+}
+.neo-tower-violet::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #d68aff;
+}
+.neo-tower-teal {
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #08201a 0 2px, #051510 2px 14px);
+  box-shadow: 0 0 30px rgba(0,255,168,0.15);
+  color: var(--neo-teal);
+}
+.neo-tower-teal::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #6dffcf;
+}
+.neo-tower-acid {
+  position: absolute; bottom: 130px;
+  background: repeating-linear-gradient(90deg, #1a2005 0 2px, #101403 2px 14px);
+  box-shadow: 0 0 30px rgba(204,255,0,0.12);
+  color: var(--neo-acid);
+}
+.neo-tower-acid::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2284%22%20height%3D%22120%22%3E%3Crect%20x%3D%2216%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2212%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2222%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2232%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2242%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2252%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2216%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2262%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2272%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%222%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2282%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%222%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2258%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%2272%22%20y%3D%2292%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2216%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2244%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22102%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.6%22/%3E%3Crect%20x%3D%222%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2230%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2258%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.9%22/%3E%3Crect%20x%3D%2272%22%20y%3D%22112%22%20width%3D%2210%22%20height%3D%226%22%20fill%3D%22currentColor%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  color: #e2ff7a;
+}
+
+/* Rooftop variety — flat, a blinking antenna, or a tiered stepped
+   top, so the skyline doesn't read as identical boxes. */
+.neo-tower-fg.roof-antenna::before,
+.neo-tower-bg.roof-antenna::before,
+.neo-tower-violet.roof-antenna::before,
+.neo-tower-teal.roof-antenna::before,
+.neo-tower-acid.roof-antenna::before {
+  content: ''; position: absolute; top: -18px; left: 50%; width: 2px; height: 18px;
+  background: rgba(0,200,255,0.6); box-shadow: 0 0 6px rgba(0,200,255,0.6);
+}
+.neo-tower-fg.roof-antenna::after,
+.neo-tower-bg.roof-antenna::after,
+.neo-tower-violet.roof-antenna::after,
+.neo-tower-teal.roof-antenna::after,
+.neo-tower-acid.roof-antenna::after {
+  content: ''; position: absolute; top: -22px; left: calc(50% - 3px); width: 6px; height: 6px;
+  border-radius: 50%; background: var(--accent-1); box-shadow: 0 0 8px var(--accent-1);
+  animation: neoAntennaBlink 1.6s ease-in-out infinite;
+}
+@keyframes neoAntennaBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.neo-tower-fg.roof-tiered::before,
+.neo-tower-bg.roof-tiered::before,
+.neo-tower-violet.roof-tiered::before,
+.neo-tower-teal.roof-tiered::before,
+.neo-tower-acid.roof-tiered::before {
+  content: ''; position: absolute; top: -16px; left: 22%; width: 56%; height: 16px;
+  background: inherit; box-shadow: inherit;
+}
+
+/* Street lights — small glowing lamp points along the base,
+   the detail that was missing between "buildings" and "a city." */
+.neo-street-light {
+  position: absolute; bottom: 128px; width: 2px; height: 10px;
+  background: rgba(255,210,130,0.8);
+}
+.neo-street-light::before {
+  content: '';
+  position: absolute; top: -3px; left: -3px; width: 8px; height: 8px;
+  border-radius: 50%; background: rgba(255,210,130,0.9);
+  box-shadow: 0 0 10px 3px rgba(255,180,80,0.6);
+}
+
+/* Forest — replacing the water/reflection entirely. Varied tree
+   silhouettes with scattered warm lights woven through, a highway
+   visible through a gap with its own lane lighting, flying cars
+   crossing above it (a broad cyberpunk convention — Blade Runner,
+   The Fifth Element — not tied to any one work's specific IP),
+   and minimal walking silhouettes along a path at the base.
+   Trees/lights are always present (ambient environment); cars and
+   people only appear from tier 2 onward — more life as you level
+   up, same logic as the skyline/particle intensity elsewhere. */
+/* Denser, more layered forest — more trees, varied sizes for
+   depth (bigger/closer at the front, smaller/further behind),
+   rather than a sparse row of identical silhouettes. */
+.neo-tree-pine {
+  position: absolute; bottom: 0;
+  width: 46px; height: 90px;
+  background: linear-gradient(115deg, #17301f 0%, #0e2015 45%, #0a1810 70%, #050d07 100%);
+  clip-path: polygon(50% 0%, 4% 100%, 96% 100%);
+}
+.neo-tree-pine::before {
+  content: '';
+  position: absolute; bottom: -8px; left: -8px;
+  width: 62px; height: 14px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent 70%);
+}
+.neo-tree-pine::after {
+  content: '';
+  position: absolute; top: 18px; left: 6px;
+  width: 34px; height: 60px;
+  background: linear-gradient(115deg, #1a341f 0%, #102415 45%, #0a1810 70%, #050d07 100%);
+  clip-path: polygon(50% 0%, 4% 100%, 96% 100%);
+}
+.neo-tree-pine.small { transform: scale(0.6); transform-origin: bottom center; filter: brightness(0.75); }
+.neo-tree-pine.large { transform: scale(1.3); transform-origin: bottom center; }
+.neo-tree-round {
+  position: absolute; bottom: 0;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #1c3620 0%, #0f2216 40%, #0c1a12 70%, #061006 100%);
+}
+.neo-tree-round::after {
+  content: '';
+  position: absolute; bottom: -16px; left: 50%; width: 5px; height: 32px;
+  background: #0a1810; transform: translateX(-50%);
+}
+.neo-tree-round::before {
+  content: '';
+  position: absolute; bottom: -20px; left: 4px;
+  width: 48px; height: 12px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent 70%);
+}
+.neo-tree-round.small { transform: scale(0.55); transform-origin: bottom center; filter: brightness(0.75); }
+.neo-tree-round.large { transform: scale(1.35); transform-origin: bottom center; }
+.neo-tree-light {
+  position: absolute; width: 4px; height: 4px; border-radius: 50%;
+  background: #ffd27a; box-shadow: 0 0 10px 4px rgba(255,210,122,0.85);
+  animation: neoTwinkle 3s ease-in-out infinite;
+}
+@keyframes neoTwinkle { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+.neo-highway {
+  position: absolute; bottom: 30px; left: 32%; width: 36%; height: 20px;
+  background: #16161a;
+  opacity: 0.85;
+  overflow: visible;
+}
+.neo-highway-line {
+  position: absolute; top: 50%; left: 4%; right: 4%; height: 2px;
+  background: repeating-linear-gradient(90deg, #ffd27a 0 12px, transparent 12px 26px);
+  opacity: 0.7;
+}
+
+/* Flyover — a genuinely curved ramp (an SVG path, not a flat
+   skewed div) that descends and merges into the main highway's
+   right edge, like a real interchange. Muted, duller background
+   buildings cluster around it — deliberately less saturated than
+   the main towers (atmospheric perspective: distant things read
+   hazier, not just smaller). */
+.neo-flyover-svg {
+  position: absolute; inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.neo-flyover-road {
+  fill: none; stroke: rgba(30,30,38,0.85); stroke-width: 16; stroke-linecap: round;
+}
+.neo-flyover-line {
+  fill: none; stroke: rgba(255,210,122,0.5); stroke-width: 1.5;
+  stroke-dasharray: 9 11;
+}
+.neo-bg-building {
+  position: absolute; bottom: 190px;
+  background: repeating-linear-gradient(90deg, #14141c 0 2px, #0a0a10 2px 10px);
+  opacity: 0.5;
+}
+
+/* Ramp car — actually follows the curved path via offset-path,
+   genuinely driving the merge rather than faking it with a
+   straight-line div. */
+.neo-ramp-car {
+  position: absolute;
+  width: 12px; height: 5px; background: #1a1a1e; border-radius: 2px;
+  offset-path: path("M 640,170 C 680,210 690,300 680,388");
+  offset-rotate: auto;
+  opacity: 0;
+}
+.neo-ramp-car::before {
+  content: ''; position: absolute; top: 1px; right: -1px;
+  width: 2.5px; height: 2.5px; border-radius: 50%;
+  background: #fff8e0; box-shadow: 0 0 5px 2px rgba(255,248,224,0.85);
+}
+.neo-ramp-car::after {
+  content: ''; position: absolute; top: 1px; left: -1px;
+  width: 2.5px; height: 2.5px; border-radius: 50%;
+  background: #ff3344; box-shadow: 0 0 5px 2px rgba(255,51,68,0.75);
+}
+@keyframes neoRampDrive {
+  0%   { offset-distance: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+[data-theme="neo-tokyo"][data-tier="2"] .neo-ramp-car,
+[data-theme="neo-tokyo"][data-tier="3"] .neo-ramp-car {
+  animation: neoRampDrive 4.5s linear infinite;
+}
+
+/* Real cars — a body, a white headlight (front), a red taillight
+   (back), actually driving along the highway surface. Always at
+   least a couple visible; tier only adds more traffic, it never
+   removes all of it — an empty highway reads as broken, not calm. */
+.neo-car {
+  position: absolute; bottom: 2px; left: -10%;
+  width: 14px; height: 6px;
+  background: #1a1a1e;
+  border-radius: 2px;
+  animation: neoCarDrive 5s linear infinite;
+}
+.neo-car::before {
+  content: ''; position: absolute; top: 1px; right: -1px;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: #fff8e0; box-shadow: 0 0 6px 2px rgba(255,248,224,0.85);
+}
+.neo-car::after {
+  content: ''; position: absolute; top: 1px; left: -1px;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: #ff3344; box-shadow: 0 0 6px 2px rgba(255,51,68,0.75);
+}
+@keyframes neoCarDrive {
+  0%   { left: -10%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: 110%; opacity: 0; }
+}
+.neo-car.tier2plus { opacity: 0; animation: none; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-car.tier2plus,
+[data-theme="neo-tokyo"][data-tier="3"] .neo-car.tier2plus {
+  animation: neoCarDrive 5s linear infinite;
+}
+
+/* Oncoming lane — genuine two-way traffic, not the same cars
+   mirrored. Sits in the opposite half of the highway (top instead
+   of bottom), travels right-to-left, and has its headlight/
+   taillight swapped to the correct sides for that direction. */
+.neo-car.reverse {
+  bottom: auto; top: 2px; left: 110%;
+  animation-name: neoCarDriveReverse;
+}
+.neo-car.reverse::before { right: auto; left: -1px; }
+.neo-car.reverse::after { left: auto; right: -1px; }
+@keyframes neoCarDriveReverse {
+  0%   { left: 110%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { left: -10%; opacity: 0; }
+}
+.neo-car.reverse.tier2plus { opacity: 0; animation: none; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-car.reverse.tier2plus,
+[data-theme="neo-tokyo"][data-tier="3"] .neo-car.reverse.tier2plus {
+  animation: neoCarDriveReverse 5s linear infinite;
+}
+
+.neo-person {
+  position: absolute; bottom: 4px;
+  width: 4px; height: 13px;
+  background: #14101c;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.7;
+  animation: neoWalk 9s ease-in-out infinite;
+}
+.neo-person.tier2plus { opacity: 0; animation: none; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-person.tier2plus,
+[data-theme="neo-tokyo"][data-tier="3"] .neo-person.tier2plus {
+  opacity: 0.7;
+  animation: neoWalk 9s ease-in-out infinite;
+}
+@keyframes neoWalk {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(50px); }
+}
+
+/* Sparse light beams — a generic "searchlight over a night city"
+   convention (used across countless works, not unique IP), kept
+   deliberately sparse rather than recreating any specific dense
+   composition. Hidden at tier 1, appear from tier 2 onward. */
+.neo-beam {
+  position: absolute; bottom: 130px;
+  width: 3px;
+  background: linear-gradient(0deg, rgba(200,230,255,0.5), transparent);
+  transform-origin: bottom center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+@keyframes neoBeamDrift {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.neo-particle {
+  position: absolute;
+  bottom: -20px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px 2px var(--accent-2);
+  animation: neoDrift 9s linear infinite;
+  opacity: 0;
+}
+.neo-particle:nth-child(3n+1) { background: var(--accent-1); box-shadow: 0 0 10px 2px var(--accent-1); }
+.neo-particle:nth-child(3n+2) { background: var(--accent-3); box-shadow: 0 0 10px 2px var(--accent-3); }
+
+@keyframes neoDrift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-100vh) translateX(30px); opacity: 0; }
+}
+
+/* --------------------------------------------------------
+   TIERS — intensity scales with your Linguistic level.
+   Tier 1 "Awakening" (level 1-9): calm but present, not empty.
+   Tier 2 "Surge" (level 10-24): more particles, faster, skyline clearer.
+   Tier 3 "Overload" (level 25+): full storm, prominent skyline, streak pulse.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"] .neo-particle:nth-child(n+7) { display: none; }
+[data-theme="neo-tokyo"] .neo-particle { animation-duration: 12s; }
+
+[data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.4; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-beam { opacity: 1; animation: neoBeamDrift 4s ease-in-out infinite; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-particle:nth-child(n+7) { display: block; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-particle { animation-duration: 8s; }
+
+[data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.6; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-beam { opacity: 1; animation: neoBeamDrift 2.5s ease-in-out infinite; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-particle:nth-child(n+7) { display: block; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-particle { animation-duration: 5s; }
+[data-theme="neo-tokyo"][data-tier="3"] .streak-card {
+  animation: neoPulse 2.5s ease-in-out infinite;
+}
+@keyframes neoPulse {
+  0%, 100% { box-shadow: 0 0 24px rgba(255,45,85,0.15); }
+  50% { box-shadow: 0 0 40px rgba(255,45,85,0.4), 0 0 60px rgba(0,229,255,0.15); }
+}
+
+/* --------------------------------------------------------
+   NEO-TOKYO ICON SYSTEM — no emoji anywhere in this theme.
+   Static emoji spans get hidden and replaced with either a
+   RemixIcon glyph (already loaded on every page) or, for the
+   streak flame and mood display specifically, real custom
+   animated/color-graded elements — those two didn't have a
+   1:1 icon equivalent worth using.
+-------------------------------------------------------- */
+
+/* Generic emoji-hide + RemixIcon-swap pattern.
+   Usage: wrap the emoji in <span class="emoji-swap"><i class="ri-x-line neo-icon"></i>🔥</span> */
+[data-theme="neo-tokyo"] .emoji-swap {
+  font-size: 0;
+  display: inline-flex;
+  align-items: center;
+}
+[data-theme="neo-tokyo"] .emoji-swap .neo-icon {
+  font-size: 1.3rem;
+  color: var(--accent-2);
+  text-shadow: 0 0 8px var(--accent-2);
+}
+
+/* Streak flame — replaced with an animated "power core" instead
+   of a RemixIcon, since a static line-icon can't capture the same
+   sense of active, accumulating energy a flame implies. */
+[data-theme="neo-tokyo"] .streak-flame {
+  font-size: 0;
+  width: 56px; height: 56px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+[data-theme="neo-tokyo"] .streak-flame::before {
+  content: '';
+  position: absolute;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--accent-1);
+  box-shadow: 0 0 16px var(--accent-1), inset 0 0 12px rgba(255,45,85,0.4);
+  animation: neoCorePulse 2s ease-in-out infinite;
+}
+[data-theme="neo-tokyo"] .streak-flame::after {
+  content: '';
+  position: absolute;
+  width: 60%; height: 60%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-1), transparent 70%);
+  animation: neoCoreGlow 2s ease-in-out infinite;
+}
+@keyframes neoCorePulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes neoCoreGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Mood display — replaced with a color-graded glowing orb instead
+   of a face emoji. Color (not an expression) carries the mood:
+   hazard-red at the low end, through amber, to cyan/lime at the
+   high end — fits the theme's whole color-as-signal language. */
+[data-theme="neo-tokyo"] .mood-display,
+[data-theme="neo-tokyo"] #todayMoodEmoji {
+  font-size: 0;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 12px currentColor;
+}
+[data-theme="neo-tokyo"] .mood-core-1  { background: #ff2d55; color: #ff2d55; }
+[data-theme="neo-tokyo"] .mood-core-2  { background: #ff4d3d; color: #ff4d3d; }
+[data-theme="neo-tokyo"] .mood-core-3  { background: #ff7a30; color: #ff7a30; }
+[data-theme="neo-tokyo"] .mood-core-4  { background: #ffb703; color: #ffb703; }
+[data-theme="neo-tokyo"] .mood-core-5  { background: #ffd166; color: #ffd166; }
+[data-theme="neo-tokyo"] .mood-core-6  { background: #ccff00; color: #ccff00; }
+[data-theme="neo-tokyo"] .mood-core-7  { background: #00ffa8; color: #00ffa8; }
+[data-theme="neo-tokyo"] .mood-core-8  { background: #00e5ff; color: #00e5ff; }
+[data-theme="neo-tokyo"] .mood-core-9  { background: #00b8ff; color: #00b8ff; }
+[data-theme="neo-tokyo"] .mood-core-10 { background: #b829ff; color: #b829ff; }
+/* --------------------------------------------------------
+   DAY/NIGHT — tied to actual device time, set via a
+   data-daytime attribute by applyThemeTier() in index.html.
+   Neo-Tokyo's identity stays a night-city aesthetic even in
+   "day" mode (this isn't a bright-blue-sky theme) — what shifts
+   is the sky gradient hue and how many windows are lit.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"][data-daytime="night"] .neo-tokyo-bg {
+  background: radial-gradient(ellipse at 50% 100%, #140a1e 0%, #08060c 70%);
+}
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1a0a1e 0%, #4a1f1a 55%, #2a1015 78%, #08060c 100%);
+}
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1a1024 0%, #3a2035 45%, #4a2a2a 72%, #08060c 100%);
+}
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tokyo-bg {
+  background: linear-gradient(180deg, #1c2333 0%, #2a3548 62%, #08060c 100%);
+}
+
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-tower-fg::after {
+  opacity: 0.25;
+}
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-tower-fg::after,
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tower-bg::after,
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-tower-fg::after {
+  opacity: 0.55;
+}
+
+/* Sun/moon — warm for dawn/day/dusk, pale cool for night */
+.neo-sky-orb {
+  position: absolute;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  top: 20px; right: 60px;
+}
+[data-theme="neo-tokyo"][data-daytime="night"] .neo-sky-orb {
+  background: radial-gradient(circle, #e8e4f0, transparent 70%);
+  box-shadow: 0 0 30px rgba(232,228,240,0.4);
+}
+[data-theme="neo-tokyo"][data-daytime="dawn"] .neo-sky-orb,
+[data-theme="neo-tokyo"][data-daytime="dusk"] .neo-sky-orb {
+  background: radial-gradient(circle, #ff8a3d, transparent 70%);
+  box-shadow: 0 0 40px rgba(255,138,61,0.5);
+}
+[data-theme="neo-tokyo"][data-daytime="day"] .neo-sky-orb {
+  background: radial-gradient(circle, #ffd27a, transparent 70%);
+  box-shadow: 0 0 26px rgba(255,210,122,0.3);
+}
+
+/* --------------------------------------------------------
+   WEATHER — real, live data (see applyWeather() in index.html),
+   not decoration. "calm" is the baseline/default; every other
+   state adds a distinct visual on top of whatever daytime/tier
+   is already active.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"][data-weather="sunny"] .neo-sky-orb {
+  transform: scale(1.3);
+}
+[data-theme="neo-tokyo"][data-weather="sunny"][data-daytime="night"] .neo-sky-orb {
+  box-shadow: 0 0 50px rgba(232,228,240,0.7);
+}
+[data-theme="neo-tokyo"][data-weather="sunny"]:not([data-daytime="night"]) .neo-sky-orb {
+  box-shadow: 0 0 50px rgba(255,210,122,0.7);
+}
+
+.neo-cloud {
+  position: absolute; top: 40px;
+  width: 90px; height: 24px; border-radius: 20px;
+  background: rgba(180,180,200,0.25);
+  opacity: 0;
+}
+[data-theme="neo-tokyo"][data-weather="cloudy"] .neo-cloud {
+  opacity: 1;
+  animation: neoCloudDrift 45s linear infinite;
+}
+@keyframes neoCloudDrift {
+  from { transform: translateX(-120px); }
+  to   { transform: translateX(120vw); }
+}
+
+.neo-rain { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+[data-theme="neo-tokyo"][data-weather="rainy"] .neo-rain { opacity: 1; }
+.neo-rain-drop {
+  position: absolute; top: -20px; width: 1px; height: 20px;
+  background: linear-gradient(180deg, transparent, rgba(180,210,255,0.5));
+  animation: neoRainFall 0.6s linear infinite;
+}
+@keyframes neoRainFall { to { transform: translateY(400px); } }
+
+/* Windy — everything already in motion just moves faster */
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-particle { animation-duration: 5s !important; }
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-bird { animation-duration: 8s !important; }
+[data-theme="neo-tokyo"][data-weather="windy"] .neo-cloud { animation-duration: 18s !important; }
+
+/* --------------------------------------------------------
+   BOLDER BASE PRESENCE — this was reading as "a subtle card
+   decoration," not "you are inside Neo-Tokyo." Turned up.
+-------------------------------------------------------- */
+.neo-skyline { height: 420px; opacity: 0.5 !important; }
+[data-theme="neo-tokyo"][data-tier="2"] .neo-skyline { opacity: 0.65 !important; }
+[data-theme="neo-tokyo"][data-tier="3"] .neo-skyline { opacity: 0.85 !important; }
+.neo-particle { width: 5px; height: 5px; box-shadow: 0 0 14px 3px currentColor; }
+
+/* --------------------------------------------------------
+   FROSTED CARDS — see the city through the UI, not around it.
+   First pass at 0.55 opacity still read as "solid card," not
+   see-through. Dropped hard, with text-shadow picking up the
+   legibility work opacity used to do.
+-------------------------------------------------------- */
+[data-theme="neo-tokyo"] .card,
+[data-theme="neo-tokyo"] .streak-card {
+  background: rgba(10,8,16,0.26);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-color: rgba(255,45,85,0.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+}
+[data-theme="neo-tokyo"] .card *,
+[data-theme="neo-tokyo"] .streak-card * {
+  text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+}
+
+/* --------------------------------------------------------
+   FLYING BIRDS — a distant, minimal two-stroke silhouette,
+   a universal convention with no ties to any specific IP.
+   Cross the sky occasionally, staggered, looping.
+-------------------------------------------------------- */
+.neo-bird {
+  position: absolute;
+  width: 16px; height: 8px;
+  top: 15%;
+  opacity: 0;
+  animation: neoBirdFly 14s linear infinite;
+}
+.neo-bird::before, .neo-bird::after {
+  content: '';
+  position: absolute;
+  width: 9px; height: 9px;
+  border-top: 2px solid rgba(232,228,240,0.6);
+  border-radius: 50%;
+}
+.neo-bird::before { left: 0; transform: rotate(25deg); }
+.neo-bird::after  { right: 0; transform: rotate(-25deg); }
+@keyframes neoBirdFly {
+  0%   { transform: translateX(-5%) translateY(0); opacity: 0; }
+  8%   { opacity: 0.7; }
+  50%  { transform: translateX(50%) translateY(-14px); }
+  92%  { opacity: 0.5; }
+  100% { transform: translateX(110%) translateY(-4px); opacity: 0; }
+}
+
+[data-theme="neo-tokyo"] .loader-icon {
+  width: 40px; height: 40px;
+  position: relative;
+  margin: 0 auto 0.75rem;
+}
+[data-theme="neo-tokyo"] .loader-icon::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--accent-1);
+  box-shadow: 0 0 14px var(--accent-1);
+  animation: neoCorePulse 0.9s ease-in-out infinite;
+}
+[data-theme="neo-tokyo"] .loader-title {
+  text-shadow: 0 0 20px var(--accent-1);
+  animation-duration: 0.5s, 4s;
+}
+[data-theme="neo-tokyo"] .loader-subtitle,
+[data-theme="neo-tokyo"] .loader-bar-track,
+[data-theme="neo-tokyo"] .loader-status {
+  animation-duration: 0.5s;
+}
+[data-theme="neo-tokyo"] .loader-bar-fill {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-3), var(--accent-2));
+  box-shadow: 0 0 12px var(--accent-2);
+}
+
+
+[data-theme="solarized-dark"] .loader-icon::before { content: '🖥️'; }
+[data-theme="solarized-dark"] .loader-title {
+  text-shadow: 0 0 20px rgba(38,139,210,0.5);
+  animation-duration: 1.0s, 4s;
+}
+[data-theme="solarized-dark"] .loader-subtitle,
+[data-theme="solarized-dark"] .loader-bar-track,
+[data-theme="solarized-dark"] .loader-status {
+  animation-duration: 1.0s;
+}
+[data-theme="solarized-dark"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="monokai"] .loader-icon::before { content: '⚡'; }
+[data-theme="monokai"] .loader-title {
+  text-shadow: 0 0 20px rgba(249,38,114,0.5);
+  animation-duration: 0.5s, 4s;
+}
+[data-theme="monokai"] .loader-subtitle,
+[data-theme="monokai"] .loader-bar-track,
+[data-theme="monokai"] .loader-status {
+  animation-duration: 0.5s;
+}
+[data-theme="monokai"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="one-dark"] .loader-icon::before { content: '⚛️'; }
+[data-theme="one-dark"] .loader-title {
+  text-shadow: 0 0 20px rgba(97,175,239,0.5);
+  animation-duration: 0.75s, 4s;
+}
+[data-theme="one-dark"] .loader-subtitle,
+[data-theme="one-dark"] .loader-bar-track,
+[data-theme="one-dark"] .loader-status {
+  animation-duration: 0.75s;
+}
+[data-theme="one-dark"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="rose-pine"] .loader-icon::before { content: '🌹'; }
+[data-theme="rose-pine"] .loader-title {
+  text-shadow: 0 0 20px rgba(235,188,186,0.5);
+  animation-duration: 1.05s, 4s;
+}
+[data-theme="rose-pine"] .loader-subtitle,
+[data-theme="rose-pine"] .loader-bar-track,
+[data-theme="rose-pine"] .loader-status {
+  animation-duration: 1.05s;
+}
+[data-theme="rose-pine"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="everforest"] .loader-icon::before { content: '🍃'; }
+[data-theme="everforest"] .loader-title {
+  text-shadow: 0 0 20px rgba(167,192,128,0.5);
+  animation-duration: 0.85s, 4s;
+}
+[data-theme="everforest"] .loader-subtitle,
+[data-theme="everforest"] .loader-bar-track,
+[data-theme="everforest"] .loader-status {
+  animation-duration: 0.85s;
+}
+[data-theme="everforest"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="kanagawa"] .loader-icon::before { content: '🌊'; }
+[data-theme="kanagawa"] .loader-title {
+  text-shadow: 0 0 20px rgba(126,156,216,0.5);
+  animation-duration: 0.9s, 4s;
+}
+[data-theme="kanagawa"] .loader-subtitle,
+[data-theme="kanagawa"] .loader-bar-track,
+[data-theme="kanagawa"] .loader-status {
+  animation-duration: 0.9s;
+}
+[data-theme="kanagawa"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="autumn"] .loader-icon::before { content: '🍂'; }
+[data-theme="autumn"] .loader-title {
+  text-shadow: 0 0 20px rgba(210,105,30,0.5);
+  animation-duration: 0.95s, 4s;
+}
+[data-theme="autumn"] .loader-subtitle,
+[data-theme="autumn"] .loader-bar-track,
+[data-theme="autumn"] .loader-status {
+  animation-duration: 0.95s;
+}
+[data-theme="autumn"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="synthwave"] .loader-icon::before { content: '📼'; }
+[data-theme="synthwave"] .loader-title {
+  text-shadow: 0 0 20px rgba(255,126,219,0.5);
+  animation-duration: 0.45s, 4s;
+}
+[data-theme="synthwave"] .loader-subtitle,
+[data-theme="synthwave"] .loader-bar-track,
+[data-theme="synthwave"] .loader-status {
+  animation-duration: 0.45s;
+}
+[data-theme="synthwave"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="matrix"] .loader-icon::before { content: '🟢'; }
+[data-theme="matrix"] .loader-title {
+  text-shadow: 0 0 20px rgba(0,255,65,0.5);
+  animation-duration: 0.3s, 4s;
+}
+[data-theme="matrix"] .loader-subtitle,
+[data-theme="matrix"] .loader-bar-track,
+[data-theme="matrix"] .loader-status {
+  animation-duration: 0.3s;
+}
+[data-theme="matrix"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="midnight-library"] .loader-icon::before { content: '🕯️'; }
+[data-theme="midnight-library"] .loader-title {
+  text-shadow: 0 0 20px rgba(212,175,55,0.5);
+  animation-duration: 1.1s, 4s;
+}
+[data-theme="midnight-library"] .loader-subtitle,
+[data-theme="midnight-library"] .loader-bar-track,
+[data-theme="midnight-library"] .loader-status {
+  animation-duration: 1.1s;
+}
+[data-theme="midnight-library"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="illuminated-vellum"] .loader-icon::before { content: '📜'; }
+[data-theme="illuminated-vellum"] .loader-title {
+  text-shadow: 0 0 20px rgba(201,162,39,0.5);
+  animation-duration: 1.0s, 4s;
+}
+[data-theme="illuminated-vellum"] .loader-subtitle,
+[data-theme="illuminated-vellum"] .loader-bar-track,
+[data-theme="illuminated-vellum"] .loader-status {
+  animation-duration: 1.0s;
+}
+[data-theme="illuminated-vellum"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="abyssal-bloom"] .loader-icon::before { content: '🫧'; }
+[data-theme="abyssal-bloom"] .loader-title {
+  text-shadow: 0 0 20px rgba(45,251,196,0.5);
+  animation-duration: 1.15s, 4s;
+}
+[data-theme="abyssal-bloom"] .loader-subtitle,
+[data-theme="abyssal-bloom"] .loader-bar-track,
+[data-theme="abyssal-bloom"] .loader-status {
+  animation-duration: 1.15s;
+}
+[data-theme="abyssal-bloom"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="petrichor"] .loader-icon::before { content: '💧'; }
+[data-theme="petrichor"] .loader-title {
+  text-shadow: 0 0 20px rgba(90,111,196,0.5);
+  animation-duration: 0.95s, 4s;
+}
+[data-theme="petrichor"] .loader-subtitle,
+[data-theme="petrichor"] .loader-bar-track,
+[data-theme="petrichor"] .loader-status {
+  animation-duration: 0.95s;
+}
+[data-theme="petrichor"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="superposition"] .loader-icon::before { content: '🌀'; }
+[data-theme="superposition"] .loader-title {
+  text-shadow: 0 0 20px rgba(139,92,246,0.5);
+  animation-duration: 0.6s, 4s;
+}
+[data-theme="superposition"] .loader-subtitle,
+[data-theme="superposition"] .loader-bar-track,
+[data-theme="superposition"] .loader-status {
+  animation-duration: 0.6s;
+}
+[data-theme="superposition"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+[data-theme="between-channels"] .loader-icon::before { content: '📺'; }
+[data-theme="between-channels"] .loader-title {
+  text-shadow: 0 0 20px rgba(154,160,166,0.5);
+  animation-duration: 0.4s, 4s;
+}
+[data-theme="between-channels"] .loader-subtitle,
+[data-theme="between-channels"] .loader-bar-track,
+[data-theme="between-channels"] .loader-status {
+  animation-duration: 0.4s;
+}
+[data-theme="between-channels"] .loader-bar-fill {
+  box-shadow: 0 0 8px var(--accent-1);
+}
+
+
+/* ============================================================
+   THEME METADATA
+   Used by js/themes.js to display theme names and unlock info.
+   This is a reference comment only, not functional CSS.
+
+   Theme unlock milestones:
+   - 7 days   => tokyo-night
+   - 14 days  => dracula
+   - 21 days  => catppuccin
+   - 30 days  => nord
+   - 45 days  => gruvbox
+   - 60 days  => sunset
+   - 75 days  => ocean-deep
+   - 90 days  => sakura
+   - 120 days => forest
+   - 150 days => cyberpunk
+   - 180 days => midnight-library
+   - 210 days => solarized-dark
+   - 240 days => kanagawa
+   - 270 days => rose-pine
+   - 300 days => one-dark
+   - 330 days => everforest
+   - 365 days => autumn
+   - 400 days => monokai
+   - 450 days => synthwave
+   - 500 days => matrix (ultimate)
+   - always   => tomb-of-the-mask (deliberate pick, not a reward)
+   - always   => illuminated-vellum (deliberate pick, not a reward)
+   - always   => abyssal-bloom (deliberate pick, not a reward)
+   - always   => petrichor (deliberate pick, not a reward)
+   - always   => superposition (deliberate pick, not a reward)
+   - always   => between-channels (deliberate pick, not a reward)
+   - always   => neo-tokyo (deliberate pick, not a reward — tiered)
+   ============================================================ */

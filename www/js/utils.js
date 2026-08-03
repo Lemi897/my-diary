@@ -1,0 +1,259 @@
+// utils.js - Shared utility functions
+
+export function todayDate() {
+  return new Date().toISOString().split('T')[0];
+}
+
+export function formatDate(dateInput) {
+  const date = new Date(dateInput);
+  return date.toLocaleDateString('en-KE', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+
+export function formatDateShort(dateInput) {
+  const date = new Date(dateInput);
+  return date.toLocaleDateString('en-KE', {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
+}
+
+export function currentTime() {
+  return new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function currentWeekRange() {
+  const today = new Date();
+  const day = today.getDay();
+  const diffToMonday = (day === 0 ? -6 : 1 - day);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return {
+    start: monday.toISOString().split('T')[0],
+    end: sunday.toISOString().split('T')[0]
+  };
+}
+
+export function currentMonthRange() {
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return {
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0]
+  };
+}
+
+export async function fetchExchangeRates() {
+  const cached = localStorage.getItem('exchange_rates');
+  const cachedDate = localStorage.getItem('exchange_rates_date');
+  const today = todayDate();
+  if (cached && cachedDate === today) return JSON.parse(cached);
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/KES');
+    const data = await res.json();
+    if (data && data.rates) {
+      localStorage.setItem('exchange_rates', JSON.stringify(data.rates));
+      localStorage.setItem('exchange_rates_date', today);
+      return data.rates;
+    }
+  } catch (err) {
+    console.warn('Exchange rate fetch failed.', err);
+  }
+  return cached ? JSON.parse(cached) : null;
+}
+
+export async function convertToKSH(amount, currency) {
+  if (currency === 'KSH' || currency === 'KES') return parseFloat(amount);
+  const rates = await fetchExchangeRates();
+  if (!rates || !rates[currency]) return parseFloat(amount);
+  return parseFloat((amount / rates[currency]).toFixed(2));
+}
+
+export function formatKSH(amount) {
+  return 'KSH ' + parseFloat(amount).toLocaleString('en-KE', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  });
+}
+
+export function isOnline() {
+  return navigator.onLine;
+}
+
+export function onConnectivityChange(callback) {
+  window.addEventListener('online', () => callback(true));
+  window.addEventListener('offline', () => callback(false));
+}
+
+export function queueOfflineAction(table, action, data) {
+  const queue = JSON.parse(localStorage.getItem('offline_queue') || '[]');
+  queue.push({ table, action, data, timestamp: new Date().toISOString() });
+  localStorage.setItem('offline_queue', JSON.stringify(queue));
+}
+
+export function getOfflineQueue() {
+  return JSON.parse(localStorage.getItem('offline_queue') || '[]');
+}
+
+export function clearOfflineQueue() {
+  localStorage.removeItem('offline_queue');
+}
+
+export function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function truncate(str, maxLength = 50) {
+  if (!str) return '';
+  return str.length > maxLength ? str.slice(0, maxLength) + '...' : str;
+}
+
+export function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('toast-hide');
+    setTimeout(() => toast.remove(), 400);
+  }, 3000);
+}
+
+// ------------------------------------------------------------
+// OFFLINE QUEUE REPLAY
+// Call this once when the app comes back online.
+// Iterates the queue, replays each action against Supabase,
+// and clears the queue on full success.
+// Import supabase inside to avoid circular deps.
+// ------------------------------------------------------------
+export async function replayOfflineQueue() {
+  const queue = getOfflineQueue();
+  if (!queue.length) return;
+
+  const { supabase } = await import('./supabase.js');
+
+  const failed = [];
+
+  for (const item of queue) {
+    try {
+      let res;
+      if (item.action === 'insert') {
+        res = await supabase.from(item.table).insert(item.data);
+      } else if (item.action === 'update') {
+        res = await supabase.from(item.table).update(item.data).eq('id', item.data.id);
+      } else if (item.action === 'delete') {
+        res = await supabase.from(item.table).delete().eq('id', item.data.id);
+      }
+      if (res?.error) failed.push(item);
+    } catch (e) {
+      failed.push(item);
+    }
+  }
+
+  // Keep only items that failed; discard those that succeeded
+  if (failed.length === 0) {
+    clearOfflineQueue();
+  } else {
+    localStorage.setItem('offline_queue', JSON.stringify(failed));
+  }
+
+  return { replayed: queue.length - failed.length, failed: failed.length };
+}
+
+// ------------------------------------------------------------
+// HTML SANITIZER
+// Escapes user-supplied strings before inserting into innerHTML.
+// Prevents XSS from stored malicious content.
+// Usage: sanitize(task.title)
+// ------------------------------------------------------------
+export function sanitize(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ------------------------------------------------------------
+// THEME TIER — only relevant for themes whose intensity scales
+// with progress (currently just Neo-Tokyo). Reads the user's
+// Linguistic level and applies a data-tier attribute to <html>.
+// Levels 1-9 = tier 1 ("Awakening"), 10-24 = tier 2 ("Surge"),
+// 25+ = tier 3 ("Overload"). No-ops entirely for every other
+// theme — cheap to call from any page's init() unconditionally.
+// ------------------------------------------------------------
+export async function applyThemeTier(supabase, userId) {
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme !== 'neo-tokyo') return;
+
+  const { data } = await supabase
+    .from('linguistic_progress')
+    .select('current_level')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  const level = data?.current_level || 1;
+  const tier = level >= 25 ? 3 : level >= 10 ? 2 : 1;
+  document.documentElement.setAttribute('data-tier', String(tier));
+}
+
+export function isNeoTokyoActive() {
+  return document.documentElement.getAttribute('data-theme') === 'neo-tokyo';
+}
+
+export function applyDaytime() {
+  if (!isNeoTokyoActive()) return;
+  const hour = new Date().getHours();
+  let daytime;
+  if (hour >= 5 && hour < 7) daytime = 'dawn';
+  else if (hour >= 7 && hour < 17) daytime = 'day';
+  else if (hour >= 17 && hour < 19) daytime = 'dusk';
+  else daytime = 'night';
+  document.documentElement.setAttribute('data-daytime', daytime);
+}
+
+// ------------------------------------------------------------
+// WEATHER — real, live data from Open-Meteo (free, keyless, same
+// pattern as the exchange-rate fetch in finance.html). Cached 3
+// hours since weather doesn't need checking on every page load.
+// Nairobi coordinates hardcoded — personal, single-location app,
+// not worth a geolocation permission prompt for one weather check.
+// ------------------------------------------------------------
+export async function applyWeather() {
+  if (!isNeoTokyoActive()) return;
+
+  const CACHE_KEY = 'neo_weather_state';
+  const CACHE_TIME_KEY = 'neo_weather_time';
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+
+  const cached = localStorage.getItem(CACHE_KEY);
+  const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+  const isFresh = cachedTime && (Date.now() - parseInt(cachedTime)) < THREE_HOURS;
+
+  let state = cached || 'calm';
+
+  if (!isFresh) {
+    try {
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-1.2864&longitude=36.8172&current_weather=true');
+      const data = await res.json();
+      const cw = data.current_weather;
+      if (cw.windspeed > 25) state = 'windy';
+      else if (cw.weathercode === 0) state = 'sunny';
+      else if (cw.weathercode <= 3) state = 'cloudy';
+      else if (cw.weathercode >= 45) state = 'rainy';
+      else state = 'calm';
+      localStorage.setItem(CACHE_KEY, state);
+      localStorage.setItem(CACHE_TIME_KEY, String(Date.now()));
+    } catch (err) {
+      // Network failure — fall back to cache (or 'calm' if there's
+      // never been a successful fetch). Never block page load.
+    }
+  }
+
+  document.documentElement.setAttribute('data-weather', state);
+}

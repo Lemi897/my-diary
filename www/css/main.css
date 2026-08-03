@@ -1,0 +1,862 @@
+/* ============================================================
+   main.css - Global styles for My Diary PWA
+   Redesigned: Mission Control — per-page accent system
+   Base: #0d1117 dark universe, each page owns its accent
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   CSS VARIABLES - Default base (overridden by themes.css)
+   ------------------------------------------------------------ */
+:root {
+  /* Base dark universe */
+  --bg-primary:    #0d1117;
+  --bg-secondary:  #0d1117;
+  --bg-card:       #161b22;
+  --border:        #1e2d3d;
+  --border-subtle: #151c25;
+
+  /* Default accent (Dashboard — violet) */
+  --accent-1:      #7c3aed;
+  --accent-2:      #06b6d4;
+  --accent-3:      #f59e0b;
+  --accent-dim:    rgba(124,58,237,0.1);
+
+  /* Text */
+  --text-primary:  #e2e8f0;
+  --text-secondary:#64748b;
+  --text-muted:    #334155;
+
+  /* Semantic */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #06b6d4;
+
+  /* Structure */
+  --radius:    10px;
+  --radius-sm: 6px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.4);
+  --font-main: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --transition: all 0.2s ease;
+}
+
+/* ------------------------------------------------------------
+   PER-PAGE ACCENT OVERRIDES
+   Add data-page="habits" etc. to <html> on each page
+   ------------------------------------------------------------ */
+
+/* Dashboard — Violet + Cyan + Amber triadic */
+[data-page="dashboard"] {
+  --accent-1:   #7c3aed;
+  --accent-2:   #06b6d4;
+  --accent-3:   #f59e0b;
+  --accent-dim: rgba(124,58,237,0.1);
+}
+
+/* Habits — Deep emerald monochromatic */
+[data-page="habits"] {
+  --accent-1:   #059669;
+  --accent-2:   #34d399;
+  --accent-3:   #6ee7b7;
+  --accent-dim: rgba(5,150,105,0.1);
+}
+
+/* Tasks — Rose red + orange split */
+[data-page="tasks"] {
+  --accent-1:   #e11d48;
+  --accent-2:   #fb7185;
+  --accent-3:   #f97316;
+  --accent-dim: rgba(225,29,72,0.1);
+}
+
+/* Journal — Violet into fuchsia */
+[data-page="journal"] {
+  --accent-1:   #7c3aed;
+  --accent-2:   #a78bfa;
+  --accent-3:   #e879f9;
+  --accent-dim: rgba(124,58,237,0.1);
+}
+
+/* Goals — Sky blue horizon */
+[data-page="goals"] {
+  --accent-1:   #0ea5e9;
+  --accent-2:   #38bdf8;
+  --accent-3:   #7dd3fc;
+  --accent-dim: rgba(14,165,233,0.1);
+}
+
+/* Finance — Precision gold (already built, keep it) */
+[data-page="finance"] {
+  --accent-1:   #c8943a;
+  --accent-2:   #4a9e6e;
+  --accent-3:   #9e4a4a;
+  --accent-dim: rgba(200,148,58,0.1);
+}
+
+/* Profile — Burnt amber */
+[data-page="profile"] {
+  --accent-1:   #d97706;
+  --accent-2:   #f59e0b;
+  --accent-3:   #fbbf24;
+  --accent-dim: rgba(217,119,6,0.1);
+}
+
+/* Review — Teal (weekly review page) */
+[data-page="review"] {
+  --accent-1:   #0d9488;
+  --accent-2:   #2dd4bf;
+  --accent-3:   #99f6e4;
+  --accent-dim: rgba(13,148,136,0.1);
+}
+
+/* Linguistic — Indigo + gold (wisdom / knowledge) */
+[data-page="linguistic"] {
+  --accent-1:   #6366f1;
+  --accent-2:   #a5b4fc;
+  --accent-3:   #fbbf24;
+  --accent-dim: rgba(99,102,241,0.1);
+}
+
+
+/* ------------------------------------------------------------
+   RESET AND BASE
+   ------------------------------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul, ol { list-style: none; }
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: var(--font-main);
+}
+
+input, textarea, select {
+  font-family: var(--font-main);
+  outline: none;
+  border: none;
+}
+
+
+/* ------------------------------------------------------------
+   TYPOGRAPHY
+   ------------------------------------------------------------ */
+h1 { font-size: 2rem;   font-weight: 700; }
+h2 { font-size: 1.5rem; font-weight: 600; }
+h3 { font-size: 1.25rem;font-weight: 600; }
+h4 { font-size: 1rem;   font-weight: 600; }
+p  { font-size: 0.95rem;color: var(--text-secondary); }
+
+.text-muted   { color: var(--text-muted);  font-size: 0.85rem; }
+.text-accent  { color: var(--accent-1); }
+.text-success { color: var(--success); }
+.text-danger  { color: var(--danger); }
+.text-warning { color: var(--warning); }
+
+
+/* ------------------------------------------------------------
+   LAYOUT
+   ------------------------------------------------------------ */
+.app-container,
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  padding: 2rem;
+  max-width: 1200px;
+  background: var(--bg-primary);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+    padding-bottom: 80px;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   SIDEBAR NAVIGATION (Desktop)
+   ------------------------------------------------------------ */
+.sidebar {
+  width: 240px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.sidebar-logo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  padding-left: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-logo span {
+  color: var(--accent-1);
+}
+
+.nav-links {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: var(--transition);
+  border-left: 2px solid transparent;
+}
+
+.nav-link:hover {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-left-color: var(--border);
+}
+
+.nav-link.active {
+  background-color: var(--accent-dim);
+  color: var(--accent-1);
+  border-left-color: var(--accent-1);
+}
+
+.nav-link .nav-icon {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Online/Offline badge */
+.online-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.75rem;
+  margin-top: auto;
+  font-family: var(--font-mono);
+}
+
+.online-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--success);
+  flex-shrink: 0;
+}
+
+.online-badge.offline .dot        { background-color: var(--danger); }
+.online-badge.offline .status-text { color: var(--danger); }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+}
+
+
+/* ------------------------------------------------------------
+   BOTTOM NAVIGATION (Mobile)
+   ------------------------------------------------------------ */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 0.4rem 0;
+  z-index: 100;
+}
+
+.bottom-nav-links {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.35rem 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  flex: 1;
+  letter-spacing: 0.02em;
+}
+
+.bottom-nav-link .nav-icon { font-size: 1.1rem; }
+
+.bottom-nav-link.active {
+  color: var(--accent-1);
+}
+
+@media (max-width: 768px) {
+  .bottom-nav { display: block; }
+}
+
+
+/* ------------------------------------------------------------
+   CARDS
+   ------------------------------------------------------------ */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.card-sm { padding: 1rem; }
+
+.card-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+
+/* ------------------------------------------------------------
+   BUTTONS
+   ------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: var(--transition);
+  letter-spacing: 0.01em;
+}
+
+.btn-primary {
+  background-color: var(--accent-1);
+  color: #fff;
+  border: 1px solid var(--accent-1);
+}
+
+.btn-primary:hover { opacity: 0.85; }
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-1);
+  color: var(--accent-1);
+  background-color: var(--accent-dim);
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: #fff;
+  border: 1px solid var(--danger);
+}
+
+.btn-danger:hover { opacity: 0.85; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  color: var(--accent-1);
+  border-color: var(--border);
+}
+
+.btn-sm   { padding: 0.35rem 0.85rem; font-size: 0.8rem; }
+.btn-full { width: 100%; justify-content: center; }
+
+
+/* ------------------------------------------------------------
+   FORM ELEMENTS
+   ------------------------------------------------------------ */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: var(--accent-1);
+  background-color: var(--bg-card);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-select option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+
+/* ------------------------------------------------------------
+   PROGRESS BAR
+   ------------------------------------------------------------ */
+.progress-bar-wrapper {
+  background-color: var(--border);
+  border-radius: 99px;
+  height: 6px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent-1);
+  transition: width 0.5s ease;
+}
+
+
+/* ------------------------------------------------------------
+   BADGES AND TAGS
+   ------------------------------------------------------------ */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.badge-success { background: rgba(16,185,129,0.12);  color: var(--success); }
+.badge-danger  { background: rgba(239,68,68,0.12);   color: var(--danger); }
+.badge-warning { background: rgba(245,158,11,0.12);  color: var(--warning); }
+.badge-info    { background: rgba(6,182,212,0.12);   color: var(--info); }
+.badge-accent  { background: var(--accent-dim);       color: var(--accent-1); }
+
+/* Priority badges — used on tasks.html and the dashboard's task preview.
+   Previously only defined locally inside tasks.html, so any other page
+   referencing these classes (like index.html's dashboard) rendered them
+   with zero color coding. */
+.priority-low      { background: rgba(16,185,129,0.15);  color: var(--success); }
+.priority-medium   { background: rgba(245,158,11,0.15);  color: var(--warning); }
+.priority-high     { background: rgba(249,115,22,0.15);  color: #fb923c; }
+.priority-urgent   { background: rgba(239,68,68,0.15);   color: var(--danger); }
+
+
+/* ------------------------------------------------------------
+   MODAL
+   ------------------------------------------------------------ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.modal {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(16px);
+  transition: transform 0.2s ease;
+}
+
+.modal-overlay.open .modal {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-1);
+}
+
+.modal-close {
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+}
+
+.modal-close:hover { color: var(--danger); }
+
+
+/* ------------------------------------------------------------
+   TOAST NOTIFICATIONS
+   ------------------------------------------------------------ */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  z-index: 9999;
+  animation: slideUp 0.3s ease;
+  max-width: 320px;
+  border: 1px solid rgba(255,255,255,0.1);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.toast-success { background-color: rgba(16,185,129,0.95);  color: #fff; }
+.toast-error   { background-color: rgba(239,68,68,0.95); }
+.toast-warning { background-color: rgba(245,158,11,0.95);  color: #000; }
+.toast-info    { background-color: rgba(6,182,212,0.95);   color: #000; }
+
+.toast-hide {
+  animation: slideDown 0.4s ease forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(20px); opacity: 0; }
+}
+
+
+/* ------------------------------------------------------------
+   PAGE HEADER
+   ------------------------------------------------------------ */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+  font-family: var(--font-mono);
+}
+
+
+/* ------------------------------------------------------------
+   EMPTY STATE
+   ------------------------------------------------------------ */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+.empty-state .empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.empty-state p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+
+/* ------------------------------------------------------------
+   SCROLLBAR
+   ------------------------------------------------------------ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track  { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-1); }
+
+
+/* ------------------------------------------------------------
+   UTILITY CLASSES
+   ------------------------------------------------------------ */
+.flex         { display: flex; }
+.flex-center  { display: flex; align-items: center; justify-content: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-col     { display: flex; flex-direction: column; }
+.gap-sm       { gap: 0.5rem; }
+.gap-md       { gap: 1rem; }
+.gap-lg       { gap: 1.5rem; }
+.mt-sm        { margin-top: 0.5rem; }
+.mt-md        { margin-top: 1rem; }
+.mt-lg        { margin-top: 2rem; }
+.mb-sm        { margin-bottom: 0.5rem; }
+.mb-md        { margin-bottom: 1rem; }
+.mb-lg        { margin-bottom: 2rem; }
+.w-full       { width: 100%; }
+.hidden       { display: none !important; }
+.rounded      { border-radius: var(--radius); }
+.rounded-sm   { border-radius: var(--radius-sm); }
+
+/* ------------------------------------------------------------
+   APP LOADER
+   Previously hardcoded inline styles, identical on every page
+   and completely blind to the active theme. Now theme-aware —
+   per-theme personality lives in themes.css.
+   ------------------------------------------------------------ */
+.app-loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg-primary);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+.loader-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.75rem;
+  animation: loaderPop 0.7s ease forwards;
+  opacity: 0;
+}
+.loader-icon::before { content: '📖'; }
+.loader-title {
+  font-size: 2.8rem; font-weight: 800; letter-spacing: -0.02em;
+  font-family: var(--font-main);
+  background-image: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3), var(--accent-1));
+  background-size: 300% 100%;
+  background-clip: text; -webkit-background-clip: text; color: transparent;
+  animation: loaderPop 0.7s ease forwards, gradientTextFlow 4s ease infinite;
+  opacity: 0; transform: scale(0.8);
+}
+@keyframes gradientTextFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.loader-subtitle {
+  font-size: 0.82rem; color: var(--text-secondary);
+  margin-top: 0.5rem; letter-spacing: 0.06em;
+  animation: loaderPop 0.7s ease 0.15s forwards; opacity: 0;
+}
+.typewriter-cursor {
+  color: var(--accent-1);
+  animation: cursorBlink 0.8s step-end infinite;
+}
+@keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.loader-bar-track {
+  width: 200px; height: 3px; background: var(--border);
+  border-radius: 99px; margin-top: 2.5rem; overflow: hidden;
+  animation: loaderPop 0.7s ease 0.25s forwards; opacity: 0;
+}
+.loader-bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-3));
+  border-radius: 99px; transition: width 0.35s ease;
+}
+.loader-status {
+  font-size: 0.72rem; color: var(--text-muted);
+  margin-top: 0.9rem; letter-spacing: 0.04em;
+  animation: loaderPop 0.7s ease 0.35s forwards; opacity: 0;
+}
+@keyframes loaderPop { to { opacity: 1; transform: scale(1); } }
+
+/* ------------------------------------------------------------
+   PIN LOCK OVERLAY
+   Device-level lock, separate from Supabase auth. Shown by
+   js/pinlock.js whenever a PIN is set. Sits above everything,
+   including the app loader and any modal (z-index 20000).
+   Frosted rather than solid, so whatever's on the page behind it
+   — including each theme's own ambient scene — shows through
+   faintly. Makes this read as "your app, locked" instead of a
+   generic security prompt bolted on top.
+   ------------------------------------------------------------ */
+.pin-lock-overlay {
+  position: fixed; inset: 0; z-index: 20000;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: none; align-items: center; justify-content: center; flex-direction: column;
+}
+.pin-lock-overlay.visible { display: flex; }
+.pin-lock-icon {
+  font-size: 2.5rem; color: var(--accent-1); margin-bottom: 1rem;
+  animation: pinIconBreathe 3s ease-in-out infinite;
+}
+@keyframes pinIconBreathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.pin-lock-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--text-primary); }
+
+/* The real input stays functional (needed for the numeric mobile
+   keyboard) but visually invisible — the dots are what's seen. */
+/* Wrapper clips the input from view while the input itself keeps
+   genuine, normal dimensions — see the comment in pinlock.js for
+   why this matters for mobile keyboards specifically. */
+.pin-input-clip { height: 0; overflow: hidden; }
+.pin-lock-input-hidden {
+  width: 200px; height: 46px;
+  font-size: 16px; /* under 16px triggers iOS Safari's auto-zoom on focus */
+  opacity: 0;
+  border: none; outline: none; background: transparent;
+}
+
+.pin-dots-row { display: flex; gap: 1rem; margin-top: 0.25rem; }
+.pin-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--border);
+  background: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pin-dot.filled {
+  background: var(--accent-1);
+  border-color: var(--accent-1);
+}
+.pin-dot-pop { animation: pinDotPop 0.25s ease; }
+@keyframes pinDotPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.pin-dots-shake { animation: pinDotsShake 0.4s ease; }
+@keyframes pinDotsShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(4px); }
+}
+
+.pin-dots-success .pin-dot {
+  background: var(--success, #22c55e);
+  border-color: var(--success, #22c55e);
+}
+
+.pin-lock-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; }

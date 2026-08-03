@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="" data-page="finance">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Finance | My Diary</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <script>(function(){ var t=localStorage.getItem('active_theme')||''; document.documentElement.setAttribute('data-theme',t); })();</script>
+  <style>
+    /* Ledger-specific variables scoped to main content only.
+       Previously hardcoded hex values, completely blind to the
+       active theme — the one page in the whole app the theme
+       switcher did nothing to. Now derived from the shared theme
+       variables, so it reskins along with everything else. */
+    .ledger-root {
+      --lg: var(--bg-primary); --ls: var(--bg-card); --lr: var(--bg-secondary); --lh: var(--accent-dim);
+      --lb: var(--border); --lb2: color-mix(in srgb, var(--border) 60%, var(--text-primary) 40%); --lo: var(--accent-1);
+      --lo-dim: var(--accent-dim);
+      --lg2: var(--success); --lr2: var(--danger); --la: var(--warning);
+      --lt: var(--text-primary); --lm: var(--text-muted); --lsu: var(--text-secondary);
+      --mono: var(--font-mono);
+    }
+    .ledger-root { background: var(--lg); }
+    .wallet-card{background:var(--ls);border:1px solid var(--lb);padding:1.75rem 1.5rem 1.5rem;margin-bottom:1px;position:relative;}
+    .wallet-label{font-size:.65rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--lm);margin-bottom:.6rem;}
+    .wallet-amount-row{display:flex;align-items:center;gap:1rem;margin-bottom:.4rem;}
+    .wallet-amount{font-family:var(--mono);font-size:2.4rem;font-weight:600;color:var(--lt);letter-spacing:-.02em;transition:filter .3s ease;}
+    .wallet-amount.blurred{filter:blur(10px);user-select:none;}
+    .blur-toggle{background:none;border:none;color:var(--lm);cursor:pointer;padding:.25rem;font-size:1rem;transition:color .2s;}
+    .blur-toggle:hover{color:var(--lt);}
+    .wallet-meta{font-size:.75rem;color:var(--lm);font-family:var(--mono);}
+    .wallet-meta span{color:var(--lo);}
+    .month-overview{background:var(--ls);border:1px solid var(--lb);border-top:none;padding:1.25rem 1.5rem;margin-bottom:1.5rem;}
+    .month-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+    .month-title{font-size:.65rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--lm);}
+    .month-nav{display:flex;align-items:center;gap:.75rem;}
+    .month-nav-btn{background:none;border:1px solid var(--lb2);color:var(--lsu);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.75rem;transition:all .2s;}
+    .month-nav-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .month-nav-label{font-family:var(--mono);font-size:.8rem;color:var(--lt);min-width:80px;text-align:center;}
+    .month-figures{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--lb);margin-bottom:1rem;}
+    .month-figure{padding:.85rem 1rem;border-right:1px solid var(--lb);}
+    .month-figure:last-child{border-right:none;}
+    .month-figure-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--lm);margin-bottom:.3rem;}
+    .month-figure-value{font-family:var(--mono);font-size:1rem;font-weight:500;color:var(--lt);}
+    .month-figure-value.income{color:var(--lg2);}
+    .month-figure-value.left{color:var(--lo);}
+    .month-progress-track{height:2px;background:var(--lb2);width:100%;}
+    .month-progress-fill{height:100%;background:var(--lo);transition:width .6s ease;max-width:100%;}
+    .month-progress-fill.warn{background:var(--la);}
+    .month-progress-fill.over{background:var(--lr2);}
+    .section-header{font-size:.65rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--lm);padding:0 0 .75rem;border-bottom:1px solid var(--lb);margin-bottom:0;}
+    .week-card{border:1px solid var(--lb);border-top:none;}
+    .week-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;cursor:pointer;background:var(--ls);transition:background .15s;user-select:none;}
+    .week-header:hover{background:var(--lh);}
+    .week-header-left{display:flex;align-items:center;gap:.75rem;}
+    .week-number{font-family:var(--mono);font-size:.65rem;font-weight:600;color:var(--lm);letter-spacing:.1em;width:28px;}
+    .week-dates{font-size:.8rem;color:var(--lsu);font-family:var(--mono);}
+    .week-badge{font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.15rem .5rem;border:1px solid var(--lb2);color:var(--lm);}
+    .week-badge.current{border-color:var(--lo);color:var(--lo);}
+    .week-badge.locked{opacity:.4;}
+    .week-score{font-size:.6rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;}
+    .week-score.disciplined{color:var(--lg2);}
+    .week-score.review{color:var(--la);}
+    .week-score.exceeded{color:var(--lr2);}
+    .week-header-right{display:flex;align-items:center;gap:1rem;}
+    .week-summary-nums{text-align:right;}
+    .week-spent-num{font-family:var(--mono);font-size:.85rem;font-weight:500;color:var(--lt);}
+    .week-budget-num{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .week-chevron{color:var(--lm);font-size:.8rem;transition:transform .2s;}
+    .week-card.open .week-chevron{transform:rotate(180deg);}
+    .week-mini-bar{height:1px;background:var(--lb);margin:0 1.25rem;}
+    .week-mini-bar-fill{height:100%;background:var(--lo);transition:width .5s ease;}
+    .week-mini-bar-fill.warn{background:var(--la);}
+    .week-mini-bar-fill.over{background:var(--lr2);}
+    .week-body{display:none;background:var(--lr);}
+    .week-card.open .week-body{display:block;}
+    .week-body-inner{padding:1rem 1.25rem;}
+    .cat-bar-row{display:grid;grid-template-columns:120px 1fr 90px;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--lb);}
+    .cat-bar-row:last-child{border-bottom:none;}
+    .cat-bar-name{font-size:.75rem;color:var(--lsu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .cat-bar-track{height:2px;background:var(--lb2);}
+    .cat-bar-fill{height:100%;background:var(--lo);transition:width .5s ease;}
+    .cat-bar-fill.warn{background:var(--la);}
+    .cat-bar-fill.over{background:var(--lr2);}
+    .cat-bar-nums{font-family:var(--mono);font-size:.7rem;color:var(--lm);text-align:right;white-space:nowrap;}
+    .log-controls{display:flex;align-items:center;gap:.5rem;padding:.75rem 0;border-bottom:1px solid var(--lb);margin-bottom:0;}
+    .log-search{flex:1;background:none;border:none;outline:none;font-size:.8rem;color:var(--lt);font-family:var(--mono);padding:.25rem 0;}
+    .log-search::placeholder{color:var(--lm);}
+    .log-filter-btn{background:none;border:1px solid var(--lb2);color:var(--lm);font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:.3rem .6rem;cursor:pointer;transition:all .15s;}
+    .log-filter-btn.active,.log-filter-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .tx-row{display:grid;grid-template-columns:60px 1fr auto auto;align-items:start;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--lb);border-left:2px solid transparent;padding-left:.75rem;transition:background .15s;}
+    .tx-row:hover{background:var(--lh);}
+    .tx-row.income{border-left-color:var(--lg2);}
+    .tx-row.mpesa{border-left-color:var(--lo);}
+    .tx-actions{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;}
+    .tx-action-btn{background:none;border:1px solid var(--lb2);color:var(--lm);font-size:.55rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:.2rem .4rem;cursor:pointer;transition:all .15s;font-family:inherit;}
+    .tx-action-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .tx-action-btn.del:hover{border-color:var(--lr2);color:var(--lr2);}
+    .tx-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);padding-top:.1rem;}
+    .tx-desc{font-size:.82rem;color:var(--lt);margin-bottom:.2rem;}
+    .tx-meta{display:flex;gap:.5rem;align-items:center;}
+    .tx-category{font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--lm);}
+    .tx-method{font-family:var(--mono);font-size:.6rem;color:var(--lm);border:1px solid var(--lb2);padding:0 .3rem;}
+    .tx-right{text-align:right;}
+    .tx-amount{font-family:var(--mono);font-size:.9rem;font-weight:500;color:var(--lt);}
+    .tx-amount.income{color:var(--lg2);}
+    .tx-fee{font-family:var(--mono);font-size:.6rem;color:var(--lm);}
+    .tx-empty{padding:2.5rem 0;text-align:center;font-size:.78rem;color:var(--lm);letter-spacing:.05em;}
+    .fab-group{position:fixed;bottom:5.5rem;right:1.25rem;display:flex;flex-direction:column;align-items:flex-end;gap:.6rem;z-index:100;}
+    .fab-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--lm);background:var(--ls);border:1px solid var(--lb);padding:.2rem .5rem;white-space:nowrap;opacity:0;transform:translateX(6px);transition:all .2s;pointer-events:none;}
+    .fab-row{display:flex;align-items:center;gap:.5rem;}
+    .fab-row:hover .fab-label{opacity:1;transform:translateX(0);}
+    .fab{width:40px;height:40px;background:var(--ls);border:1px solid var(--lb2);color:var(--lsu);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all .2s;}
+    .fab.primary{background:var(--lo);border-color:var(--lo);color:#0c0c0c;width:44px;height:44px;font-size:1.1rem;}
+    .fab:hover{border-color:var(--lo);color:var(--lo);}
+    .fab.primary:hover{opacity:.9;}
+    .ledger-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+    .ledger-modal-overlay.open{display:flex;}
+    .ledger-modal{background:var(--ls);border:1px solid var(--lb2);border-bottom:none;width:100%;max-width:560px;padding:1.5rem;max-height:90vh;overflow-y:auto;}
+    .modal-title{font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--lo);margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;}
+    .modal-close{background:none;border:none;color:var(--lm);cursor:pointer;font-size:1rem;}
+    .ledger-field{margin-bottom:1rem;}
+    .ledger-label{font-size:.6rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--lm);margin-bottom:.4rem;display:block;}
+    .ledger-input{width:100%;background:var(--lr);border:none;border-bottom:1px solid var(--lb2);color:var(--lt);font-family:var(--mono);font-size:.9rem;padding:.6rem 0;outline:none;transition:border-color .2s;box-sizing:border-box;}
+    .ledger-input:focus{border-bottom-color:var(--lo);}
+    select.ledger-input{cursor:pointer;background:var(--lr);}
+    .ledger-input-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .fee-note{font-family:var(--mono);font-size:.7rem;color:var(--lo);margin-top:.3rem;}
+    .modal-btn-row{display:flex;gap:.75rem;margin-top:1.25rem;}
+    .ledger-btn{flex:1;padding:.75rem;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--lb2);cursor:pointer;transition:all .2s;background:none;color:var(--lm);}
+    .ledger-btn.confirm{background:var(--lo);border-color:var(--lo);color:#0c0c0c;}
+    .ledger-btn.confirm:hover{opacity:.9;}
+    .ledger-btn:hover{border-color:var(--lsu);color:var(--lt);}
+    .quick-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-bottom:1rem;}
+    .quick-cat-btn{padding:.6rem .4rem;border:1px solid var(--lb2);background:none;color:var(--lsu);font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;text-align:center;}
+    .quick-cat-btn.selected,.quick-cat-btn:hover{border-color:var(--lo);color:var(--lo);background:var(--lo-dim);}
+    .budget-cat-row{display:grid;grid-template-columns:1fr 100px;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid var(--lb);}
+    .budget-cat-name{font-size:.78rem;color:var(--lsu);}
+    .budget-cat-input{font-family:var(--mono);font-size:.85rem;background:none;border:none;border-bottom:1px solid var(--lb2);color:var(--lt);outline:none;text-align:right;padding:.2rem 0;width:100%;}
+    .budget-cat-input:focus{border-bottom-color:var(--lo);}
+    .scripture-strip{border-left:2px solid var(--lo);padding:.75rem 1rem;background:var(--lo-dim);margin-bottom:1.5rem;}
+    .scripture-strip-text{font-size:.78rem;font-style:italic;color:var(--lsu);line-height:1.6;}
+    .scripture-strip-ref{font-family:var(--mono);font-size:.65rem;color:var(--lo);margin-top:.3rem;}
+    .income-row{display:grid;grid-template-columns:60px 1fr auto;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--lb);border-left:2px solid var(--lg2);padding-left:.75rem;}
+    .income-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .income-source{font-size:.82rem;color:var(--lt);}
+    .income-label{font-size:.65rem;color:var(--lm);text-transform:uppercase;letter-spacing:.06em;}
+    .income-amount{font-family:var(--mono);font-size:.9rem;font-weight:500;color:var(--lg2);}
+    .ledger-tabs{display:flex;border-bottom:1px solid var(--lb);margin-bottom:1.5rem;}
+    .ledger-tab{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lm);padding:.75rem 1rem;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;}
+    .ledger-tab.active{color:var(--lo);border-bottom-color:var(--lo);}
+    .ledger-panel{display:none;}
+    .ledger-panel.active{display:block;}
+    .budget-total-row{display:flex;justify-content:space-between;align-items:center;padding:.75rem 0;margin-top:.5rem;}
+    .budget-total-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lm);}
+    .budget-total-value{font-family:var(--mono);font-size:1rem;font-weight:600;color:var(--lo);}
+    .online-dot{position:fixed;bottom:4.2rem;left:1rem;font-size:.6rem;color:var(--lm);display:flex;align-items:center;gap:.3rem;font-family:var(--mono);z-index:50;}
+    .online-dot::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--lg2);}
+    .online-dot.offline::before{background:var(--lr2);}
+    .weeks-section{margin-bottom:1.5rem;}
+    .log-section{margin-bottom:6rem;}
+    .income-section{margin-bottom:1.5rem;}
+    .cat-bars-section{margin-bottom:1.5rem;}
+    /* Set Budget button — ledger style but won't conflict */
+    .set-budget-btn{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.4rem .75rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;}
+    .set-budget-btn:hover{border-color:var(--lo);color:var(--lo);}
+    .savings-section-header{display:flex;align-items:center;justify-content:space-between;padding:0 0 .75rem;border-bottom:1px solid var(--lb);margin-bottom:1rem;}
+    .savings-add-btn{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.35rem .7rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:inherit;}
+    .savings-add-btn:hover{border-color:var(--lg2);color:var(--lg2);}
+    .savings-goal-card{border:1px solid var(--lb);border-top:none;background:var(--ls);}
+    .savings-goal-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;cursor:pointer;transition:background .15s;user-select:none;}
+    .savings-goal-header:hover{background:var(--lh);}
+    .savings-goal-title{font-size:.85rem;color:var(--lt);margin-bottom:.35rem;}
+    .savings-goal-nums{font-family:var(--mono);font-size:.7rem;color:var(--lm);}
+    .savings-goal-nums span{color:var(--lg2);}
+    .savings-goal-right{display:flex;align-items:center;gap:.75rem;}
+    .savings-goal-meta{text-align:right;}
+    .savings-goal-days{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .savings-goal-days.reached{color:var(--lg2);font-weight:600;}
+    .savings-chevron{color:var(--lm);font-size:.8rem;transition:transform .2s;}
+    .savings-goal-card.open .savings-chevron{transform:rotate(180deg);}
+    .savings-progress-track{height:2px;background:var(--lb2);margin:0 1.25rem .9rem;}
+    .savings-progress-fill{height:100%;background:var(--lg2);transition:width .5s ease;max-width:100%;}
+    .savings-goal-body{display:none;background:var(--lr);}
+    .savings-goal-card.open .savings-goal-body{display:block;}
+    .savings-goal-body-inner{padding:1rem 1.25rem;}
+    .savings-goal-actions{display:flex;gap:.5rem;margin-bottom:1rem;}
+    .savings-deposit-row{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--lb);}
+    .savings-deposit-row:last-child{border-bottom:none;}
+    .wishlist-totals-row{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .wishlist-total-chip{background:var(--ls);border:1px solid var(--lb);padding:.5rem .9rem;}
+    .wishlist-total-chip .label{color:var(--lm);text-transform:uppercase;letter-spacing:.08em;font-size:.6rem;display:block;margin-bottom:.2rem;}
+    .wishlist-total-chip .value{font-family:var(--mono);color:var(--lo);font-weight:700;font-size:.9rem;}
+    .wishlist-card{border:1px solid var(--lb);background:var(--ls);padding:1rem 1.25rem;margin-bottom:.75rem;}
+    .wishlist-card.ready{border-color:var(--lg2);box-shadow:0 0 0 1px var(--lg2);}
+    .wishlist-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;}
+    .wishlist-name{font-size:.9rem;color:var(--lt);margin-bottom:.35rem;}
+    .wishlist-cat-badge{font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.15rem .5rem;}
+    .wishlist-cat-badge.need{background:rgba(158,74,74,.15);color:var(--lr2);}
+    .wishlist-cat-badge.want{background:rgba(200,148,58,.15);color:var(--lo);}
+    .wishlist-cat-badge.wish{background:rgba(74,158,110,.15);color:var(--lg2);}
+    .wishlist-price{font-family:var(--mono);font-size:.85rem;color:var(--lt);white-space:nowrap;}
+    .wishlist-progress-track{height:4px;background:var(--lb2);margin:.6rem 0;overflow:hidden;}
+    .wishlist-progress-fill{height:100%;background:var(--lo);transition:width .5s ease;max-width:100%;}
+    .wishlist-card.ready .wishlist-progress-fill{background:var(--lg2);}
+    .wishlist-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--lm);flex-wrap:wrap;gap:.5rem;}
+    .wishlist-source-link{color:var(--lo);text-decoration:none;display:inline-flex;align-items:center;gap:.3rem;}
+    .wishlist-status-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.2rem .5rem;}
+    .wishlist-status-badge.ready{background:rgba(74,158,110,.2);color:var(--lg2);}
+    .wishlist-status-badge.purchased{background:rgba(120,120,120,.2);color:var(--lm);}
+    .wishlist-status-badge.abandoned{background:rgba(158,74,74,.15);color:var(--lr2);}
+    .wishlist-actions{display:flex;gap:.4rem;margin-top:.65rem;}
+    .wishlist-card{display:flex;gap:.9rem;}
+    .wishlist-thumb{width:52px;height:52px;object-fit:cover;border-radius:4px;background:var(--lb2);flex-shrink:0;}
+    .wishlist-thumb-placeholder{width:52px;height:52px;border-radius:4px;background:var(--lb2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--lm);font-size:1.2rem;}
+    .wishlist-body{flex:1;min-width:0;}
+    .wishlist-days-ago{font-size:.65rem;color:var(--lm);}
+    .wishlist-goal-link{font-size:.72rem;color:var(--lm);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.3rem;}
+    .wishlist-goal-link a,.wishlist-goal-link button.link-style{background:none;border:none;color:var(--lo);font-family:inherit;font-size:inherit;cursor:pointer;padding:0;text-decoration:underline;}
+    .wishlist-shared-warning{font-size:.65rem;color:var(--lr2);margin-top:.25rem;display:flex;align-items:center;gap:.3rem;}
+    .wishlist-insight-bar{background:var(--ls);border:1px solid var(--lb);padding:.6rem .9rem;margin-bottom:1rem;font-size:.72rem;color:var(--lm);}
+    .wishlist-insight-bar span{color:var(--lo);font-weight:700;}
+    .wishlist-drag-handle{cursor:grab;color:var(--lm);padding:.3rem;align-self:flex-start;}
+    .wishlist-drag-handle:active{cursor:grabbing;}
+    .wishlist-history-toggle{background:none;border:1px solid var(--lb2);color:var(--lm);padding:.35rem .7rem;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;font-family:inherit;margin-bottom:1rem;}
+    .wishlist-history-toggle:hover{border-color:var(--lo);color:var(--lo);}
+    .wishlist-price-history-list{font-size:.68rem;color:var(--lm);margin-top:.4rem;padding-left:.9rem;}
+    .savings-deposit-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);}
+    .savings-deposit-note{font-size:.75rem;color:var(--lsu);margin-top:.15rem;}
+    .savings-deposit-amount{font-family:var(--mono);font-size:.82rem;color:var(--lg2);font-weight:500;}
+    .savings-empty{padding:2.5rem 0;text-align:center;font-size:.78rem;color:var(--lm);letter-spacing:.05em;}
+    .debts-summary{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--lb);margin-bottom:1.5rem;}
+    .debts-summary-figure{padding:.85rem 1rem;border-right:1px solid var(--lb);}
+    .debts-summary-figure:last-child{border-right:none;}
+    .debts-summary-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--lm);margin-bottom:.3rem;}
+    .debts-summary-value{font-family:var(--mono);font-size:1.1rem;font-weight:600;}
+    .debts-summary-value.owe{color:var(--lr2);}
+    .debts-summary-value.owed{color:var(--lg2);}
+    .debts-filter-row{display:flex;gap:.5rem;padding:.75rem 0;border-bottom:1px solid var(--lb);margin-bottom:0;}
+    .debt-row{display:grid;grid-template-columns:75px 1fr auto auto;align-items:start;gap:.75rem;padding:.85rem 0;border-bottom:1px solid var(--lb);}
+    .debt-row.paid{opacity:.45;}
+    .debt-date{font-family:var(--mono);font-size:.65rem;color:var(--lm);padding-top:.1rem;}
+    .debt-desc{font-size:.82rem;color:var(--lt);margin-bottom:.25rem;}
+    .debt-meta{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+    .debt-person{font-size:.65rem;color:var(--lm);}
+    .debt-type-badge{font-size:.55rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.12rem .4rem;border:1px solid var(--lb2);}
+    .debt-type-badge.owe{border-color:var(--lr2);color:var(--lr2);}
+    .debt-type-badge.owed{border-color:var(--lg2);color:var(--lg2);}
+    .debt-amount{font-family:var(--mono);font-size:.9rem;font-weight:500;text-align:right;}
+    .debt-amount.owe{color:var(--lr2);}
+    .debt-amount.owed{color:var(--lg2);}
+    .debt-actions{display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;}
+  </style>
+</head>
+<body>
+<div class="neo-tokyo-bg" aria-hidden="true">
+  <div class="neo-sky-orb"></div>
+  <div class="neo-bird" style="left:5%; animation-delay:0s;"></div>
+  <div class="neo-bird" style="left:5%; animation-delay:6s;"></div>
+  <div class="neo-particle" style="left:8%; animation-delay:0s;"></div>
+  <div class="neo-particle" style="left:22%; animation-delay:1.8s;"></div>
+  <div class="neo-particle" style="left:38%; animation-delay:3.2s;"></div>
+  <div class="neo-particle" style="left:54%; animation-delay:0.9s;"></div>
+  <div class="neo-particle" style="left:67%; animation-delay:2.6s;"></div>
+  <div class="neo-particle" style="left:79%; animation-delay:4.1s;"></div>
+  <div class="neo-particle" style="left:88%; animation-delay:1.3s;"></div>
+  <div class="neo-particle" style="left:95%; animation-delay:3.7s;"></div>
+</div>
+<!-- PIN LOCK — device-level, separate from Supabase auth -->
+<div class="pin-lock-overlay" id="pinLockOverlay">
+  <div class="pin-lock-icon"><i class="ri-lock-2-line"></i></div>
+  <div class="pin-lock-title">Enter PIN</div>
+  <input type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pinLockInput" class="pin-lock-input" autocomplete="off" />
+  <div class="pin-lock-error" id="pinLockError" style="display:none;">Incorrect PIN</div>
+</div>
+
+<div id="appLoader" class="app-loader">
+  <div class="loader-icon" aria-hidden="true"></div>
+  <div class="loader-title">My<span>Diary</span></div>
+  <div class="loader-subtitle">Your personal life tracker</div>
+  <div class="loader-bar-track">
+    <div id="loaderBar" class="loader-bar-fill"></div>
+  </div>
+  <div id="loaderStatus" class="loader-status">Connecting...</div>
+</div>
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-logo">My<span>Diary</span></div>
+    <nav class="nav-links">
+      <a href="index.html"   class="nav-link"><i class="ri-home-5-line nav-icon"></i><span>Dashboard</span></a>
+      <a href="habits.html"  class="nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+      <a href="tasks.html"   class="nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+      <a href="journal.html" class="nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+      <a href="linguistic.html" class="nav-link"><i class="ri-book-open-line nav-icon"></i><span>Linguistic</span></a>
+      <a href="goals.html"   class="nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+      <a href="finance.html" class="nav-link active"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+      <a href="profile.html" class="nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
+    </nav>
+    <div class="online-badge" id="onlineBadge">
+      <div class="dot"></div>
+      <span class="status-text">Online</span>
+    </div>
+  </aside>
+
+  <main class="main-content ledger-root">
+    <div class="page-header" style="margin-bottom:1.5rem;">
+      <div>
+        <div class="page-title" style="font-size:1.1rem;letter-spacing:.05em;">THE LEDGER</div>
+        <div style="font-size:.7rem;color:var(--lm);font-family:var(--mono);margin-top:.2rem;" id="ledgerSubtitle">loading...</div>
+      </div>
+      <button class="set-budget-btn" onclick="openBudgetModal()">SET BUDGET</button>
+    </div>
+
+    <div class="scripture-strip">
+      <div class="scripture-strip-text" id="finVerseText">loading...</div>
+      <div class="scripture-strip-ref"  id="finVerseRef"></div>
+    </div>
+
+    <div class="wallet-card">
+      <div class="wallet-label">Wallet Balance</div>
+      <div class="wallet-amount-row">
+        <div class="wallet-amount blurred" id="walletBalance">KSH 0</div>
+        <button class="blur-toggle" id="blurToggle" onclick="toggleBlur()">
+          <i class="ri-eye-off-line" id="blurIcon"></i>
+        </button>
+      </div>
+      <div class="wallet-meta">
+        <span id="walletWeekLabel">Week - of -</span>
+        &nbsp;&middot;&nbsp;
+        <span id="walletPctLabel" style="color:var(--lsu);">no budget set</span>
+      </div>
+    </div>
+
+    <div class="month-overview">
+      <div class="month-title-row">
+        <div class="month-title">Monthly Overview</div>
+        <div class="month-nav">
+          <button class="month-nav-btn" onclick="changeMonth(-1)"><i class="ri-arrow-left-s-line"></i></button>
+          <div class="month-nav-label" id="monthNavLabel">Jun 2026</div>
+          <button class="month-nav-btn" onclick="changeMonth(1)"><i class="ri-arrow-right-s-line"></i></button>
+        </div>
+      </div>
+      <div class="month-figures">
+        <div class="month-figure">
+          <div class="month-figure-label">Received</div>
+          <div class="month-figure-value income" id="monthIncome">KSH 0</div>
+        </div>
+        <div class="month-figure">
+          <div class="month-figure-label">Spent</div>
+          <div class="month-figure-value" id="monthSpent">KSH 0</div>
+        </div>
+        <div class="month-figure">
+          <div class="month-figure-label">Remaining</div>
+          <div class="month-figure-value left" id="monthLeft">KSH 0</div>
+        </div>
+      </div>
+      <div class="month-progress-track">
+        <div class="month-progress-fill" id="monthProgressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="ledger-tabs">
+      <button class="ledger-tab active" onclick="switchTab('weeks',this)">Weeks</button>
+      <button class="ledger-tab" onclick="switchTab('categories',this)">Categories</button>
+      <button class="ledger-tab" onclick="switchTab('income',this)">Income</button>
+      <button class="ledger-tab" onclick="switchTab('savings',this)">Savings</button>
+      <button class="ledger-tab" onclick="switchTab('debts',this)">Debts</button>
+      <button class="ledger-tab" onclick="switchTab('wishlist',this)">Wishlist</button>
+      <button class="ledger-tab" onclick="switchTab('log',this)">Log</button>
+    </div>
+
+    <div class="ledger-panel active" id="panel-weeks">
+      <div class="weeks-section">
+        <div class="section-header">Weekly Breakdown</div>
+        <div id="weeksContainer"></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-categories">
+      <div class="cat-bars-section">
+        <div class="section-header" style="margin-bottom:.5rem;">Budget vs Actual</div>
+        <div id="catBarsContainer"></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-income">
+      <div class="income-section">
+        <div class="section-header" style="margin-bottom:0;">Income Log</div>
+        <div id="incomeLogContainer"><div class="tx-empty">No income recorded this month.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-savings">
+      <div class="savings-section">
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Savings Goals</div>
+          <button class="savings-add-btn" onclick="openSavingsGoalModal()">+ NEW GOAL</button>
+        </div>
+        <div id="savingsGoalsContainer"><div class="savings-empty">No savings goals yet.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-debts">
+      <div class="debts-section">
+        <div class="debts-summary">
+          <div class="debts-summary-figure">
+            <div class="debts-summary-label">You Owe</div>
+            <div class="debts-summary-value owe" id="debtsSummaryOwe">KSH 0</div>
+          </div>
+          <div class="debts-summary-figure">
+            <div class="debts-summary-label">Owed To You</div>
+            <div class="debts-summary-value owed" id="debtsSummaryOwed">KSH 0</div>
+          </div>
+        </div>
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Debts</div>
+          <button class="savings-add-btn" onclick="openDebtModal()">+ NEW DEBT</button>
+        </div>
+        <div class="debts-filter-row">
+          <button class="log-filter-btn active" onclick="setDebtFilter('all',this)">All</button>
+          <button class="log-filter-btn" onclick="setDebtFilter('owe',this)">I Owe</button>
+          <button class="log-filter-btn" onclick="setDebtFilter('owed_to_me',this)">Owed to Me</button>
+        </div>
+        <div id="debtsContainer"><div class="savings-empty">No debts logged.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-wishlist">
+      <div class="savings-section">
+        <div class="savings-section-header">
+          <div class="section-header" style="border-bottom:none;padding-bottom:0;">Needs, Wants &amp; Wishes</div>
+          <button class="savings-add-btn" onclick="openWishlistModal()">+ NEW ITEM</button>
+        </div>
+        <div class="wishlist-totals-row" id="wishlistTotals"></div>
+        <div class="wishlist-insight-bar" id="wishlistInsight"></div>
+        <div class="debts-filter-row">
+          <button class="log-filter-btn active" onclick="setWishlistFilter('all',this)">All</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('need',this)">Needs</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('want',this)">Wants</button>
+          <button class="log-filter-btn" onclick="setWishlistFilter('wish',this)">Wishes</button>
+        </div>
+        <button class="wishlist-history-toggle" onclick="toggleWishlistHistory()" id="wishlistHistoryToggleBtn">Show History</button>
+        <div id="wishlistContainer"><div class="savings-empty">No items yet.</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-panel" id="panel-log">
+      <div class="log-section">
+        <div class="log-controls">
+          <input class="log-search" id="logSearch" type="text" placeholder="search transactions..." oninput="filterLog()" />
+          <button class="log-filter-btn active" onclick="setFilter('all',this)">All</button>
+          <button class="log-filter-btn" onclick="setFilter('mpesa',this)">M-Pesa</button>
+          <button class="log-filter-btn" onclick="setFilter('cash',this)">Cash</button>
+        </div>
+        <div id="txLogContainer"><div class="tx-empty">No transactions this month.</div></div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-links">
+      <a href="index.html"   class="bottom-nav-link"><i class="ri-home-5-line nav-icon"></i><span>Home</span></a>
+      <a href="habits.html"  class="bottom-nav-link"><i class="ri-checkbox-circle-line nav-icon"></i><span>Habits</span></a>
+      <a href="tasks.html"   class="bottom-nav-link"><i class="ri-task-line nav-icon"></i><span>Tasks</span></a>
+      <a href="journal.html" class="bottom-nav-link"><i class="ri-quill-pen-line nav-icon"></i><span>Journal</span></a>
+      <a href="linguistic.html" class="bottom-nav-link"><i class="ri-book-open-line nav-icon"></i><span>Linguistic</span></a>
+      <a href="goals.html"   class="bottom-nav-link"><i class="ri-focus-3-line nav-icon"></i><span>Goals</span></a>
+      <a href="finance.html" class="bottom-nav-link active"><i class="ri-money-dollar-circle-line nav-icon"></i><span>Finance</span></a>
+      <a href="profile.html" class="bottom-nav-link"><i class="ri-user-3-line nav-icon"></i><span>Profile</span></a>
+    </div>
+  </nav>
+
+  <div class="fab-group">
+    <div class="fab-row">
+      <div class="fab-label">Log Income</div>
+      <button class="fab" onclick="openModal('income')"><i class="ri-arrow-down-line"></i></button>
+    </div>
+    <div class="fab-row">
+      <div class="fab-label">Quick Log</div>
+      <button class="fab" onclick="openModal('quick')"><i class="ri-flashlight-line"></i></button>
+    </div>
+    <div class="fab-row">
+      <div class="fab-label">Add Expense</div>
+      <button class="fab primary" onclick="openModal('expense')"><i class="ri-add-line"></i></button>
+    </div>
+  </div>
+
+  <div class="online-dot" id="onlineDot">online</div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="ledger-modal-overlay" id="expenseModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>NEW EXPENSE</span><button class="modal-close" onclick="closeModal('expenseModal')"><i class="ri-close-line"></i></button></div>
+    <div class="ledger-field"><label class="ledger-label">Description</label><input class="ledger-input" id="exp_desc" type="text" placeholder="what did you spend on?" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="exp_amount" type="number" placeholder="0" oninput="calcFee()" /></div>
+      <div class="ledger-field"><label class="ledger-label">Method</label>
+        <select class="ledger-input" id="exp_method" onchange="calcFee()">
+          <option value="mpesa_send">M-Pesa Send</option>
+          <option value="mpesa_withdraw">M-Pesa Withdraw</option>
+          <option value="cash">Cash</option>
+          <option value="lipa">Lipa na M-Pesa</option>
+        </select>
+      </div>
+    </div>
+    <div class="ledger-field" id="feeField" style="display:none;">
+      <label class="ledger-label">M-Pesa Fee (auto-calculated)</label>
+      <input class="ledger-input" id="exp_fee" type="number" placeholder="0" />
+      <div class="fee-note" id="feeNote"></div>
+    </div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Category</label>
+        <select class="ledger-input" id="exp_category">
+          <option>Food &amp; Drinks</option><option>Transport</option>
+          <option>Airtime &amp; Data</option><option>Personal Care</option>
+          <option>Clothing</option><option>Entertainment</option>
+          <option>Giving</option><option>Education</option>
+          <option>Household</option><option>Emergency</option>
+          <option>Miscellaneous</option>
+        </select>
+      </div>
+      <div class="ledger-field"><label class="ledger-label">Date &amp; Time</label><input class="ledger-input" id="exp_date" type="datetime-local" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="exp_note" type="text" placeholder="any extra details..." /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('expenseModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveExpense()">Record Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK MODAL -->
+<div class="ledger-modal-overlay" id="quickModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>QUICK LOG</span><button class="modal-close" onclick="closeModal('quickModal')"><i class="ri-close-line"></i></button></div>
+    <div class="ledger-field"><label class="ledger-label">Category</label><div class="quick-cats" id="quickCats"></div></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="quick_amount" type="number" placeholder="0" oninput="calcQuickFee()" /></div>
+      <div class="ledger-field"><label class="ledger-label">Method</label>
+        <select class="ledger-input" id="quick_method" onchange="calcQuickFee()">
+          <option value="mpesa_send">M-Pesa Send</option>
+          <option value="mpesa_withdraw">M-Pesa Withdraw</option>
+          <option value="cash">Cash</option>
+          <option value="lipa">Lipa na M-Pesa</option>
+        </select>
+      </div>
+    </div>
+    <div class="fee-note" id="quickFeeNote" style="margin-bottom:.75rem;"></div>
+    <div class="ledger-field"><label class="ledger-label">Description (optional)</label><input class="ledger-input" id="quick_desc" type="text" placeholder="quick note..." /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('quickModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveQuick()">Log It</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCOME MODAL -->
+<div class="ledger-modal-overlay" id="incomeModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>LOG INCOME</span><button class="modal-close" onclick="closeModal('incomeModal')"><i class="ri-close-line"></i></button></div>
+    <div class="ledger-field"><label class="ledger-label">Source</label>
+      <select class="ledger-input" id="inc_source">
+        <option>Parents</option><option>Petty Cash</option><option>Other</option>
+      </select>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Label (optional)</label><input class="ledger-input" id="inc_label" type="text" placeholder='e.g. "Dad sent"' /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="inc_amount" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Method</label>
+        <select class="ledger-input" id="inc_method"><option value="mpesa">M-Pesa</option><option value="cash">Cash</option></select>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Date &amp; Time</label><input class="ledger-input" id="inc_date" type="datetime-local" /></div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="inc_note" type="text" placeholder="any context..." /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('incomeModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveIncome()">Record Income</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT EXPENSE MODAL -->
+<div class="ledger-modal-overlay" id="editExpenseModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span>EDIT EXPENSE</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" style="flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteExpenseFromEditModal()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('editExpenseModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Description</label><input class="ledger-input" id="edit_desc" type="text" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="edit_amount" type="number" oninput="calcEditFee()" /></div>
+      <div class="ledger-field"><label class="ledger-label">Method</label>
+        <select class="ledger-input" id="edit_method" onchange="calcEditFee()">
+          <option value="mpesa_send">M-Pesa Send</option>
+          <option value="mpesa_withdraw">M-Pesa Withdraw</option>
+          <option value="cash">Cash</option>
+          <option value="lipa">Lipa na M-Pesa</option>
+        </select>
+      </div>
+    </div>
+    <div class="ledger-field" id="editFeeField">
+      <label class="ledger-label">M-Pesa Fee</label>
+      <input class="ledger-input" id="edit_fee" type="number" placeholder="0" />
+      <div class="fee-note" id="editFeeNote"></div>
+    </div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Category</label>
+        <select class="ledger-input" id="edit_category">
+          <option>Food &amp; Drinks</option><option>Transport</option>
+          <option>Airtime &amp; Data</option><option>Personal Care</option>
+          <option>Clothing</option><option>Entertainment</option>
+          <option>Giving</option><option>Education</option>
+          <option>Household</option><option>Emergency</option>
+          <option>Miscellaneous</option>
+        </select>
+      </div>
+      <div class="ledger-field"><label class="ledger-label">Date &amp; Time</label><input class="ledger-input" id="edit_date" type="datetime-local" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="edit_note" type="text" /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('editExpenseModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="updateExpense()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET MODAL -->
+<div class="ledger-modal-overlay" id="budgetModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>SET BUDGET &mdash; <span id="budgetMonthLabel"></span></span><button class="modal-close" onclick="closeModal('budgetModal')"><i class="ri-close-line"></i></button></div>
+    <div style="font-size:.72rem;color:var(--lm);margin-bottom:1rem;line-height:1.6;">Assign every shilling a job. Zero-based: total budget should equal expected income.</div>
+    <div id="budgetSetupGrid"></div>
+    <div class="budget-total-row">
+      <div class="budget-total-label">Total Budgeted</div>
+      <div class="budget-total-value" id="budgetTotalDisplay">KSH 0</div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('budgetModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveBudget()">Save Budget</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVINGS GOAL MODAL -->
+<div class="ledger-modal-overlay" id="savingsGoalModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="savingsGoalModalTitle">NEW SAVINGS GOAL</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="savingsGoalDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteSavingsGoal()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('savingsGoalModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Goal Title</label><input class="ledger-input" id="goal_title" type="text" placeholder="e.g. Emergency Fund" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Target Amount (KSH)</label><input class="ledger-input" id="goal_target" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Target Date (optional)</label><input class="ledger-input" id="goal_date" type="date" /></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('savingsGoalModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveSavingsGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- WISHLIST ITEM MODAL -->
+<div class="ledger-modal-overlay" id="wishlistModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="wishlistModalTitle">NEW ITEM</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="wishlistDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteWishlistItem()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('wishlistModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Item Name</label><input class="ledger-input" id="wishlist_name" type="text" placeholder="e.g. AirPods Pro" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Category</label>
+        <select class="ledger-input" id="wishlist_category">
+          <option value="need">Need</option>
+          <option value="want">Want</option>
+          <option value="wish">Wish</option>
+        </select>
+      </div>
+      <div class="ledger-field"><label class="ledger-label">Price (KSH)</label><input class="ledger-input" id="wishlist_price" type="number" placeholder="0" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Link or Location (optional)</label><input class="ledger-input" id="wishlist_source" type="text" placeholder="Paste a link, or note where you saw it" /></div>
+    <div class="ledger-field"><label class="ledger-label">Photo URL (optional)</label><input class="ledger-input" id="wishlist_image" type="text" placeholder="Paste an image link" /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('wishlistModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveWishlistItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- LINK SAVINGS GOAL MODAL -->
+<div class="ledger-modal-overlay" id="wishlistGoalModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span>Link a Savings Goal</span>
+      <button class="modal-close" onclick="closeModal('wishlistGoalModal')"><i class="ri-close-line"></i></button>
+    </div>
+    <p style="font-size:.75rem;color:var(--lm);margin:-.5rem 0 1rem;">Saving toward this item happens through a real Savings Goal — pick an existing one, or create a new one just for this.</p>
+    <div class="ledger-field">
+      <label class="ledger-label">Existing Goal</label>
+      <select class="ledger-input" id="wishlist_goal_select">
+        <option value="">— Create a new goal instead —</option>
+      </select>
+    </div>
+    <div class="ledger-field" id="wishlist_new_goal_field">
+      <label class="ledger-label">New Goal Title</label>
+      <input class="ledger-input" id="wishlist_new_goal_title" type="text" placeholder="e.g. AirPods Pro Fund" />
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('wishlistGoalModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveWishlistGoalLink()">Link Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL -->
+<div class="ledger-modal-overlay" id="depositModal">
+  <div class="ledger-modal">
+    <div class="modal-title"><span>ADD DEPOSIT</span><button class="modal-close" onclick="closeModal('depositModal')"><i class="ri-close-line"></i></button></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="dep_amount" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Date</label><input class="ledger-input" id="dep_date" type="date" /></div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Note (optional)</label><input class="ledger-input" id="dep_note" type="text" placeholder="any context..." /></div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('depositModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveDeposit()">Add Deposit</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEBT MODAL -->
+<div class="ledger-modal-overlay" id="debtModal">
+  <div class="ledger-modal">
+    <div class="modal-title">
+      <span id="debtModalTitle">NEW DEBT</span>
+      <div style="display:flex;gap:.5rem;align-items:center;">
+        <button class="ledger-btn" id="debtDeleteBtn" style="display:none;flex:0;padding:.3rem .6rem;font-size:.6rem;border-color:#9e4a4a;color:#9e4a4a;" onclick="deleteDebt()">DELETE</button>
+        <button class="modal-close" onclick="closeModal('debtModal')"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="ledger-field"><label class="ledger-label">Description</label><input class="ledger-input" id="debt_desc" type="text" placeholder="e.g. Laptop repair loan" /></div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Amount (KSH)</label><input class="ledger-input" id="debt_amount" type="number" placeholder="0" /></div>
+      <div class="ledger-field"><label class="ledger-label">Type</label>
+        <select class="ledger-input" id="debt_type">
+          <option value="owe">I Owe</option>
+          <option value="owed_to_me">Owed to Me</option>
+        </select>
+      </div>
+    </div>
+    <div class="ledger-input-row">
+      <div class="ledger-field"><label class="ledger-label">Person (optional)</label><input class="ledger-input" id="debt_person" type="text" placeholder="who?" /></div>
+      <div class="ledger-field"><label class="ledger-label">Due Date (optional)</label><input class="ledger-input" id="debt_due" type="date" /></div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="ledger-btn" onclick="closeModal('debtModal')">Cancel</button>
+      <button class="ledger-btn confirm" onclick="saveDebt()">Save Debt</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase } from './js/supabase.js';
+  import { initPinLock, wirePinLockUI } from './js/pinlock.js';
+  import { isOnline, onConnectivityChange, showToast, todayDate, isNeoTokyoActive, applyDaytime, applyWeather, applyThemeTier, sanitize } from './js/utils.js';
+  import { getVerseFromLibrary } from './js/scripture.js';
+
+  // ----------------------------------------------------------
+  // LOADER HELPERS
+  // ----------------------------------------------------------
+  function loaderProgress(pct, status) {
+    const bar = document.getElementById('loaderBar');
+    const txt = document.getElementById('loaderStatus');
+    if (bar) bar.style.width = pct + '%';
+    if (txt && status) txt.textContent = status;
+  }
+  function hideLoader() {
+    const loader = document.getElementById('appLoader');
+    if (!loader) return;
+    loader.style.opacity = '0';
+    loader.style.visibility = 'hidden';
+    setTimeout(() => loader.remove(), 650);
+  }
+
+  // ----------------------------------------------------------
+  // AUTH CHECK — runs first, before anything else.
+  // Redirects to login if there's no active session, and sets
+  // userId (module-level) so every query/write below can use it.
+  // Matches the pattern used in habits.html / tasks.html / etc.
+  // ----------------------------------------------------------
+  let userId = null;
+  {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      hideLoader();
+      window.location.replace('login.html');
+    } else {
+      userId = session.user.id;
+      initPinLock();
+      wirePinLockUI();
+      applyThemeTier(supabase, userId);
+      applyDaytime();
+      applyWeather();
+    }
+  }
+
+  const CATEGORIES = ['Food & Drinks','Transport','Airtime & Data','Personal Care','Clothing','Entertainment','Giving','Education','Household','Emergency','Miscellaneous'];
+
+  const SEND_FEES = [[1,100,0],[101,500,7],[501,1000,13],[1001,1500,23],[1501,2500,33],[2501,3500,53],[3501,5000,57],[5001,7500,78],[7501,10000,90],[10001,15000,100],[15001,20000,105],[20001,999999,108]];
+  const WITHDRAW_FEES = [[50,100,11],[101,500,11],[501,1000,29],[1001,1500,29],[1501,2500,29],[2501,3500,52],[3501,5000,69],[5001,7500,87],[7501,10000,115],[10001,15000,167],[15001,20000,197],[20001,999999,309]];
+
+  function getMpesaFee(amount, type) {
+    const table = type === 'mpesa_withdraw' ? WITHDRAW_FEES : SEND_FEES;
+    amount = Number(amount);
+    for (const [min,max,fee] of table) { if (amount>=min && amount<=max) return fee; }
+    return 0;
+  }
+
+  let currentMonthYear = getMonthYear(new Date());
+  let allExpenses=[], allIncome=[], catBudgets={}, balanceBlurred=true;
+  let allSavingsGoals=[];
+  let depositsByGoal={};
+  let allDebts=[];
+  let debtFilter='all';
+  let selectedQuickCat = CATEGORIES[0];
+  let activeFilter = 'all';
+
+  function getMonthYear(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+  function fmtKSH(n) { return 'KSH '+Number(n||0).toLocaleString('en-KE',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function fmtDate(dt) { return new Date(dt).toLocaleDateString('en-KE',{day:'2-digit',month:'short'}); }
+  function fmtTime(dt) { return new Date(dt).toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit',hour12:true}); }
+
+  function getWeeksInMonth(my) {
+    const [y,m] = my.split('-').map(Number);
+    const first=new Date(y,m-1,1), last=new Date(y,m,0);
+    const weeks=[]; let ws=new Date(first), n=1;
+    while(ws<=last) {
+      const we=new Date(ws); we.setDate(we.getDate()+6);
+      if(we>last) we.setTime(last.getTime());
+      weeks.push({num:n,start:new Date(ws),end:new Date(we)});
+      n++; ws.setDate(ws.getDate()+7);
+    }
+    return weeks;
+  }
+
+  function getCurrentWeekNum(weeks) {
+    const now=new Date();
+    for(const w of weeks) { if(now>=w.start && now<=w.end) return w.num; }
+    return weeks.length;
+  }
+
+  function getWeekScore(spent,budgeted) {
+    if(!budgeted) return null;
+    const p=spent/budgeted;
+    return p<=0.85?'disciplined':p<=1.0?'review':'exceeded';
+  }
+
+  function getScoreVerse(score) {
+    const v={
+      disciplined:{text:'The wise store up choice food and olive oil, but fools gulp theirs down.',ref:'Proverbs 21:20'},
+      review:{text:'The plans of the diligent lead to profit as surely as haste leads to poverty.',ref:'Proverbs 21:5'},
+      exceeded:{text:'Let no debt remain outstanding, except the continuing debt to love one another.',ref:'Romans 13:8'},
+    };
+    return v[score]||null;
+  }
+
+  function setLocalNow(id) {
+    const now=new Date(), off=now.getTimezoneOffset()*60000;
+    document.getElementById(id).value=new Date(now-off).toISOString().slice(0,16);
+  }
+
+  function getWeekNum(date) {
+    const [y,m]=currentMonthYear.split('-').map(Number);
+    const first=new Date(y,m-1,1);
+    return Math.floor((date-first)/(1000*60*60*24*7))+1;
+  }
+
+  async function init() {
+    loaderProgress(20, 'Loading finance...');
+    loadVerse();
+    updateOnline();
+    onConnectivityChange(updateOnline);
+    updateMonthLabel();
+    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets(),loadSavingsGoals(),loadDebts(),loadWishlist()]);
+    render();
+    renderWishlist();
+    loaderProgress(100, 'Ready!');
+    setTimeout(hideLoader, 300);
+  }
+
+  function loadVerse() {
+    const v=getVerseFromLibrary('spending');
+    document.getElementById('finVerseText').textContent=`"${v.text}"`;
+    document.getElementById('finVerseRef').textContent=v.ref;
+  }
+
+  function updateOnline() {
+    const d=document.getElementById('onlineDot');
+    d.textContent=isOnline()?'online':'offline';
+    d.classList.toggle('offline',!isOnline());
+  }
+
+  function updateMonthLabel() {
+    const [y,m]=currentMonthYear.split('-').map(Number);
+    const lbl=new Date(y,m-1,1).toLocaleDateString('en-KE',{month:'short',year:'numeric'});
+    document.getElementById('monthNavLabel').textContent=lbl;
+    document.getElementById('ledgerSubtitle').textContent=`${lbl} · every penny accounted for`;
+    const bm=document.getElementById('budgetMonthLabel');
+    if(bm) bm.textContent=lbl;
+  }
+
+  async function loadExpenses() {
+    const [y,m]=currentMonthYear.split('-').map(Number);
+    const s=new Date(y,m-1,1).toISOString(), e=new Date(y,m,0,23,59,59).toISOString();
+    const {data,error}=await supabase.from('expenses').select('*').eq('user_id',userId).gte('expense_date',s).lte('expense_date',e).order('expense_date',{ascending:false});
+    if(!error) allExpenses=data||[];
+  }
+
+  async function loadIncome() {
+    const [y,m]=currentMonthYear.split('-').map(Number);
+    const s=new Date(y,m-1,1).toISOString(), e=new Date(y,m,0,23,59,59).toISOString();
+    const {data,error}=await supabase.from('income_logs').select('*').eq('user_id',userId).gte('received_at',s).lte('received_at',e).order('received_at',{ascending:false});
+    if(!error) allIncome=data||[];
+  }
+
+  async function loadCatBudgets() {
+    const {data,error}=await supabase.from('category_budgets').select('*').eq('user_id',userId).eq('month_year',currentMonthYear);
+    catBudgets={};
+    if(!error&&data) data.forEach(r=>{catBudgets[r.category]=Number(r.budgeted_amount);});
+  }
+
+  async function loadSavingsGoals() {
+    const {data,error}=await supabase.from('savings_goals').select('*').eq('user_id',userId).order('created_at',{ascending:true});
+    if(!error) allSavingsGoals=data||[];
+  }
+
+  async function loadDepositsForGoal(goalId) {
+    const {data,error}=await supabase.from('savings_deposits').select('*').eq('user_id',userId).eq('savings_goal_id',goalId).order('deposit_date',{ascending:false});
+    if(!error) depositsByGoal[goalId]=data||[];
+    return depositsByGoal[goalId]||[];
+  }
+
+  async function loadDebts() {
+    const {data,error}=await supabase.from('debts').select('*').eq('user_id',userId).order('paid',{ascending:true}).order('due_date',{ascending:true,nullsFirst:false});
+    if(!error) allDebts=data||[];
+  }
+
+  function render() {
+    renderWallet(); renderMonthOverview(); renderWeeks();
+    renderCatBars(); renderIncomeLog(); renderTxLog(); renderSavings(); renderDebts();
+  }
+
+  function renderWallet() {
+    const income=allIncome.reduce((s,r)=>s+Number(r.amount),0);
+    const spent=allExpenses.reduce((s,e)=>s+Number(e.amount)+Number(e.mpesa_fee||0),0);
+    const bal=income-spent;
+    const totalBudget=Object.values(catBudgets).reduce((s,v)=>s+v,0);
+    const pct=totalBudget?Math.round((spent/totalBudget)*100):0;
+    const weeks=getWeeksInMonth(currentMonthYear);
+    const cw=getCurrentWeekNum(weeks);
+    document.getElementById('walletBalance').textContent=fmtKSH(bal);
+    document.getElementById('walletWeekLabel').textContent=`Week ${cw} of ${weeks.length}`;
+    document.getElementById('walletPctLabel').textContent=totalBudget?`${pct}% of budget used`:'no budget set';
+  }
+
+  function renderMonthOverview() {
+    const income=allIncome.reduce((s,r)=>s+Number(r.amount),0);
+    const spent=allExpenses.reduce((s,e)=>s+Number(e.amount)+Number(e.mpesa_fee||0),0);
+    const totalBudget=Object.values(catBudgets).reduce((s,v)=>s+v,0);
+    const pct=totalBudget?Math.min((spent/totalBudget)*100,100):0;
+    document.getElementById('monthIncome').textContent=fmtKSH(income);
+    document.getElementById('monthSpent').textContent=fmtKSH(spent);
+    document.getElementById('monthLeft').textContent=fmtKSH(income-spent);
+    const fill=document.getElementById('monthProgressFill');
+    fill.style.width=pct+'%';
+    fill.className='month-progress-fill'+(pct>=100?' over':pct>=80?' warn':'');
+  }
+
+  function renderWeeks() {
+    const weeks=getWeeksInMonth(currentMonthYear);
+    const cw=getCurrentWeekNum(weeks);
+    const now=new Date();
+    const totalBudget=Object.values(catBudgets).reduce((s,v)=>s+v,0);
+    const weekBudget=weeks.length?Math.round(totalBudget/weeks.length):0;
+    const container=document.getElementById('weeksContainer');
+    container.innerHTML='';
+    weeks.forEach(w=>{
+      const isPast=w.end<now&&w.num!==cw;
+      const isCurrent=w.num===cw;
+      const isFuture=w.start>now;
+      const wxps=allExpenses.filter(e=>{const d=new Date(e.expense_date);return d>=w.start&&d<=w.end;});
+      const spent=wxps.reduce((s,e)=>s+Number(e.amount)+Number(e.mpesa_fee||0),0);
+      const pct=weekBudget?Math.min((spent/weekBudget)*100,100):0;
+      const score=(isPast||isCurrent)?getWeekScore(spent,weekBudget):null;
+      const ds=`${w.start.toLocaleDateString('en-KE',{day:'2-digit',month:'short'})} — ${w.end.toLocaleDateString('en-KE',{day:'2-digit',month:'short'})}`;
+      const sv=score?getScoreVerse(score):null;
+      const card=document.createElement('div');
+      card.className='week-card'+(isCurrent?' open':'');
+      card.innerHTML=`
+        <div class="week-header" onclick="toggleWeek(this)">
+          <div class="week-header-left">
+            <div class="week-number">W${w.num}</div>
+            <div class="week-dates">${ds}</div>
+            <div class="week-badge ${isCurrent?'current':isFuture?'locked':''}">${isCurrent?'current':isFuture?'upcoming':'done'}</div>
+            ${score?`<div class="week-score ${score}">${score}</div>`:''}
+          </div>
+          <div class="week-header-right">
+            ${!isFuture?`<div class="week-summary-nums"><div class="week-spent-num">${fmtKSH(spent)}</div><div class="week-budget-num">of ${fmtKSH(weekBudget)}</div></div>`:`<div class="week-budget-num">${fmtKSH(weekBudget)} planned</div>`}
+            <i class="ri-arrow-down-s-line week-chevron"></i>
+          </div>
+        </div>
+        <div class="week-mini-bar"><div class="week-mini-bar-fill ${pct>=100?'over':pct>=80?'warn':''}" style="width:${pct}%"></div></div>
+        <div class="week-body"><div class="week-body-inner">
+          ${isFuture?`<div style="font-size:.75rem;color:var(--lm);padding:.5rem 0;">This week hasn't started. Budget: ${fmtKSH(weekBudget)}</div>`:
+            wxps.length===0?`<div style="font-size:.75rem;color:var(--lm);padding:.5rem 0;">No expenses recorded.</div>`:
+            wxps.map(e=>`<div class="tx-row ${e.method&&e.method.includes('mpesa')?'mpesa':''}">
+              <div class="tx-date">${fmtDate(e.expense_date)}<br>${fmtTime(e.expense_date)}</div>
+              <div><div class="tx-desc">${e.description||'—'}</div>
+              <div class="tx-meta"><span class="tx-category">${e.category||''}</span><span class="tx-method">${e.method||'cash'}</span></div></div>
+              <div class="tx-right"><div class="tx-amount">${fmtKSH(e.amount)}</div>${e.mpesa_fee>0?`<div class="tx-fee">+ ${fmtKSH(e.mpesa_fee)} fee</div>`:''}</div>
+            </div>`).join('')
+          }
+          ${sv?`<div style="border-top:1px solid var(--lb);margin-top:.75rem;padding-top:.75rem;">
+            <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--lm);margin-bottom:.35rem;">Week ${w.num} · ${score.toUpperCase()}</div>
+            <div style="font-size:.75rem;font-style:italic;color:var(--lsu);line-height:1.6;">"${sv.text}"</div>
+            <div style="font-family:var(--mono);font-size:.65rem;color:var(--lo);margin-top:.25rem;">${sv.ref}</div>
+          </div>`:''}
+        </div></div>`;
+      container.appendChild(card);
+    });
+  }
+
+  function renderCatBars() {
+    const container=document.getElementById('catBarsContainer');
+    container.innerHTML='';
+    CATEGORIES.forEach(cat=>{
+      const budgeted=catBudgets[cat]||0;
+      const spent=allExpenses.filter(e=>e.category===cat).reduce((s,e)=>s+Number(e.amount)+Number(e.mpesa_fee||0),0);
+      const pct=budgeted?Math.min((spent/budgeted)*100,100):0;
+      const cls=pct>=100?'over':pct>=80?'warn':'';
+      const row=document.createElement('div');
+      row.className='cat-bar-row';
+      row.innerHTML=`<div class="cat-bar-name">${cat}</div>
+        <div class="cat-bar-track"><div class="cat-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <div class="cat-bar-nums">${fmtKSH(spent)}${budgeted?' / '+fmtKSH(budgeted):' / —'}</div>`;
+      container.appendChild(row);
+    });
+  }
+
+  function renderIncomeLog() {
+    const c=document.getElementById('incomeLogContainer');
+    c.innerHTML=allIncome.length===0?'<div class="tx-empty">No income recorded this month.</div>':
+      allIncome.map(r=>`<div class="income-row">
+        <div class="income-date">${fmtDate(r.received_at)}<br>${fmtTime(r.received_at)}</div>
+        <div><div class="income-source">${r.label||r.source}</div><div class="income-label">${r.source} · ${r.method}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
+          <div class="income-amount">+ ${fmtKSH(r.amount)}</div>
+          <button class="tx-action-btn del" onclick="deleteIncome('${r.id}')">del</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function fmtDateOnly(dt) { return new Date(dt).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'}); }
+
+  function daysLeftLabel(targetDate) {
+    if(!targetDate) return '';
+    const diff=Math.ceil((new Date(targetDate)-new Date())/(1000*60*60*24));
+    if(diff<0) return 'past due';
+    if(diff===0) return 'due today';
+    return diff+' days left';
+  }
+
+  function renderSavings() {
+    const container=document.getElementById('savingsGoalsContainer');
+    if(allSavingsGoals.length===0){ container.innerHTML='<div class="savings-empty">No savings goals yet. Tap + New Goal to start one.</div>'; return; }
+    container.innerHTML=allSavingsGoals.map(g=>{
+      const current=Number(g.current_amount)||0;
+      const target=Number(g.target_amount)||0;
+      const pct=target?Math.min((current/target)*100,100):0;
+      const reached=target>0&&current>=target;
+      const deposits=depositsByGoal[g.id];
+      const isOpen=deposits!==undefined;
+      return `<div class="savings-goal-card${isOpen?' open':''}" id="goalCard-${g.id}">
+        <div class="savings-goal-header" onclick="toggleSavingsGoal('${g.id}')">
+          <div>
+            <div class="savings-goal-title">${g.title}</div>
+            <div class="savings-goal-nums"><span>${fmtKSH(current)}</span> of ${fmtKSH(target)}</div>
+          </div>
+          <div class="savings-goal-right">
+            <div class="savings-goal-meta">
+              <div class="savings-goal-days${reached?' reached':''}">${reached?'GOAL REACHED':daysLeftLabel(g.target_date)}</div>
+            </div>
+            <i class="ri-arrow-down-s-line savings-chevron"></i>
+          </div>
+        </div>
+        <div class="savings-progress-track"><div class="savings-progress-fill" style="width:${pct}%"></div></div>
+        <div class="savings-goal-body" id="goalBody-${g.id}">
+          <div class="savings-goal-body-inner">
+            <div class="savings-goal-actions">
+              <button class="ledger-btn confirm" style="flex:0;padding:.5rem .9rem;" onclick="openDepositModal('${g.id}')">+ Add Deposit</button>
+              <button class="ledger-btn" style="flex:0;padding:.5rem .9rem;" onclick="openSavingsGoalModal('${g.id}')">Edit</button>
+            </div>
+            <div id="depositsList-${g.id}"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    // Re-render any already-open deposit lists (data persists across full re-renders)
+    Object.keys(depositsByGoal).forEach(goalId=>renderDepositsList(goalId));
+  }
+
+  function renderDepositsList(goalId) {
+    const el=document.getElementById(`depositsList-${goalId}`);
+    if(!el) return;
+    const deposits=depositsByGoal[goalId]||[];
+    el.innerHTML=deposits.length===0?'<div class="savings-empty" style="padding:1.25rem 0;">No deposits logged yet.</div>':
+      deposits.map(d=>`<div class="savings-deposit-row">
+        <div>
+          <div class="savings-deposit-date">${fmtDateOnly(d.deposit_date)}</div>
+          ${d.note?`<div class="savings-deposit-note">${d.note}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <div class="savings-deposit-amount">+ ${fmtKSH(d.amount)}</div>
+          <button class="tx-action-btn del" onclick="deleteDeposit('${d.id}','${goalId}')">del</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.toggleSavingsGoal=async function(goalId){
+    const card=document.getElementById(`goalCard-${goalId}`);
+    const isOpen=card.classList.contains('open');
+    if(isOpen){
+      card.classList.remove('open');
+      delete depositsByGoal[goalId];
+      return;
+    }
+    card.classList.add('open');
+    await loadDepositsForGoal(goalId);
+    renderDepositsList(goalId);
+  };
+
+  function renderDebts() {
+    const owe=allDebts.filter(d=>d.type==='owe'&&!d.paid).reduce((s,d)=>s+Number(d.amount_ksh),0);
+    const owed=allDebts.filter(d=>d.type==='owed_to_me'&&!d.paid).reduce((s,d)=>s+Number(d.amount_ksh),0);
+    document.getElementById('debtsSummaryOwe').textContent=fmtKSH(owe);
+    document.getElementById('debtsSummaryOwed').textContent=fmtKSH(owed);
+
+    const container=document.getElementById('debtsContainer');
+    let rows=allDebts;
+    if(debtFilter!=='all') rows=rows.filter(d=>d.type===debtFilter);
+    if(rows.length===0){ container.innerHTML='<div class="savings-empty">No debts logged.</div>'; return; }
+    container.innerHTML=rows.map(d=>{
+      const isOwe=d.type==='owe';
+      const dueLabel=d.due_date?fmtDateOnly(d.due_date):'no due date';
+      return `<div class="debt-row${d.paid?' paid':''}">
+        <div class="debt-date">${dueLabel}</div>
+        <div>
+          <div class="debt-desc">${d.description}</div>
+          <div class="debt-meta">
+            <span class="debt-type-badge ${isOwe?'owe':'owed'}">${isOwe?'I Owe':'Owed to Me'}</span>
+            ${d.person_name?`<span class="debt-person">${d.person_name}</span>`:''}
+            ${d.paid?'<span class="debt-person">PAID</span>':''}
+          </div>
+        </div>
+        <div class="debt-amount ${isOwe?'owe':'owed'}">${fmtKSH(d.amount_ksh)}</div>
+        <div class="debt-actions">
+          <button class="tx-action-btn" onclick="toggleDebtPaid('${d.id}')">${d.paid?'unpaid':'paid'}</button>
+          <button class="tx-action-btn" onclick="openDebtModal('${d.id}')">edit</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.setDebtFilter=function(f,btn){
+    debtFilter=f;
+    document.querySelectorAll('.debts-filter-row .log-filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDebts();
+  };
+
+  window.toggleDebtPaid=async function(id){
+    const d=allDebts.find(x=>x.id===id);
+    if(!d) return;
+    const {error}=await supabase.from('debts').update({paid:!d.paid}).eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to update','error');return;}
+    await loadDebts(); renderDebts();
+  };
+
+  window.openDebtModal=function(debtId){
+    const modal=document.getElementById('debtModal');
+    const deleteBtn=document.getElementById('debtDeleteBtn');
+    if(debtId){
+      const d=allDebts.find(x=>x.id===debtId);
+      if(!d) return;
+      modal._editId=debtId;
+      document.getElementById('debtModalTitle').textContent='EDIT DEBT';
+      document.getElementById('debt_desc').value=d.description||'';
+      document.getElementById('debt_amount').value=d.amount_ksh||'';
+      document.getElementById('debt_type').value=d.type||'owe';
+      document.getElementById('debt_person').value=d.person_name||'';
+      document.getElementById('debt_due').value=d.due_date||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      document.getElementById('debtModalTitle').textContent='NEW DEBT';
+      document.getElementById('debt_desc').value='';
+      document.getElementById('debt_amount').value='';
+      document.getElementById('debt_type').value='owe';
+      document.getElementById('debt_person').value='';
+      document.getElementById('debt_due').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveDebt=async function(){
+    const description=document.getElementById('debt_desc').value.trim();
+    const amount_ksh=Number(document.getElementById('debt_amount').value);
+    const type=document.getElementById('debt_type').value;
+    const person_name=document.getElementById('debt_person').value.trim()||null;
+    const due_date=document.getElementById('debt_due').value||null;
+    if(!description||!amount_ksh){showToast('Enter a description and amount','error');return;}
+    const editId=document.getElementById('debtModal')._editId;
+    let error;
+    if(editId){
+      ({error}=await supabase.from('debts').update({description,amount_ksh,type,person_name,due_date}).eq('id',editId).eq('user_id',userId));
+    } else {
+      ({error}=await supabase.from('debts').insert({description,amount_ksh,type,person_name,due_date,paid:false,user_id:userId}));
+    }
+    if(error){showToast('Failed to save debt','error');return;}
+    showToast('Debt saved','success');
+    closeModal('debtModal');
+    await loadDebts(); renderDebts();
+  };
+
+  window.deleteDebt=async function(){
+    const debtId=document.getElementById('debtModal')._editId;
+    if(!debtId) return;
+    if(!confirm('Delete this debt?')) return;
+    const {error}=await supabase.from('debts').delete().eq('id',debtId).eq('user_id',userId);
+    if(error){showToast('Failed to delete debt','error');return;}
+    showToast('Debt deleted','success');
+    closeModal('debtModal');
+    await loadDebts(); renderDebts();
+  };
+
+  // ----------------------------------------------------------
+  // WISHLIST — Needs, Wants & Wishes. Log a product the moment
+  // you're tempted, then save toward it through a REAL Savings
+  // Goal (not a self-contained number) — so "ready" reflects
+  // actual money you have, not a wishlist-only figure. Multiple
+  // items can share one goal; when they do, "ready" is shown
+  // honestly with a caveat, since the money doesn't multiply.
+  // ----------------------------------------------------------
+  let allWishlistItems=[];
+  let wishlistFilter='all';
+  let wishlistShowHistory=false;
+  let wishlistPriceHistory={};
+  let wishlistDragSourceId=null;
+
+  async function loadWishlist(){
+    const {data,error}=await supabase.from('wishlist_items').select('*').eq('user_id',userId).order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+    if(error){showToast('Failed to load wishlist','error');return;}
+    allWishlistItems=data||[];
+  }
+
+  async function loadWishlistPriceHistory(itemId){
+    const {data}=await supabase.from('wishlist_price_history').select('*').eq('item_id',itemId).eq('user_id',userId).order('changed_at',{ascending:false});
+    wishlistPriceHistory[itemId]=data||[];
+    return wishlistPriceHistory[itemId];
+  }
+
+  window.setWishlistFilter=function(cat,btn){
+    wishlistFilter=cat;
+    document.querySelectorAll('#panel-wishlist .log-filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderWishlist();
+  };
+
+  window.toggleWishlistHistory=function(){
+    wishlistShowHistory=!wishlistShowHistory;
+    document.getElementById('wishlistHistoryToggleBtn').textContent=wishlistShowHistory?'Hide History':'Show History';
+    renderWishlist();
+  };
+
+  function goalForItem(item){
+    return item.savings_goal_id ? allSavingsGoals.find(g=>g.id===item.savings_goal_id) : null;
+  }
+  function savedAmountForItem(item){
+    const g=goalForItem(item);
+    return g ? Number(g.current_amount||0) : 0;
+  }
+  function isItemReady(item){
+    return savedAmountForItem(item) >= Number(item.price||0);
+  }
+  function daysAgoText(dateStr){
+    const days=Math.floor((Date.now()-new Date(dateStr).getTime())/86400000);
+    if(days<=0) return 'added today';
+    if(days===1) return 'added 1 day ago';
+    return `added ${days} days ago`;
+  }
+
+  function renderWishlist(){
+    const active=allWishlistItems.filter(i=>i.status!=='purchased'&&i.status!=='abandoned');
+    const history=allWishlistItems.filter(i=>i.status==='purchased'||i.status==='abandoned');
+
+    // How many ACTIVE items currently share each goal — needed for
+    // the honest "shared" caveat.
+    const goalUsage={};
+    active.forEach(i=>{ if(i.savings_goal_id) goalUsage[i.savings_goal_id]=(goalUsage[i.savings_goal_id]||0)+1; });
+
+    // Category totals (active items only)
+    const totalsEl=document.getElementById('wishlistTotals');
+    const cats=['need','want','wish'];
+    const catSums={};
+    cats.forEach(c=>{ catSums[c]=active.filter(i=>i.category===c).reduce((s,i)=>s+Number(i.price||0),0); });
+    totalsEl.innerHTML=cats.map(c=>{
+      const label=c==='need'?'Needs':c==='want'?'Wants':'Wishes';
+      return `<div class="wishlist-total-chip"><span class="label">${label}</span><span class="value">${fmtKSH(catSums[c])}</span></div>`;
+    }).join('');
+
+    // Category-balance insight
+    const grandTotal=catSums.need+catSums.want+catSums.wish;
+    const insightEl=document.getElementById('wishlistInsight');
+    if(grandTotal>0){
+      const pct=c=>Math.round(catSums[c]/grandTotal*100);
+      insightEl.style.display='block';
+      insightEl.innerHTML=`<span>${pct('want')}%</span> of your wishlist's value is Wants, <span>${pct('need')}%</span> Needs, <span>${pct('wish')}%</span> Wishes.`;
+    } else {
+      insightEl.style.display='none';
+    }
+
+    const container=document.getElementById('wishlistContainer');
+    const filtered=wishlistFilter==='all'?active:active.filter(i=>i.category===wishlistFilter);
+
+    if(!filtered.length && !wishlistShowHistory){
+      container.innerHTML='<div class="savings-empty">No items yet.</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(item=>renderWishlistCard(item, goalUsage)).join('')
+      + (wishlistShowHistory && history.length ? `
+          <div class="section-header" style="margin-top:1.5rem;">History</div>
+          ${history.map(item=>renderWishlistCard(item, goalUsage, true)).join('')}
+        ` : '');
+
+    // Wire drag-and-drop on the active (non-history) cards only
+    container.querySelectorAll('.wishlist-card[data-draggable="true"]').forEach(card=>{
+      card.addEventListener('dragstart',e=>{ wishlistDragSourceId=card.dataset.itemId; e.dataTransfer.effectAllowed='move'; });
+      card.addEventListener('dragover',e=>{ e.preventDefault(); });
+      card.addEventListener('drop',async e=>{
+        e.preventDefault();
+        const targetId=card.dataset.itemId;
+        if(!wishlistDragSourceId || wishlistDragSourceId===targetId) return;
+        await reorderWishlistItems(wishlistDragSourceId, targetId);
+      });
+    });
+  }
+
+  function renderWishlistCard(item, goalUsage, isHistory){
+    const price=Number(item.price||0);
+    const saved=savedAmountForItem(item);
+    const pct=price>0?Math.min(100,Math.round(saved/price*100)):0;
+    const ready=!isHistory && isItemReady(item);
+    const isUrl=item.source && /^https?:\/\//i.test(item.source);
+    const goal=goalForItem(item);
+    const sharedCount=item.savings_goal_id ? (goalUsage[item.savings_goal_id]||0) : 0;
+
+    return `
+      <div class="wishlist-card ${ready?'ready':''}" ${!isHistory?`draggable="true" data-draggable="true" data-item-id="${item.id}"`:''}>
+        ${!isHistory?'<div class="wishlist-drag-handle"><i class="ri-drag-move-2-line"></i></div>':''}
+        ${item.image_url
+          ? `<img class="wishlist-thumb" src="${sanitize(item.image_url)}" alt="" onerror="this.style.display='none'"/>`
+          : `<div class="wishlist-thumb-placeholder"><i class="ri-image-line"></i></div>`}
+        <div class="wishlist-body">
+          <div class="wishlist-card-top">
+            <div>
+              <div class="wishlist-name">${sanitize(item.name)}</div>
+              <span class="wishlist-cat-badge ${item.category}">${item.category}</span>
+              ${item.status==='purchased'?'<span class="wishlist-status-badge purchased">purchased</span>':''}
+              ${item.status==='abandoned'?'<span class="wishlist-status-badge abandoned">abandoned</span>':''}
+              ${ready?'<span class="wishlist-status-badge ready">ready</span>':''}
+              <div class="wishlist-days-ago">${daysAgoText(item.created_at)}</div>
+            </div>
+            <div class="wishlist-price">${fmtKSH(price)}</div>
+          </div>
+
+          ${!isHistory ? `<div class="wishlist-progress-track"><div class="wishlist-progress-fill" style="width:${pct}%;"></div></div>` : ''}
+          <div class="wishlist-meta-row">
+            <span>${goal ? `${fmtKSH(saved)} saved (${pct}%)` : 'No goal linked yet'}</span>
+            ${item.source
+              ? (isUrl
+                  ? `<a class="wishlist-source-link" href="${sanitize(item.source)}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> Open</a>`
+                  : `<span><i class="ri-map-pin-line"></i> ${sanitize(item.source)}</span>`)
+              : ''}
+          </div>
+
+          ${!isHistory ? `
+            <div class="wishlist-goal-link">
+              ${goal
+                ? `<span><i class="ri-piggy-bank-line"></i> Linked to "${sanitize(goal.title)}"</span><button class="link-style" onclick="openWishlistGoalModal('${item.id}')">Change</button>`
+                : `<button class="link-style" onclick="openWishlistGoalModal('${item.id}')">Link a Savings Goal</button>`}
+            </div>
+            ${sharedCount>1 ? `<div class="wishlist-shared-warning"><i class="ri-error-warning-line"></i> Shared with ${sharedCount-1} other item(s) — actual availability may be less than shown.</div>` : ''}
+          ` : ''}
+
+          ${!isHistory ? `
+            <div class="wishlist-actions">
+              ${ready ? `<button class="ledger-btn confirm" onclick="markWishlistPurchased('${item.id}')">Mark Purchased</button>` : ''}
+              <button class="ledger-btn" onclick="openWishlistModal('${item.id}')">Edit</button>
+              <button class="ledger-btn" onclick="abandonWishlistItem('${item.id}')">Abandon</button>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  async function reorderWishlistItems(sourceId, targetId){
+    const sourceIdx=allWishlistItems.findIndex(i=>i.id===sourceId);
+    const targetIdx=allWishlistItems.findIndex(i=>i.id===targetId);
+    if(sourceIdx===-1||targetIdx===-1) return;
+    const [moved]=allWishlistItems.splice(sourceIdx,1);
+    allWishlistItems.splice(targetIdx,0,moved);
+
+    // Persist new order for all active items
+    const updates=allWishlistItems
+      .filter(i=>i.status!=='purchased'&&i.status!=='abandoned')
+      .map((i,idx)=>supabase.from('wishlist_items').update({sort_order:idx}).eq('id',i.id).eq('user_id',userId));
+    await Promise.all(updates);
+    renderWishlist();
+  }
+
+  window.openWishlistModal=function(itemId){
+    const modal=document.getElementById('wishlistModal');
+    const deleteBtn=document.getElementById('wishlistDeleteBtn');
+    if(itemId){
+      const it=allWishlistItems.find(x=>x.id===itemId);
+      if(!it) return;
+      modal._editId=itemId;
+      modal._oldPrice=it.price;
+      document.getElementById('wishlistModalTitle').textContent='EDIT ITEM';
+      document.getElementById('wishlist_name').value=it.name||'';
+      document.getElementById('wishlist_category').value=it.category||'want';
+      document.getElementById('wishlist_price').value=it.price||'';
+      document.getElementById('wishlist_source').value=it.source||'';
+      document.getElementById('wishlist_image').value=it.image_url||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      modal._oldPrice=null;
+      document.getElementById('wishlistModalTitle').textContent='NEW ITEM';
+      document.getElementById('wishlist_name').value='';
+      document.getElementById('wishlist_category').value='want';
+      document.getElementById('wishlist_price').value='';
+      document.getElementById('wishlist_source').value='';
+      document.getElementById('wishlist_image').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveWishlistItem=async function(){
+    const name=document.getElementById('wishlist_name').value.trim();
+    const category=document.getElementById('wishlist_category').value;
+    const price=Number(document.getElementById('wishlist_price').value);
+    const source=document.getElementById('wishlist_source').value.trim()||null;
+    const imageUrl=document.getElementById('wishlist_image').value.trim()||null;
+    if(!name||!price){showToast('Enter a name and price','error');return;}
+    if(!isOnline()){showToast('Connect to the internet to save this item','error');return;}
+
+    const modal=document.getElementById('wishlistModal');
+    const editId=modal._editId;
+    const oldPrice=modal._oldPrice;
+    let error;
+
+    if(editId){
+      ({error}=await supabase.from('wishlist_items').update({name,category,price,source,image_url:imageUrl}).eq('id',editId).eq('user_id',userId));
+      if(!error && oldPrice!=null && Number(oldPrice)!==price){
+        await supabase.from('wishlist_price_history').insert({item_id:editId,user_id:userId,old_price:oldPrice,new_price:price});
+      }
+    } else {
+      const maxOrder=allWishlistItems.reduce((m,i)=>Math.max(m,i.sort_order||0),0);
+      ({error}=await supabase.from('wishlist_items').insert({name,category,price,source,image_url:imageUrl,status:'saving',sort_order:maxOrder+1,user_id:userId}));
+    }
+    if(error){showToast('Failed to save item','error');return;}
+    showToast('Item saved','success');
+    closeModal('wishlistModal');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.deleteWishlistItem=async function(){
+    const itemId=document.getElementById('wishlistModal')._editId;
+    if(!itemId) return;
+    if(!confirm('Delete this item?')) return;
+    const {error}=await supabase.from('wishlist_items').delete().eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to delete item','error');return;}
+    showToast('Item deleted','success');
+    closeModal('wishlistModal');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.markWishlistPurchased=async function(itemId){
+    if(!confirm('Mark this item as purchased?')) return;
+    const {error}=await supabase.from('wishlist_items').update({status:'purchased'}).eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to update item','error');return;}
+    showToast('Marked as purchased','success');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.abandonWishlistItem=async function(itemId){
+    if(!confirm('Move this item to history as abandoned?')) return;
+    const {error}=await supabase.from('wishlist_items').update({status:'abandoned'}).eq('id',itemId).eq('user_id',userId);
+    if(error){showToast('Failed to update item','error');return;}
+    showToast('Moved to history','success');
+    await loadWishlist(); renderWishlist();
+  };
+
+  window.openWishlistGoalModal=function(itemId){
+    const modal=document.getElementById('wishlistGoalModal');
+    modal._itemId=itemId;
+    const item=allWishlistItems.find(x=>x.id===itemId);
+    const select=document.getElementById('wishlist_goal_select');
+    select.innerHTML='<option value="">— Create a new goal instead —</option>'
+      + allSavingsGoals.map(g=>`<option value="${g.id}">${sanitize(g.title)} (${fmtKSH(g.current_amount||0)} saved)</option>`).join('');
+    select.value=item?.savings_goal_id||'';
+    document.getElementById('wishlist_new_goal_title').value=item?.name||'';
+    document.getElementById('wishlist_new_goal_field').style.display=select.value?'none':'block';
+    select.onchange=()=>{ document.getElementById('wishlist_new_goal_field').style.display=select.value?'none':'block'; };
+    modal.classList.add('open');
+  };
+
+  window.saveWishlistGoalLink=async function(){
+    const modal=document.getElementById('wishlistGoalModal');
+    const itemId=modal._itemId;
+    const selectedGoalId=document.getElementById('wishlist_goal_select').value;
+    if(!isOnline()){showToast('Connect to the internet to link a goal','error');return;}
+
+    let goalId=selectedGoalId;
+    if(!goalId){
+      const title=document.getElementById('wishlist_new_goal_title').value.trim();
+      const item=allWishlistItems.find(x=>x.id===itemId);
+      if(!title){showToast('Enter a title for the new goal','error');return;}
+      const {data,error}=await supabase.from('savings_goals').insert({title,target_amount:item?.price||0,current_amount:0,user_id:userId}).select().single();
+      if(error){showToast('Failed to create goal','error');return;}
+      goalId=data.id;
+    }
+
+    const {error:linkError}=await supabase.from('wishlist_items').update({savings_goal_id:goalId}).eq('id',itemId).eq('user_id',userId);
+    if(linkError){showToast('Failed to link goal','error');return;}
+
+    showToast('Goal linked','success');
+    closeModal('wishlistGoalModal');
+    await Promise.all([loadWishlist(), loadSavingsGoals()]);
+    renderWishlist();
+  };
+
+
+  function renderTxLog() {
+    const c=document.getElementById('txLogContainer');
+    const q=(document.getElementById('logSearch')?.value||'').toLowerCase();
+    let rows=[...allExpenses];
+    if(activeFilter==='mpesa') rows=rows.filter(e=>e.method&&e.method.includes('mpesa'));
+    if(activeFilter==='cash')  rows=rows.filter(e=>e.method==='cash'||e.method==='lipa');
+    if(q) rows=rows.filter(e=>(e.description||'').toLowerCase().includes(q)||(e.category||'').toLowerCase().includes(q));
+    c.innerHTML=rows.length===0?'<div class="tx-empty">No transactions found.</div>':
+      rows.map(e=>`<div class="tx-row ${e.method&&e.method.includes('mpesa')?'mpesa':''}">
+        <div class="tx-date">${fmtDate(e.expense_date)}<br>${fmtTime(e.expense_date)}</div>
+        <div><div class="tx-desc">${e.description||'—'}</div>
+        <div class="tx-meta"><span class="tx-category">${e.category||''}</span><span class="tx-method">${e.method||'cash'}</span></div></div>
+        <div class="tx-right"><div class="tx-amount">${fmtKSH(e.amount)}</div>${e.mpesa_fee>0?`<div class="tx-fee">+ ${fmtKSH(e.mpesa_fee)} fee</div>`:''}</div>
+        <div class="tx-actions">
+          <button class="tx-action-btn" onclick="editExpense('${e.id}')">edit</button>
+          <button class="tx-action-btn del" onclick="deleteExpense('${e.id}')">del</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window.openModal=function(type){
+    if(type==='expense'){setLocalNow('exp_date');document.getElementById('expenseModal').classList.add('open');}
+    else if(type==='quick'){renderQuickCats();document.getElementById('quickModal').classList.add('open');}
+    else if(type==='income'){setLocalNow('inc_date');document.getElementById('incomeModal').classList.add('open');}
+  };
+  window.closeModal=function(id){
+    document.getElementById(id).classList.remove('open');
+    if(id==='expenseModal') document.getElementById('expenseModal')._editId=null;
+    if(id==='savingsGoalModal') document.getElementById('savingsGoalModal')._editId=null;
+    if(id==='depositModal') document.getElementById('depositModal')._goalId=null;
+    if(id==='debtModal') document.getElementById('debtModal')._editId=null;
+    if(id==='wishlistModal') { document.getElementById('wishlistModal')._editId=null; document.getElementById('wishlistModal')._oldPrice=null; }
+    if(id==='wishlistGoalModal') document.getElementById('wishlistGoalModal')._itemId=null;
+  };
+  window.openBudgetModal=function(){
+    updateMonthLabel();renderBudgetGrid();document.getElementById('budgetModal').classList.add('open');
+  };
+
+  window.openSavingsGoalModal=function(goalId){
+    const modal=document.getElementById('savingsGoalModal');
+    const deleteBtn=document.getElementById('savingsGoalDeleteBtn');
+    if(goalId){
+      const g=allSavingsGoals.find(x=>x.id===goalId);
+      if(!g) return;
+      modal._editId=goalId;
+      document.getElementById('savingsGoalModalTitle').textContent='EDIT SAVINGS GOAL';
+      document.getElementById('goal_title').value=g.title||'';
+      document.getElementById('goal_target').value=g.target_amount||'';
+      document.getElementById('goal_date').value=g.target_date||'';
+      deleteBtn.style.display='block';
+    } else {
+      modal._editId=null;
+      document.getElementById('savingsGoalModalTitle').textContent='NEW SAVINGS GOAL';
+      document.getElementById('goal_title').value='';
+      document.getElementById('goal_target').value='';
+      document.getElementById('goal_date').value='';
+      deleteBtn.style.display='none';
+    }
+    modal.classList.add('open');
+  };
+
+  window.saveSavingsGoal=async function(){
+    const title=document.getElementById('goal_title').value.trim();
+    const target=Number(document.getElementById('goal_target').value);
+    const targetDate=document.getElementById('goal_date').value||null;
+    if(!title||!target){showToast('Enter a title and target amount','error');return;}
+    const editId=document.getElementById('savingsGoalModal')._editId;
+    let error;
+    if(editId){
+      ({error}=await supabase.from('savings_goals').update({title,target_amount:target,target_date:targetDate}).eq('id',editId).eq('user_id',userId));
+    } else {
+      ({error}=await supabase.from('savings_goals').insert({title,target_amount:target,target_date:targetDate,current_amount:0,user_id:userId}));
+    }
+    if(error){showToast('Failed to save goal','error');return;}
+    showToast('Savings goal saved','success');
+    closeModal('savingsGoalModal');
+    await loadSavingsGoals(); renderSavings();
+  };
+
+  window.deleteSavingsGoal=async function(){
+    const goalId=document.getElementById('savingsGoalModal')._editId;
+    if(!goalId) return;
+    if(!confirm('Delete this savings goal? This also removes all its logged deposits.')) return;
+    await supabase.from('savings_deposits').delete().eq('savings_goal_id',goalId).eq('user_id',userId);
+    const {error}=await supabase.from('savings_goals').delete().eq('id',goalId).eq('user_id',userId);
+    if(error){showToast('Failed to delete goal','error');return;}
+    delete depositsByGoal[goalId];
+    showToast('Savings goal deleted','success');
+    closeModal('savingsGoalModal');
+    await loadSavingsGoals(); renderSavings();
+  };
+
+  window.openDepositModal=function(goalId){
+    const modal=document.getElementById('depositModal');
+    modal._goalId=goalId;
+    document.getElementById('dep_amount').value='';
+    document.getElementById('dep_note').value='';
+    document.getElementById('dep_date').value=todayDate();
+    modal.classList.add('open');
+  };
+
+  window.saveDeposit=async function(){
+    const goalId=document.getElementById('depositModal')._goalId;
+    const amount=Number(document.getElementById('dep_amount').value);
+    const note=document.getElementById('dep_note').value.trim();
+    const dateVal=document.getElementById('dep_date').value;
+    if(!goalId||!amount||!dateVal){showToast('Enter an amount and date','error');return;}
+    const goal=allSavingsGoals.find(g=>g.id===goalId);
+    if(!goal) return;
+    const {error:depErr}=await supabase.from('savings_deposits').insert({
+      savings_goal_id:goalId,amount,note:note||null,deposit_date:dateVal,user_id:userId
+    });
+    if(depErr){showToast('Failed to log deposit','error');return;}
+    const newTotal=(Number(goal.current_amount)||0)+amount;
+    await supabase.from('savings_goals').update({current_amount:newTotal}).eq('id',goalId).eq('user_id',userId);
+    showToast('Deposit logged','success');
+    closeModal('depositModal');
+    await loadSavingsGoals();
+    await loadDepositsForGoal(goalId);
+    renderSavings();
+  };
+
+  window.deleteDeposit=async function(depositId,goalId){
+    if(!confirm('Delete this deposit?')) return;
+    const deposit=(depositsByGoal[goalId]||[]).find(d=>d.id===depositId);
+    if(!deposit) return;
+    const {error}=await supabase.from('savings_deposits').delete().eq('id',depositId).eq('user_id',userId);
+    if(error){showToast('Failed to delete deposit','error');return;}
+    const goal=allSavingsGoals.find(g=>g.id===goalId);
+    if(goal){
+      const newTotal=Math.max((Number(goal.current_amount)||0)-Number(deposit.amount),0);
+      await supabase.from('savings_goals').update({current_amount:newTotal}).eq('id',goalId).eq('user_id',userId);
+    }
+    showToast('Deposit deleted','success');
+    await loadSavingsGoals();
+    await loadDepositsForGoal(goalId);
+    renderSavings();
+  };
+
+  function renderBudgetGrid() {
+    const g=document.getElementById('budgetSetupGrid');
+    g.innerHTML=CATEGORIES.map(cat=>`<div class="budget-cat-row">
+      <div class="budget-cat-name">${cat}</div>
+      <input class="budget-cat-input" data-cat="${cat}" type="number" value="${catBudgets[cat]||''}" placeholder="0" oninput="updateBudgetTotal()" />
+    </div>`).join('');
+    updateBudgetTotal();
+  }
+
+  window.updateBudgetTotal=function(){
+    let t=0; document.querySelectorAll('.budget-cat-input').forEach(i=>t+=Number(i.value)||0);
+    document.getElementById('budgetTotalDisplay').textContent=fmtKSH(t);
+  };
+
+  window.saveBudget=async function(){
+    const inputs=document.querySelectorAll('.budget-cat-input');
+    const upserts=[]; inputs.forEach(i=>upserts.push({user_id:userId,month_year:currentMonthYear,category:i.dataset.cat,budgeted_amount:Number(i.value)||0}));
+    const {error}=await supabase.from('category_budgets').upsert(upserts,{onConflict:'user_id,month_year,category'});
+    if(error){showToast('Failed to save budget','error');return;}
+    await loadCatBudgets(); render(); closeModal('budgetModal'); showToast('Budget saved','success');
+  };
+
+  function renderQuickCats() {
+    document.getElementById('quickCats').innerHTML=CATEGORIES.map(cat=>`<button class="quick-cat-btn${cat===selectedQuickCat?' selected':''}" onclick="selectQuickCat(this,'${cat}')">${cat}</button>`).join('');
+  }
+
+  window.selectQuickCat=function(btn,cat){
+    document.querySelectorAll('.quick-cat-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected'); selectedQuickCat=cat;
+  };
+
+  window.calcFee=function(){
+    const amt=Number(document.getElementById('exp_amount').value)||0;
+    const method=document.getElementById('exp_method').value;
+    const field=document.getElementById('feeField');
+    const note=document.getElementById('feeNote');
+    if(method==='mpesa_send'||method==='mpesa_withdraw'){
+      const fee=getMpesaFee(amt,method);
+      document.getElementById('exp_fee').value=fee;
+      note.textContent=fee>0?`Safaricom charges KSH ${fee} for this transaction`:'Free — below KSH 100';
+      field.style.display='block';
+    } else { field.style.display='none'; }
+  };
+
+  window.calcQuickFee=function(){
+    const amt=Number(document.getElementById('quick_amount').value)||0;
+    const method=document.getElementById('quick_method').value;
+    const note=document.getElementById('quickFeeNote');
+    if(method==='mpesa_send'||method==='mpesa_withdraw'){
+      const fee=getMpesaFee(amt,method);
+      note.textContent=fee>0?`+ KSH ${fee} Safaricom fee will be recorded`:'+ Free (below KSH 100)';
+    } else { note.textContent=''; }
+  };
+
+  window.saveExpense=async function(){
+    const desc=document.getElementById('exp_desc').value.trim();
+    const amount=Number(document.getElementById('exp_amount').value);
+    const method=document.getElementById('exp_method').value;
+    const category=document.getElementById('exp_category').value;
+    const dateVal=document.getElementById('exp_date').value;
+    const note=document.getElementById('exp_note').value.trim();
+    const fee=Number(document.getElementById('exp_fee')?.value)||0;
+    if(!desc||!amount||!dateVal){showToast('Fill in description, amount and date','error');return;}
+    const expDate=new Date(dateVal);
+    const editId=document.getElementById('expenseModal')._editId;
+    const payload={description:desc,amount,currency:'KES',amount_ksh:amount,category,method,mpesa_fee:fee,note:note||null,week_number:getWeekNum(expDate),expense_date:expDate.toISOString()};
+    let error;
+    if(editId){
+      ({error}=await supabase.from('expenses').update(payload).eq('id',editId).eq('user_id',userId));
+      if(!error) showToast('Expense updated','success');
+    } else {
+      ({error}=await supabase.from('expenses').insert({...payload,user_id:userId}));
+      if(!error) showToast('Expense recorded','success');
+    }
+    if(error){showToast('Failed to save','error');return;}
+    document.getElementById('expenseModal')._editId=null;
+    closeModal('expenseModal');
+    ['exp_desc','exp_amount','exp_note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('feeField').style.display='none';
+    await loadExpenses(); render();
+  };
+
+  window.saveQuick=async function(){
+    const amount=Number(document.getElementById('quick_amount').value);
+    const method=document.getElementById('quick_method').value;
+    const desc=document.getElementById('quick_desc').value.trim()||selectedQuickCat;
+    const fee=(method==='mpesa_send'||method==='mpesa_withdraw')?getMpesaFee(amount,method):0;
+    if(!amount){showToast('Enter an amount','error');return;}
+    const now=new Date();
+    const {error}=await supabase.from('expenses').insert({
+      description:desc,amount,currency:'KES',amount_ksh:amount,
+      category:selectedQuickCat,method,mpesa_fee:fee,
+      week_number:getWeekNum(now),expense_date:now.toISOString(),
+      user_id:userId
+    });
+    if(error){showToast('Failed to save','error');return;}
+    showToast('Logged','success');
+    closeModal('quickModal');
+    document.getElementById('quick_amount').value='';
+    document.getElementById('quick_desc').value='';
+    await loadExpenses(); render();
+  };
+
+  window.saveIncome=async function(){
+    const source=document.getElementById('inc_source').value;
+    const label=document.getElementById('inc_label').value.trim();
+    const amount=Number(document.getElementById('inc_amount').value);
+    const method=document.getElementById('inc_method').value;
+    const dateVal=document.getElementById('inc_date').value;
+    const note=document.getElementById('inc_note').value.trim();
+    if(!amount||!dateVal){showToast('Enter amount and date','error');return;}
+    const {error}=await supabase.from('income_logs').insert({
+      source,label:label||null,amount,method,mpesa_fee:0,
+      note:note||null,received_at:new Date(dateVal).toISOString(),
+      user_id:userId
+    });
+    if(error){showToast('Failed to save','error');return;}
+    showToast('Income recorded','success');
+    closeModal('incomeModal');
+    await loadIncome(); render();
+  };
+
+  window.switchTab=function(panel,btn){
+    document.querySelectorAll('.ledger-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.ledger-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${panel}`).classList.add('active');
+  };
+
+  window.toggleWeek=function(header){header.closest('.week-card').classList.toggle('open');};
+
+  window.toggleBlur=function(){
+    const el=document.getElementById('walletBalance');
+    const icon=document.getElementById('blurIcon');
+    balanceBlurred=!balanceBlurred;
+    el.classList.toggle('blurred',balanceBlurred);
+    icon.className=balanceBlurred?'ri-eye-off-line':'ri-eye-line';
+  };
+
+  window.changeMonth=async function(dir){
+    const [y,m]=currentMonthYear.split('-').map(Number);
+    currentMonthYear=getMonthYear(new Date(y,m-1+dir,1));
+    updateMonthLabel();
+    await Promise.all([loadExpenses(),loadIncome(),loadCatBudgets()]);
+    render();
+  };
+
+  // Edit/delete expense
+  let editingExpenseId = null;
+
+  window.openEditExpense=function(id){
+    const e=allExpenses.find(x=>x.id===id);
+    if(!e) return;
+    editingExpenseId=id;
+    document.getElementById('edit_desc').value=e.description||'';
+    document.getElementById('edit_amount').value=e.amount||0;
+    document.getElementById('edit_method').value=e.method||'cash';
+    document.getElementById('edit_category').value=e.category||'Miscellaneous';
+    document.getElementById('edit_fee').value=e.mpesa_fee||0;
+    document.getElementById('edit_note').value=e.note||'';
+    const dt=new Date(e.expense_date);
+    const off=dt.getTimezoneOffset()*60000;
+    document.getElementById('edit_date').value=new Date(dt-off).toISOString().slice(0,16);
+    const isMpesa=e.method&&e.method.includes('mpesa');
+    document.getElementById('editFeeField').style.display=isMpesa?'block':'none';
+    document.getElementById('editExpenseModal').classList.add('open');
+  };
+
+  window.calcEditFee=function(){
+    const amt=Number(document.getElementById('edit_amount').value)||0;
+    const method=document.getElementById('edit_method').value;
+    const field=document.getElementById('editFeeField');
+    const note=document.getElementById('editFeeNote');
+    if(method==='mpesa_send'||method==='mpesa_withdraw'){
+      const fee=getMpesaFee(amt,method);
+      document.getElementById('edit_fee').value=fee;
+      note.textContent=fee>0?`Safaricom charges KSH ${fee}`:'Free — below KSH 100';
+      field.style.display='block';
+    } else { field.style.display='none'; }
+  };
+
+  window.updateExpense=async function(){
+    const desc=document.getElementById('edit_desc').value.trim();
+    const amount=Number(document.getElementById('edit_amount').value);
+    const method=document.getElementById('edit_method').value;
+    const category=document.getElementById('edit_category').value;
+    const dateVal=document.getElementById('edit_date').value;
+    const note=document.getElementById('edit_note').value.trim();
+    const fee=Number(document.getElementById('edit_fee').value)||0;
+    if(!desc||!amount||!dateVal){showToast('Fill in description, amount and date','error');return;}
+    const expDate=new Date(dateVal);
+    const {error}=await supabase.from('expenses').update({
+      description:desc,amount,category,method,mpesa_fee:fee,
+      note:note||null,expense_date:expDate.toISOString(),
+      week_number:getWeekNum(expDate)
+    }).eq('id',editingExpenseId).eq('user_id',userId);
+    if(error){showToast('Failed to update','error');return;}
+    showToast('Expense updated','success');
+    closeModal('editExpenseModal');
+    await loadExpenses(); render();
+  };
+
+  window.deleteExpenseFromEditModal=async function(){
+    if(!editingExpenseId) return;
+    if(!confirm('Delete this expense?')) return;
+    const {error}=await supabase.from('expenses').delete().eq('id',editingExpenseId).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Expense deleted','success');
+    closeModal('editExpenseModal');
+    editingExpenseId=null;
+    await loadExpenses(); render();
+  };
+
+  window.setFilter=function(f,btn){
+    activeFilter=f;
+    document.querySelectorAll('.log-filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); renderTxLog();
+  };
+
+  window.filterLog=function(){renderTxLog();};
+
+  document.querySelectorAll('.ledger-modal-overlay').forEach(o=>{
+    o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('open');});
+  });
+
+  window.deleteExpense=async function(id){
+    if(!confirm('Delete this expense?')) return;
+    const {error}=await supabase.from('expenses').delete().eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Deleted','success');
+    await loadExpenses(); render();
+  };
+
+  window.deleteIncome=async function(id){
+    if(!confirm('Delete this income entry?')) return;
+    const {error}=await supabase.from('income_logs').delete().eq('id',id).eq('user_id',userId);
+    if(error){showToast('Failed to delete','error');return;}
+    showToast('Deleted','success');
+    await loadIncome(); render();
+  };
+
+  window.editExpense=function(id){
+    const e=allExpenses.find(x=>x.id===id);
+    if(!e) return;
+    document.getElementById('exp_desc').value=e.description||'';
+    document.getElementById('exp_amount').value=e.amount||'';
+    document.getElementById('exp_method').value=e.method||'cash';
+    document.getElementById('exp_category').value=e.category||'Food & Drinks';
+    const d=new Date(e.expense_date);
+    const off=d.getTimezoneOffset()*60000;
+    document.getElementById('exp_date').value=new Date(d-off).toISOString().slice(0,16);
+    document.getElementById('exp_note').value=e.note||'';
+    if(e.mpesa_fee>0){
+      document.getElementById('exp_fee').value=e.mpesa_fee;
+      document.getElementById('feeField').style.display='block';
+    }
+    // Store editing id on the modal
+    document.getElementById('expenseModal')._editId=id;
+    document.getElementById('expenseModal').classList.add('open');
+  };
+
+  init();
+</script>
+<script>
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+</script>
+</body>
+</html>
